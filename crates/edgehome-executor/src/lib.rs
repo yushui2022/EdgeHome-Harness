@@ -4,7 +4,9 @@
 //! accepts `ExecutionPlan`/`DryRunPlan` created after parser, registry, gate, and
 //! policy checks have already happened.
 
-use std::collections::HashMap;
+mod home_assistant;
+
+use std::{collections::HashMap, path::PathBuf};
 
 use edgehome_core::{
     Action, DeviceId, DryRunPlan, ExecutionPlan, ExecutionResult, NormalizedCommand,
@@ -19,6 +21,11 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use thiserror::Error;
 use time::{Duration, OffsetDateTime};
+
+pub use home_assistant::{
+    HomeAssistantClient, HomeAssistantConfig, HomeAssistantExecutor, HomeAssistantSecrets,
+    HomeAssistantServiceCall, HomeAssistantState, SecretsLoader, home_assistant_service_call,
+};
 
 pub type ExecutorResult<T> = Result<T, ExecutorError>;
 
@@ -50,6 +57,48 @@ pub enum ExecutorError {
 
     #[error("post-state verification failed")]
     PostStateVerificationFailed,
+
+    #[error("executor backend mismatch: expected `{expected}`, got `{actual}`")]
+    ExecutorBackendMismatch { expected: String, actual: String },
+
+    #[error("missing Home Assistant route for device `{0}`")]
+    MissingHomeAssistantRoute(String),
+
+    #[error("failed to read Home Assistant config `{path}`: {source}")]
+    HomeAssistantConfigRead {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+
+    #[error("failed to parse Home Assistant config `{path}`: {source}")]
+    HomeAssistantConfigParse {
+        path: PathBuf,
+        source: serde_yaml::Error,
+    },
+
+    #[error("missing Home Assistant token; set `{env_var}` or configure token_file")]
+    HomeAssistantSecretMissing { env_var: String },
+
+    #[error("invalid Home Assistant entity_id: {0}")]
+    InvalidHomeAssistantEntityId(String),
+
+    #[error("unsupported Home Assistant base URL: {0}")]
+    HomeAssistantUnsupportedBaseUrl(String),
+
+    #[error("invalid Home Assistant HTTP response: {0}")]
+    HomeAssistantInvalidHttpResponse(String),
+
+    #[error("Home Assistant returned status {status}: {body}")]
+    HomeAssistantHttpStatus { status: u16, body: String },
+
+    #[error("unsupported Home Assistant action `{action}` for entity `{entity_id}`")]
+    UnsupportedHomeAssistantAction { action: String, entity_id: String },
+
+    #[error("io error: {0}")]
+    Io(#[from] std::io::Error),
+
+    #[error("json error: {0}")]
+    Json(#[from] serde_json::Error),
 }
 
 pub trait Executor {
@@ -94,7 +143,7 @@ impl DryRunPlanner {
 
         Ok(DryRunPlan {
             backend: backend_name(&device.backend).to_owned(),
-            payload: mock_payload(device, command),
+            payload: backend_payload(device, command, &plan)?,
             plan,
         })
     }
@@ -320,6 +369,41 @@ fn mock_payload(device: &DeviceRecord, command: &NormalizedCommand) -> Value {
     })
 }
 
+fn backend_payload(
+    device: &DeviceRecord,
+    command: &NormalizedCommand,
+    plan: &ExecutionPlan,
+) -> ExecutorResult<Value> {
+    match device.backend {
+        BackendKind::HomeAssistant => home_assistant_payload(device, command, plan),
+        BackendKind::Mock | BackendKind::MiioLocal | BackendKind::Mqtt => {
+            Ok(mock_payload(device, command))
+        }
+    }
+}
+
+fn home_assistant_payload(
+    device: &DeviceRecord,
+    command: &NormalizedCommand,
+    plan: &ExecutionPlan,
+) -> ExecutorResult<Value> {
+    let service_call = home_assistant_service_call(plan, &device.backend_entity_id)?;
+    Ok(json!({
+        "backend": "home_assistant",
+        "device_id": device.device_id,
+        "entity_id": device.backend_entity_id,
+        "room": device.room,
+        "device_type": device.device_type,
+        "action": command.action,
+        "service": service_call.service_name(),
+        "service_path": service_call.service_path(),
+        "payload": service_call.payload,
+        "condition": {
+            "time_after": command.params.time_after,
+        }
+    }))
+}
+
 fn operation_name(action: &Action) -> &'static str {
     match action {
         Action::TurnOn => "set_power_on",
@@ -371,6 +455,14 @@ mod tests {
         }
     }
 
+    fn ha_light_device() -> DeviceRecord {
+        DeviceRecord {
+            backend: BackendKind::HomeAssistant,
+            backend_entity_id: "light.hallway".to_owned(),
+            ..light_device()
+        }
+    }
+
     fn command() -> NormalizedCommand {
         NormalizedCommand {
             schema_version: CommandSchemaVersion::default(),
@@ -410,6 +502,24 @@ mod tests {
         assert_eq!(plan.plan.params.brightness, Some(30));
         assert_eq!(plan.backend, "mock");
         assert_eq!(plan.payload["operation"], "set_brightness");
+    }
+
+    #[test]
+    fn dry_run_planner_translates_home_assistant_payload() {
+        let plan = DryRunPlanner
+            .plan(
+                &TraceId("tr_test".to_owned()),
+                &command(),
+                &ha_light_device(),
+                PolicyDecision::Allow,
+            )
+            .expect("ha dry-run plan");
+
+        assert_eq!(plan.backend, "home_assistant");
+        assert_eq!(plan.payload["entity_id"], "light.hallway");
+        assert_eq!(plan.payload["service"], "light.turn_on");
+        assert_eq!(plan.payload["service_path"], "/api/services/light/turn_on");
+        assert_eq!(plan.payload["payload"]["brightness_pct"], 30);
     }
 
     #[test]

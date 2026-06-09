@@ -1,0 +1,20 @@
+# Home Assistant executor example.
+# Copy this file to a private path outside git if you need local real-device tests.
+# Do not commit real long-lived tokens.
+
+base_url: http://homeassistant.local:8123
+
+# The executor reads the long-lived token from this environment variable.
+# PowerShell example:
+#   $env:EDGEHOME_HA_TOKEN = "your-long-lived-access-token"
+token_env: EDGEHOME_HA_TOKEN
+
+# Optional alternative to token_env. Keep the file outside the repository.
+token_file:
+
+# Local LAN REST calls should fail fast on edge devices.
+request_timeout_ms: 8000
+
+# Must remain false by default. Real execution should only be enabled for an
+# explicit local test after gate, dry-run, and confirmation checks have passed.
+execute_enabled: false

@@ -13,5 +13,6 @@ edgehome-registry = { path = "../edgehome-registry" }
 edgehome-trace = { path = "../edgehome-trace" }
 serde.workspace = true
 serde_json.workspace = true
+serde_yaml.workspace = true
 thiserror.workspace = true
 time.workspace = true
