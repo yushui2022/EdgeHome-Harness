@@ -188,6 +188,14 @@ dependencies = [
 [[package]]
 name = "edgehome-ollama"
 version = "0.1.0"
+dependencies = [
+ "edgehome-config",
+ "edgehome-core",
+ "edgehome-parser",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
 
 [[package]]
 name = "edgehome-parser"

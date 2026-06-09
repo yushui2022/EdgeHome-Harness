@@ -7,4 +7,9 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-
+edgehome-config = { path = "../edgehome-config" }
+edgehome-core = { path = "../edgehome-core" }
+edgehome-parser = { path = "../edgehome-parser" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
