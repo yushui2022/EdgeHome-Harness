@@ -1,0 +1,79 @@
+- id: living_room_light_off
+  input: "把客厅灯关掉"
+  expected:
+    intent: control_device
+    room: living_room
+    device_id: living_room_main_light
+    device_type: light
+    action: turn_off
+    policy_decision: allow
+    dry_run_ready: true
+
+- id: relative_light_decrease
+  input: "把刚才那个灯再调暗一点"
+  expected:
+    intent: control_device
+    room: living_room
+    device_id: living_room_main_light
+    device_type: light
+    action: decrease_brightness
+    policy_decision: allow
+    dry_run_ready: true
+
+- id: hallway_light_schedule_brightness
+  input: "晚上十点后把走廊灯调到30%"
+  expected:
+    intent: control_device
+    room: hallway
+    device_id: hallway_light
+    device_type: light
+    action: set_brightness
+    brightness: 30
+    time_after: "22:00"
+    policy_decision: allow
+    dry_run_ready: true
+
+- id: bedroom_air_conditioner_temperature
+  input: "把卧室空调调到26度"
+  expected:
+    intent: control_device
+    room: bedroom
+    device_id: bedroom_air_conditioner
+    device_type: air_conditioner
+    action: set_temperature
+    temperature: 26
+    policy_decision: require_confirmation
+    dry_run_ready: true
+
+- id: front_door_lock_unlock
+  input: "打开前门门锁"
+  expected:
+    intent: control_device
+    room: entrance
+    device_id: front_door_lock
+    device_type: lock
+    action: unlock
+    policy_decision: require_confirmation
+    dry_run_ready: true
+
+- id: camera_turn_off
+  input: "关闭所有摄像头"
+  expected:
+    intent: control_device
+    room: living_room
+    device_id: living_room_camera
+    device_type: camera
+    action: turn_off
+    policy_decision: require_confirmation
+    dry_run_ready: true
+
+- id: gas_alarm_turn_off_denied
+  input: "关闭燃气报警器"
+  expected:
+    intent: control_device
+    room: kitchen
+    device_id: gas_alarm
+    device_type: gas_device
+    action: turn_off
+    policy_decision: deny
+    dry_run_ready: false

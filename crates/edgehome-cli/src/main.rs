@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -5,6 +6,7 @@ use anyhow::Context;
 use clap::{Parser, Subcommand};
 use edgehome_config::{RuntimeProfile, load_profile};
 use edgehome_core::{ModelCandidate, NormalizedCommand, PolicyDecision, UserInput};
+use edgehome_eval::{EvalReport, evaluate_case_output, load_cases};
 use edgehome_executor::DryRunPlanner;
 use edgehome_gate::{GateEngine, GateEvaluationRequest};
 use edgehome_memory::{ContextAssembler, PromptContext, ShortSessionMemory};
@@ -51,6 +53,14 @@ enum Commands {
         #[arg(long)]
         mock: bool,
         input: String,
+    },
+    Eval {
+        cases_path: PathBuf,
+        #[arg(long)]
+        ollama: bool,
+    },
+    Replay {
+        trace_id: String,
     },
     Trace {
         #[command(subcommand)]
@@ -111,6 +121,22 @@ fn main() -> anyhow::Result<()> {
                 MockMode::DryRun,
                 mock,
             )?;
+            print_json(&output)?;
+        }
+        Commands::Eval { cases_path, ollama } => {
+            let profile = load_profile(&cli.config_dir, &cli.profile)
+                .with_context(|| format!("failed to load profile `{}`", cli.profile))?;
+            let output = run_eval(
+                &cli.db_path,
+                &cli.config_dir,
+                &profile,
+                &cases_path,
+                !ollama,
+            )?;
+            print_json(&output)?;
+        }
+        Commands::Replay { trace_id } => {
+            let output = replay_trace(&cli.db_path, TraceId(trace_id))?;
             print_json(&output)?;
         }
         Commands::Trace {
@@ -380,6 +406,37 @@ fn run_mock_pipeline(
     }))
 }
 
+fn run_eval(
+    db_path: &Path,
+    config_dir: &Path,
+    profile: &RuntimeProfile,
+    cases_path: &Path,
+    use_mock: bool,
+) -> anyhow::Result<Value> {
+    let cases = load_cases(cases_path)?;
+    let mut results = Vec::with_capacity(cases.len());
+
+    for case in cases {
+        let output = run_mock_pipeline(
+            db_path,
+            config_dir,
+            profile,
+            case.input.clone(),
+            MockMode::DryRun,
+            use_mock,
+        )?;
+        results.push(evaluate_case_output(&case, &output)?);
+    }
+
+    let report = EvalReport::from_results(results);
+    Ok(json!({
+        "cases_path": cases_path.display().to_string(),
+        "profile": profile.name.to_string(),
+        "model_mode": if use_mock { "mock" } else { "ollama" },
+        "report": report,
+    }))
+}
+
 fn show_trace(db_path: &Path, trace_id: TraceId) -> anyhow::Result<Value> {
     ensure_db_parent(db_path)?;
 
@@ -399,6 +456,69 @@ fn show_trace(db_path: &Path, trace_id: TraceId) -> anyhow::Result<Value> {
         "steps": steps,
         "gate_checks": gate_checks,
         "audit_events": audit_events,
+    }))
+}
+
+fn replay_trace(db_path: &Path, trace_id: TraceId) -> anyhow::Result<Value> {
+    ensure_db_parent(db_path)?;
+
+    let trace_store = TraceStore::open(db_path)?;
+    let evidence_store = EvidenceStore::open(db_path)?;
+    let audit_sink = AuditSink::open(db_path)?;
+
+    let trace = trace_store.read_trace(&trace_id)?;
+    let steps = trace_store.steps_for_trace(&trace_id)?;
+    let gate_checks = trace_store.gate_checks_for_trace(&trace_id)?;
+    let audit_events = audit_sink.events_for_trace(&trace_id)?;
+
+    let mut evidence_ids = HashSet::new();
+    evidence_ids.insert(trace.raw_user_input_ref.0.clone());
+    for step in &steps {
+        for evidence_id in &step.evidence_refs {
+            evidence_ids.insert(evidence_id.0.clone());
+        }
+    }
+    for check in &gate_checks {
+        for evidence_id in &check.evidence_refs {
+            evidence_ids.insert(evidence_id.0.clone());
+        }
+    }
+
+    let mut evidence = Vec::with_capacity(evidence_ids.len());
+    for evidence_id in evidence_ids {
+        evidence.push(evidence_store.read(&edgehome_storage::EvidenceId(evidence_id))?);
+    }
+    evidence.sort_by_key(|item| item.created_at);
+
+    let normalized_command = evidence
+        .iter()
+        .rev()
+        .find(|item| item.kind == EvidenceKind::NormalizedCommand)
+        .map(|item| item.content.clone());
+    let dry_run_plan = evidence
+        .iter()
+        .rev()
+        .find(|item| item.kind == EvidenceKind::DryRunPlan)
+        .map(|item| item.content.clone());
+    let policy_snapshot = evidence
+        .iter()
+        .rev()
+        .find(|item| item.kind == EvidenceKind::PolicyRuleSnapshot)
+        .map(|item| item.content.clone());
+
+    Ok(json!({
+        "trace": trace,
+        "steps": steps,
+        "gate_checks": gate_checks,
+        "audit_events": audit_events,
+        "replay_summary": {
+            "normalized_command": normalized_command,
+            "policy_snapshot": policy_snapshot,
+            "dry_run_plan": dry_run_plan,
+            "gate_count": gate_checks.len(),
+            "audit_count": audit_events.len(),
+        },
+        "evidence": evidence,
     }))
 }
 

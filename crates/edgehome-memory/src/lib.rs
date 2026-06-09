@@ -156,13 +156,34 @@ impl ShortSessionMemory {
             return Some(command.clone());
         }
 
-        let target = self.last_target()?;
+        let target = self
+            .last_target_matching(&command.device_type)
+            .or_else(|| self.last_target())?;
         let mut resolved = command.clone();
         resolved.room = target.room;
         resolved.device_id = Some(target.device_id);
         resolved.device_type = target.device_type;
         resolved.risk = target.risk;
         Some(resolved)
+    }
+
+    fn last_target_matching(&self, device_type: &DeviceType) -> Option<MemoryTarget> {
+        if *device_type == DeviceType::Unknown {
+            return None;
+        }
+
+        self.turns.iter().rev().find_map(|turn| {
+            if turn.command.device_type != *device_type {
+                return None;
+            }
+
+            Some(MemoryTarget {
+                room: turn.command.room.clone(),
+                device_id: turn.command.device_id.clone()?,
+                device_type: turn.command.device_type.clone(),
+                risk: turn.command.risk.clone(),
+            })
+        })
     }
 }
 

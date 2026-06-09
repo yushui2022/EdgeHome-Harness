@@ -110,6 +110,7 @@ dependencies = [
  "clap",
  "edgehome-config",
  "edgehome-core",
+ "edgehome-eval",
  "edgehome-executor",
  "edgehome-gate",
  "edgehome-memory",
@@ -144,6 +145,13 @@ dependencies = [
 [[package]]
 name = "edgehome-eval"
 version = "0.1.0"
+dependencies = [
+ "edgehome-core",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "thiserror",
+]
 
 [[package]]
 name = "edgehome-executor"
