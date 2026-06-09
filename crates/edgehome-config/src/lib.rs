@@ -1,3 +1,10 @@
-//! Configuration profile crate placeholder.
+//! Runtime profile loading for EdgeHome Harness.
 
-pub const CRATE_NAME: &str = "edgehome-config";
+mod error;
+mod profile;
+
+pub use error::ConfigError;
+pub use profile::{
+    DangerousActionPolicy, ExecutorBackend, ProfileName, RuntimeProfile, load_profile,
+    load_profile_from_path,
+};

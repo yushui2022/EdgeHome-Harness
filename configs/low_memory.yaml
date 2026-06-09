@@ -1,0 +1,19 @@
+name: low_memory
+model_name: openbmb/minicpm5:1b
+ollama_base_url: http://127.0.0.1:11434
+temperature: 0.1
+top_p: 0.8
+top_k: 20
+repeat_penalty: 1.25
+num_ctx: 1024
+num_predict: 128
+timeout_ms: 8000
+retry_count: 1
+memory_enabled: true
+max_short_memory_turns: 3
+max_context_chars: 500
+executor_backend: mock
+dangerous_action_policy: deny
+audit_enabled: true
+trace_enabled: true
+

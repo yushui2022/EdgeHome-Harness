@@ -1,0 +1,19 @@
+name: demo_mode
+model_name: openbmb/minicpm5:1b
+ollama_base_url: http://127.0.0.1:11434
+temperature: 0.2
+top_p: 0.9
+top_k: 20
+repeat_penalty: 1.2
+num_ctx: 1536
+num_predict: 160
+timeout_ms: 12000
+retry_count: 1
+memory_enabled: true
+max_short_memory_turns: 3
+max_context_chars: 800
+executor_backend: mock
+dangerous_action_policy: require_confirmation
+audit_enabled: true
+trace_enabled: true
+
