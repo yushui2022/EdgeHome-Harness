@@ -147,6 +147,15 @@ version = "0.1.0"
 [[package]]
 name = "edgehome-gate"
 version = "0.1.0"
+dependencies = [
+ "edgehome-core",
+ "edgehome-registry",
+ "edgehome-storage",
+ "edgehome-trace",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
 
 [[package]]
 name = "edgehome-memory"

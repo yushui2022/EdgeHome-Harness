@@ -7,4 +7,10 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-
+edgehome-core = { path = "../edgehome-core" }
+edgehome-registry = { path = "../edgehome-registry" }
+edgehome-storage = { path = "../edgehome-storage" }
+edgehome-trace = { path = "../edgehome-trace" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true

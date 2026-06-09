@@ -27,6 +27,13 @@ devices:
     backend: mock
     backend_entity_id: mock.lock.front_door
     risk_level: high
+  - device_id: living_room_camera
+    aliases: ["摄像头", "客厅摄像头", "所有摄像头"]
+    room: living_room
+    device_type: camera
+    backend: mock
+    backend_entity_id: mock.camera.living_room
+    risk_level: high
   - device_id: gas_alarm
     aliases: ["燃气报警器", "厨房燃气报警器"]
     room: kitchen
@@ -58,6 +65,9 @@ capabilities:
     - action: unlock
     - action: open
     - action: close
+  camera:
+    - action: turn_on
+    - action: turn_off
   gas_device:
     - action: turn_on
     - action: turn_off
