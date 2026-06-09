@@ -1609,6 +1609,7 @@ ARM cross compile
 8. 不在核心 Harness 稳定前做真实设备执行
 9. 不因为模型输出正确就省略 validator
 10. 不因为 JSON 合法就省略 policy
+11. 经常提交留档，完成一个可验证 checkpoint 就提交一次
 ```
 
 每个 milestone 的结束报告必须包含：
@@ -1621,6 +1622,7 @@ ARM cross compile
 哪些验收标准通过
 哪些风险仍然存在
 下一步 milestone 是什么
+本次提交 hash 是什么
 ```
 
 ## 22. 当前最近一步
