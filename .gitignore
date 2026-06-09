@@ -1,0 +1,11 @@
+/target/
+/.idea/
+/.vscode/
+*.db
+*.sqlite
+*.sqlite3
+*.log
+.env
+.env.*
+!/configs/*.example.*
+
