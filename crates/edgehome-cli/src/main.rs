@@ -4,10 +4,8 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, bail};
 use clap::{Parser, Subcommand};
 use edgehome_config::{RuntimeProfile, load_profile};
-use edgehome_core::{
-    Action, CommandParams, DeviceId, DeviceType, Intent, ModelCandidate, NormalizedCommand,
-    RiskLevel, Room, UserInput,
-};
+use edgehome_core::{ModelCandidate, NormalizedCommand, UserInput};
+use edgehome_parser::{RulePreParser, SemanticNormalizer};
 use edgehome_storage::{EvidenceKind, EvidenceStore, NewEvidence, SourceSystem};
 use edgehome_trace::{
     AuditSink, GateOutcome, NewAuditEvent, NewCommandStep, NewGateCheck, StepStatus, TraceId,
@@ -143,7 +141,7 @@ fn run_mock_pipeline(
             .with_evidence_refs(vec![raw_user_input.id.clone()]),
     )?;
 
-    let candidate = mock_model_candidate(&input.text);
+    let candidate = mock_model_candidate(&input);
     let raw_model_output_text = serde_json::to_string(&candidate)?;
     let raw_model_output = trace_store.record_evidence(NewEvidence::new(
         EvidenceKind::RawModelOutput,
@@ -282,79 +280,12 @@ fn show_trace(db_path: &Path, trace_id: TraceId) -> anyhow::Result<Value> {
     }))
 }
 
-fn mock_model_candidate(input: &str) -> ModelCandidate {
-    match input.trim() {
-        "把客厅灯关掉" => ModelCandidate {
-            intent: Intent::ControlDevice,
-            room: Some(Room::LivingRoom),
-            device_alias: Some("客厅灯".to_owned()),
-            device_type: DeviceType::Light,
-            action: Action::TurnOff,
-            ..ModelCandidate::default()
-        },
-        "晚上十点后把走廊灯调到30%" | "晚上十点后把走廊灯调到 30%" => {
-            ModelCandidate {
-                intent: Intent::ControlDevice,
-                room: Some(Room::Hallway),
-                device_alias: Some("走廊灯".to_owned()),
-                device_type: DeviceType::Light,
-                action: Action::SetBrightness,
-                params: CommandParams {
-                    brightness: Some(30),
-                    time_after: Some("22:00".to_owned()),
-                    ..CommandParams::default()
-                },
-                ..ModelCandidate::default()
-            }
-        }
-        "把卧室空调调到26度" | "把卧室空调调到 26 度" => ModelCandidate {
-            intent: Intent::ControlDevice,
-            room: Some(Room::Bedroom),
-            device_alias: Some("卧室空调".to_owned()),
-            device_type: DeviceType::AirConditioner,
-            action: Action::SetTemperature,
-            params: CommandParams {
-                temperature: Some(26),
-                ..CommandParams::default()
-            },
-            ..ModelCandidate::default()
-        },
-        _ => ModelCandidate::default(),
-    }
+fn mock_model_candidate(input: &UserInput) -> ModelCandidate {
+    RulePreParser.pre_parse(input).unwrap_or_default()
 }
 
 fn normalize_mock_candidate(candidate: &ModelCandidate) -> anyhow::Result<NormalizedCommand> {
-    let room = candidate.room.clone().unwrap_or_default();
-    let device_id = match (&room, &candidate.device_type, &candidate.action) {
-        (Room::LivingRoom, DeviceType::Light, Action::TurnOff | Action::TurnOn) => {
-            Some(DeviceId::new("living_room_main_light")?)
-        }
-        (Room::Hallway, DeviceType::Light, Action::SetBrightness) => {
-            Some(DeviceId::new("hallway_light")?)
-        }
-        (Room::Bedroom, DeviceType::AirConditioner, Action::SetTemperature) => {
-            Some(DeviceId::new("bedroom_air_conditioner")?)
-        }
-        _ => None,
-    };
-    let risk = match candidate.device_type {
-        DeviceType::Light => RiskLevel::Low,
-        DeviceType::AirConditioner => RiskLevel::Medium,
-        DeviceType::Lock | DeviceType::GasDevice | DeviceType::Camera => RiskLevel::High,
-        DeviceType::Unknown => RiskLevel::Unknown,
-        _ => RiskLevel::Medium,
-    };
-
-    Ok(NormalizedCommand {
-        intent: candidate.intent.clone(),
-        room,
-        device_id,
-        device_type: candidate.device_type.clone(),
-        action: candidate.action.clone(),
-        params: candidate.params.clone(),
-        risk,
-        ..NormalizedCommand::default()
-    })
+    Ok(SemanticNormalizer.normalize(candidate)?)
 }
 
 impl MockMode {

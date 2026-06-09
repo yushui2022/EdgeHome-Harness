@@ -7,4 +7,6 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-
+edgehome-core = { path = "../edgehome-core" }
+serde_json.workspace = true
+thiserror.workspace = true
