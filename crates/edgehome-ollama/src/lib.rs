@@ -89,6 +89,100 @@ impl MiniCpm5Profile {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum MemoryPressureLevel {
+    Normal,
+    Elevated,
+    Critical,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ResourcePressurePolicy {
+    pub elevated_free_memory_mb: u32,
+    pub critical_free_memory_mb: u32,
+    pub elevated_num_ctx_cap: u32,
+    pub elevated_num_predict_cap: u32,
+    pub critical_num_ctx_cap: u32,
+    pub critical_num_predict_cap: u32,
+}
+
+impl Default for ResourcePressurePolicy {
+    fn default() -> Self {
+        Self {
+            elevated_free_memory_mb: 512,
+            critical_free_memory_mb: 256,
+            elevated_num_ctx_cap: 768,
+            elevated_num_predict_cap: 96,
+            critical_num_ctx_cap: 512,
+            critical_num_predict_cap: 64,
+        }
+    }
+}
+
+impl ResourcePressurePolicy {
+    pub fn classify(&self, free_memory_mb: u32) -> MemoryPressureLevel {
+        if free_memory_mb <= self.critical_free_memory_mb {
+            MemoryPressureLevel::Critical
+        } else if free_memory_mb <= self.elevated_free_memory_mb {
+            MemoryPressureLevel::Elevated
+        } else {
+            MemoryPressureLevel::Normal
+        }
+    }
+
+    pub fn adapt_profile(
+        &self,
+        profile: &MiniCpm5Profile,
+        free_memory_mb: u32,
+    ) -> ResourcePressureDecision {
+        let level = self.classify(free_memory_mb);
+        let mut adapted = profile.clone();
+        let (memory_enabled, fallback_mode, reason) = match level {
+            MemoryPressureLevel::Normal => (
+                true,
+                FallbackMode::FullJson,
+                "memory pressure is normal; keep low_memory profile limits",
+            ),
+            MemoryPressureLevel::Elevated => {
+                adapted.num_ctx = adapted.num_ctx.min(self.elevated_num_ctx_cap);
+                adapted.num_predict = adapted.num_predict.min(self.elevated_num_predict_cap);
+                (
+                    true,
+                    FallbackMode::CompactJson,
+                    "memory pressure is elevated; cap num_ctx and num_predict",
+                )
+            }
+            MemoryPressureLevel::Critical => {
+                adapted.num_ctx = adapted.num_ctx.min(self.critical_num_ctx_cap);
+                adapted.num_predict = adapted.num_predict.min(self.critical_num_predict_cap);
+                (
+                    false,
+                    FallbackMode::RuleOnly,
+                    "memory pressure is critical; disable memory injection and use rule-only fallback",
+                )
+            }
+        };
+
+        ResourcePressureDecision {
+            level,
+            profile: adapted,
+            memory_enabled,
+            fallback_mode,
+            reason: reason.to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ResourcePressureDecision {
+    pub level: MemoryPressureLevel,
+    pub profile: MiniCpm5Profile,
+    pub memory_enabled: bool,
+    pub fallback_mode: FallbackMode,
+    pub reason: String,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ModelOptions {
     pub temperature: f32,
@@ -636,6 +730,50 @@ mod tests {
         assert!(payload["format"].get("properties").is_some());
         assert_eq!(payload["options"]["num_ctx"], 1024);
         assert_eq!(payload["messages"][0]["role"], "system");
+    }
+
+    #[test]
+    fn resource_pressure_normal_keeps_profile_limits() {
+        let profile = MiniCpm5Profile::low_memory_default();
+        let policy = ResourcePressurePolicy::default();
+
+        let decision = policy.adapt_profile(&profile, 1024);
+
+        assert_eq!(decision.level, MemoryPressureLevel::Normal);
+        assert_eq!(decision.profile.num_ctx, profile.num_ctx);
+        assert_eq!(decision.profile.num_predict, profile.num_predict);
+        assert!(decision.memory_enabled);
+        assert_eq!(decision.fallback_mode, FallbackMode::FullJson);
+    }
+
+    #[test]
+    fn resource_pressure_elevated_caps_context_and_output() {
+        let mut profile = MiniCpm5Profile::low_memory_default();
+        profile.num_ctx = 1024;
+        profile.num_predict = 128;
+        let policy = ResourcePressurePolicy::default();
+
+        let decision = policy.adapt_profile(&profile, 400);
+
+        assert_eq!(decision.level, MemoryPressureLevel::Elevated);
+        assert_eq!(decision.profile.num_ctx, 768);
+        assert_eq!(decision.profile.num_predict, 96);
+        assert!(decision.memory_enabled);
+        assert_eq!(decision.fallback_mode, FallbackMode::CompactJson);
+    }
+
+    #[test]
+    fn resource_pressure_critical_disables_memory_and_uses_rule_only() {
+        let profile = MiniCpm5Profile::low_memory_default();
+        let policy = ResourcePressurePolicy::default();
+
+        let decision = policy.adapt_profile(&profile, 128);
+
+        assert_eq!(decision.level, MemoryPressureLevel::Critical);
+        assert_eq!(decision.profile.num_ctx, 512);
+        assert_eq!(decision.profile.num_predict, 64);
+        assert!(!decision.memory_enabled);
+        assert_eq!(decision.fallback_mode, FallbackMode::RuleOnly);
     }
 
     #[test]
