@@ -220,8 +220,11 @@ pub struct EvidenceRef {
     pub summary: String,
     pub content: Value,
     pub content_hash: String,
+    #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
+    #[serde(with = "time::serde::rfc3339::option")]
     pub observed_at: Option<OffsetDateTime>,
+    #[serde(with = "time::serde::rfc3339::option")]
     pub expires_at: Option<OffsetDateTime>,
     pub metadata: Value,
 }

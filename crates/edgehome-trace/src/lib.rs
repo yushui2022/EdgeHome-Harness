@@ -193,7 +193,9 @@ pub struct CommandTrace {
     pub raw_user_input_ref: EvidenceId,
     pub profile: String,
     pub status: StepStatus,
+    #[serde(with = "time::serde::rfc3339")]
     pub started_at: OffsetDateTime,
+    #[serde(with = "time::serde::rfc3339::option")]
     pub finished_at: Option<OffsetDateTime>,
 }
 
@@ -205,6 +207,7 @@ pub struct CommandStep {
     pub name: String,
     pub status: StepStatus,
     pub message: Option<String>,
+    #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
     pub evidence_refs: Vec<EvidenceId>,
 }
@@ -247,6 +250,7 @@ pub struct GateCheck {
     pub outcome: GateOutcome,
     pub reason: String,
     pub evidence_refs: Vec<EvidenceId>,
+    #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
 }
 
@@ -292,6 +296,7 @@ pub struct AuditEvent {
     pub event_type: String,
     pub summary: String,
     pub payload: Value,
+    #[serde(with = "time::serde::rfc3339")]
     pub created_at: OffsetDateTime,
 }
 

@@ -109,6 +109,10 @@ dependencies = [
  "anyhow",
  "clap",
  "edgehome-config",
+ "edgehome-core",
+ "edgehome-storage",
+ "edgehome-trace",
+ "serde",
  "serde_json",
 ]
 

@@ -144,7 +144,8 @@ mod imp {
 
     impl SqliteConnection {
         pub fn open(path: impl AsRef<Path>) -> StorageResult<Self> {
-            Self::open_raw(&path.as_ref().to_string_lossy())
+            let path = path.as_ref().to_string_lossy().replace('\\', "/");
+            Self::open_raw(&path)
         }
 
         pub fn open_in_memory() -> StorageResult<Self> {
