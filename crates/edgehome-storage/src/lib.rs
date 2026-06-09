@@ -6,21 +6,25 @@
 
 use std::path::Path;
 use std::str::FromStr;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{SystemTime, UNIX_EPOCH};
 
-use rusqlite::{Connection, OptionalExtension, params};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use thiserror::Error;
 use time::OffsetDateTime;
 use time::format_description::well_known::Rfc3339;
-use uuid::Uuid;
+
+pub mod sqlite;
+
+use sqlite::{SqlValue, SqliteConnection, text};
 
 pub type StorageResult<T> = Result<T, StorageError>;
 
 #[derive(Debug, Error)]
 pub enum StorageError {
     #[error("sqlite error: {0}")]
-    Sqlite(#[from] rusqlite::Error),
+    Sqlite(String),
 
     #[error("json error: {0}")]
     Json(#[from] serde_json::Error),
@@ -30,6 +34,15 @@ pub enum StorageError {
 
     #[error("time format error: {0}")]
     TimeFormat(#[from] time::error::Format),
+
+    #[error("string contains an interior nul byte: {0}")]
+    Nul(#[from] std::ffi::NulError),
+
+    #[error("missing sqlite column at index {0}")]
+    MissingColumn(usize),
+
+    #[error("sqlite column {0} has unexpected type")]
+    UnexpectedColumnType(usize),
 
     #[error("unknown evidence kind: {0}")]
     UnknownEvidenceKind(String),
@@ -47,7 +60,7 @@ pub struct EvidenceId(pub String);
 
 impl EvidenceId {
     pub fn new() -> Self {
-        Self(format!("ev_{}", Uuid::new_v4().simple()))
+        Self(new_id_with_prefix("ev"))
     }
 }
 
@@ -259,31 +272,43 @@ impl NewEvidence {
 }
 
 pub struct EvidenceStore {
-    connection: Connection,
+    connection: SqliteConnection,
+}
+
+pub fn new_id_with_prefix(prefix: &str) -> String {
+    static COUNTER: AtomicU64 = AtomicU64::new(1);
+
+    let counter = COUNTER.fetch_add(1, Ordering::Relaxed);
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .unwrap_or_default();
+
+    format!("{prefix}_{nanos:x}_{counter:x}")
 }
 
 impl EvidenceStore {
     pub fn open(path: impl AsRef<Path>) -> StorageResult<Self> {
-        let connection = Connection::open(path)?;
+        let connection = SqliteConnection::open(path)?;
         let store = Self { connection };
         store.migrate()?;
         Ok(store)
     }
 
     pub fn in_memory() -> StorageResult<Self> {
-        let connection = Connection::open_in_memory()?;
+        let connection = SqliteConnection::open_in_memory()?;
         let store = Self { connection };
         store.migrate()?;
         Ok(store)
     }
 
-    pub fn from_connection(connection: Connection) -> StorageResult<Self> {
+    pub fn from_connection(connection: SqliteConnection) -> StorageResult<Self> {
         let store = Self { connection };
         store.migrate()?;
         Ok(store)
     }
 
-    pub fn connection(&self) -> &Connection {
+    pub fn connection(&self) -> &SqliteConnection {
         &self.connection
     }
 
@@ -307,17 +332,17 @@ impl EvidenceStore {
                 expires_at,
                 metadata_json
             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
-            params![
-                id.0.as_str(),
-                evidence.kind.as_str(),
-                evidence.source.as_str(),
-                evidence.summary.as_str(),
-                content_json.as_str(),
-                content_hash.as_str(),
-                format_time(created_at)?,
-                format_optional_time(evidence.observed_at)?,
-                format_optional_time(evidence.expires_at)?,
-                metadata_json.as_str(),
+            &[
+                text(&id.0),
+                text(evidence.kind.as_str()),
+                text(evidence.source.as_str()),
+                text(&evidence.summary),
+                text(&content_json),
+                text(&content_hash),
+                text(format_time(created_at)?),
+                optional_text(format_optional_time(evidence.observed_at)?),
+                optional_text(format_optional_time(evidence.expires_at)?),
+                text(&metadata_json),
             ],
         )?;
 
@@ -325,9 +350,8 @@ impl EvidenceStore {
     }
 
     pub fn read(&self, id: &EvidenceId) -> StorageResult<EvidenceRef> {
-        self.connection
-            .query_row(
-                "SELECT
+        let Some(row) = self.connection.query_one(
+            "SELECT
                     evidence_id,
                     kind,
                     source,
@@ -340,13 +364,13 @@ impl EvidenceStore {
                     metadata_json
                 FROM evidence_refs
                 WHERE evidence_id = ?1",
-                params![id.0.as_str()],
-                evidence_row_from_row,
-            )
-            .optional()?
-            .map(EvidenceRef::try_from)
-            .transpose()?
-            .ok_or_else(|| StorageError::EvidenceNotFound(id.0.clone()))
+            &[text(&id.0)],
+        )?
+        else {
+            return Err(StorageError::EvidenceNotFound(id.0.clone()));
+        };
+
+        EvidenceRef::try_from(EvidenceRow::try_from(row)?)
     }
 
     pub fn freshness(&self, id: &EvidenceId) -> StorageResult<Freshness> {
@@ -399,6 +423,25 @@ struct EvidenceRow {
     metadata_json: String,
 }
 
+impl TryFrom<sqlite::SqlRow> for EvidenceRow {
+    type Error = StorageError;
+
+    fn try_from(row: sqlite::SqlRow) -> Result<Self, Self::Error> {
+        Ok(Self {
+            evidence_id: row.text(0)?,
+            kind: row.text(1)?,
+            source: row.text(2)?,
+            summary: row.text(3)?,
+            content_json: row.text(4)?,
+            content_hash: row.text(5)?,
+            created_at: row.text(6)?,
+            observed_at: row.optional_text(7)?,
+            expires_at: row.optional_text(8)?,
+            metadata_json: row.text(9)?,
+        })
+    }
+}
+
 impl TryFrom<EvidenceRow> for EvidenceRef {
     type Error = StorageError;
 
@@ -418,19 +461,8 @@ impl TryFrom<EvidenceRow> for EvidenceRef {
     }
 }
 
-fn evidence_row_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<EvidenceRow> {
-    Ok(EvidenceRow {
-        evidence_id: row.get("evidence_id")?,
-        kind: row.get("kind")?,
-        source: row.get("source")?,
-        summary: row.get("summary")?,
-        content_json: row.get("content_json")?,
-        content_hash: row.get("content_hash")?,
-        created_at: row.get("created_at")?,
-        observed_at: row.get("observed_at")?,
-        expires_at: row.get("expires_at")?,
-        metadata_json: row.get("metadata_json")?,
-    })
+fn optional_text(value: Option<String>) -> SqlValue {
+    value.map_or(SqlValue::Null, SqlValue::Text)
 }
 
 fn stable_hash_hex(value: &str) -> String {

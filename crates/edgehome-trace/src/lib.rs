@@ -7,21 +7,22 @@
 use std::path::Path;
 use std::str::FromStr;
 
-use edgehome_storage::{EvidenceId, EvidenceRef, EvidenceStore, NewEvidence, StorageError};
-use rusqlite::{Connection, OptionalExtension, params};
+use edgehome_storage::sqlite::{SqlRow, SqlValue, SqliteConnection, integer, text};
+use edgehome_storage::{
+    EvidenceId, EvidenceRef, EvidenceStore, NewEvidence, StorageError, new_id_with_prefix,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use thiserror::Error;
 use time::OffsetDateTime;
 use time::format_description::well_known::Rfc3339;
-use uuid::Uuid;
 
 pub type TraceResult<T> = Result<T, TraceError>;
 
 #[derive(Debug, Error)]
 pub enum TraceError {
     #[error("sqlite error: {0}")]
-    Sqlite(#[from] rusqlite::Error),
+    Sqlite(String),
 
     #[error("json error: {0}")]
     Json(#[from] serde_json::Error),
@@ -54,7 +55,7 @@ pub struct TraceId(pub String);
 
 impl TraceId {
     pub fn new() -> Self {
-        Self(format!("tr_{}", Uuid::new_v4().simple()))
+        Self(new_id_with_prefix("tr"))
     }
 }
 
@@ -76,7 +77,7 @@ pub struct StepId(pub String);
 
 impl StepId {
     pub fn new() -> Self {
-        Self(format!("st_{}", Uuid::new_v4().simple()))
+        Self(new_id_with_prefix("st"))
     }
 }
 
@@ -92,7 +93,7 @@ pub struct GateCheckId(pub String);
 
 impl GateCheckId {
     pub fn new() -> Self {
-        Self(format!("gc_{}", Uuid::new_v4().simple()))
+        Self(new_id_with_prefix("gc"))
     }
 }
 
@@ -108,7 +109,7 @@ pub struct AuditEventId(pub String);
 
 impl AuditEventId {
     pub fn new() -> Self {
-        Self(format!("au_{}", Uuid::new_v4().simple()))
+        Self(new_id_with_prefix("au"))
     }
 }
 
@@ -343,7 +344,7 @@ impl TraceStore {
         Ok(store)
     }
 
-    pub fn connection(&self) -> &Connection {
+    pub fn connection(&self) -> &SqliteConnection {
         self.evidence_store.connection()
     }
 
@@ -374,13 +375,13 @@ impl TraceStore {
                 started_at,
                 finished_at
             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-            params![
-                trace.trace_id.0.as_str(),
-                trace.raw_user_input_ref.0.as_str(),
-                trace.profile.as_str(),
-                trace.status.as_str(),
-                format_time(trace.started_at)?,
-                format_optional_time(trace.finished_at)?,
+            &[
+                text(&trace.trace_id.0),
+                text(&trace.raw_user_input_ref.0),
+                text(&trace.profile),
+                text(trace.status.as_str()),
+                text(format_time(trace.started_at)?),
+                optional_text(format_optional_time(trace.finished_at)?),
             ],
         )?;
 
@@ -388,24 +389,23 @@ impl TraceStore {
     }
 
     pub fn read_trace(&self, trace_id: &TraceId) -> TraceResult<CommandTrace> {
-        self.connection()
-            .query_row(
-                "SELECT
-                    trace_id,
-                    raw_user_input_ref,
-                    profile,
-                    status,
-                    started_at,
-                    finished_at
-                FROM command_traces
-                WHERE trace_id = ?1",
-                params![trace_id.0.as_str()],
-                trace_row_from_row,
-            )
-            .optional()?
-            .map(CommandTrace::try_from)
-            .transpose()?
-            .ok_or_else(|| TraceError::TraceNotFound(trace_id.0.clone()))
+        let Some(row) = self.connection().query_one(
+            "SELECT
+                trace_id,
+                raw_user_input_ref,
+                profile,
+                status,
+                started_at,
+                finished_at
+            FROM command_traces
+            WHERE trace_id = ?1",
+            &[text(&trace_id.0)],
+        )?
+        else {
+            return Err(TraceError::TraceNotFound(trace_id.0.clone()));
+        };
+
+        CommandTrace::try_from(TraceRow::try_from(row)?)
     }
 
     pub fn append_step(
@@ -431,15 +431,15 @@ impl TraceStore {
                 created_at,
                 evidence_refs_json
             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-            params![
-                step_id.0.as_str(),
-                trace_id.0.as_str(),
-                sequence,
-                step.name.as_str(),
-                step.status.as_str(),
-                step.message.as_deref(),
-                format_time(created_at)?,
-                evidence_json.as_str(),
+            &[
+                text(&step_id.0),
+                text(&trace_id.0),
+                integer(sequence),
+                text(&step.name),
+                text(step.status.as_str()),
+                optional_text(step.message),
+                text(format_time(created_at)?),
+                text(evidence_json),
             ],
         )?;
 
@@ -447,7 +447,7 @@ impl TraceStore {
             self.connection().execute(
                 "INSERT INTO step_evidence_refs (step_id, evidence_id)
                  VALUES (?1, ?2)",
-                params![step_id.0.as_str(), evidence_id.0.as_str()],
+                &[text(&step_id.0), text(&evidence_id.0)],
             )?;
         }
 
@@ -455,30 +455,7 @@ impl TraceStore {
     }
 
     pub fn read_step(&self, step_id: &StepId) -> TraceResult<CommandStep> {
-        self.connection()
-            .query_row(
-                "SELECT
-                    step_id,
-                    trace_id,
-                    sequence,
-                    name,
-                    status,
-                    message,
-                    created_at,
-                    evidence_refs_json
-                FROM command_steps
-                WHERE step_id = ?1",
-                params![step_id.0.as_str()],
-                step_row_from_row,
-            )
-            .optional()?
-            .map(CommandStep::try_from)
-            .transpose()?
-            .ok_or_else(|| TraceError::StepNotFound(step_id.0.clone()))
-    }
-
-    pub fn steps_for_trace(&self, trace_id: &TraceId) -> TraceResult<Vec<CommandStep>> {
-        let mut statement = self.connection().prepare(
+        let Some(row) = self.connection().query_one(
             "SELECT
                 step_id,
                 trace_id,
@@ -489,16 +466,37 @@ impl TraceStore {
                 created_at,
                 evidence_refs_json
             FROM command_steps
-            WHERE trace_id = ?1
-            ORDER BY sequence ASC",
-        )?;
+            WHERE step_id = ?1",
+            &[text(&step_id.0)],
+        )?
+        else {
+            return Err(TraceError::StepNotFound(step_id.0.clone()));
+        };
 
-        let rows = statement.query_map(params![trace_id.0.as_str()], step_row_from_row)?;
-        let mut steps = Vec::new();
-        for row in rows {
-            steps.push(CommandStep::try_from(row?)?);
-        }
-        Ok(steps)
+        CommandStep::try_from(StepRow::try_from(row)?)
+    }
+
+    pub fn steps_for_trace(&self, trace_id: &TraceId) -> TraceResult<Vec<CommandStep>> {
+        self.connection()
+            .query_all(
+                "SELECT
+                    step_id,
+                    trace_id,
+                    sequence,
+                    name,
+                    status,
+                    message,
+                    created_at,
+                    evidence_refs_json
+                FROM command_steps
+                WHERE trace_id = ?1
+                ORDER BY sequence ASC",
+                &[text(&trace_id.0)],
+            )?
+            .into_iter()
+            .map(StepRow::try_from)
+            .map(|row| row.and_then(CommandStep::try_from))
+            .collect()
     }
 
     pub fn append_gate_check(
@@ -531,15 +529,15 @@ impl TraceStore {
                 evidence_refs_json,
                 created_at
             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-            params![
-                gate_check.gate_check_id.0.as_str(),
-                gate_check.trace_id.0.as_str(),
-                gate_check.step_id.as_ref().map(|id| id.0.as_str()),
-                gate_check.gate_name.as_str(),
-                gate_check.outcome.as_str(),
-                gate_check.reason.as_str(),
-                evidence_json.as_str(),
-                format_time(gate_check.created_at)?,
+            &[
+                text(&gate_check.gate_check_id.0),
+                text(&gate_check.trace_id.0),
+                optional_text(gate_check.step_id.as_ref().map(|id| id.0.clone())),
+                text(&gate_check.gate_name),
+                text(gate_check.outcome.as_str()),
+                text(&gate_check.reason),
+                text(evidence_json),
+                text(format_time(gate_check.created_at)?),
             ],
         )?;
 
@@ -547,61 +545,63 @@ impl TraceStore {
     }
 
     pub fn gate_checks_for_trace(&self, trace_id: &TraceId) -> TraceResult<Vec<GateCheck>> {
-        let mut statement = self.connection().prepare(
-            "SELECT
-                gate_check_id,
-                trace_id,
-                step_id,
-                gate_name,
-                outcome,
-                reason,
-                evidence_refs_json,
-                created_at
-            FROM gate_checks
-            WHERE trace_id = ?1
-            ORDER BY created_at ASC",
-        )?;
-
-        let rows = statement.query_map(params![trace_id.0.as_str()], gate_check_row_from_row)?;
-        let mut checks = Vec::new();
-        for row in rows {
-            checks.push(GateCheck::try_from(row?)?);
-        }
-        Ok(checks)
+        self.connection()
+            .query_all(
+                "SELECT
+                    gate_check_id,
+                    trace_id,
+                    step_id,
+                    gate_name,
+                    outcome,
+                    reason,
+                    evidence_refs_json,
+                    created_at
+                FROM gate_checks
+                WHERE trace_id = ?1
+                ORDER BY created_at ASC",
+                &[text(&trace_id.0)],
+            )?
+            .into_iter()
+            .map(GateCheckRow::try_from)
+            .map(|row| row.and_then(GateCheck::try_from))
+            .collect()
     }
 
     fn next_step_sequence(&self, trace_id: &TraceId) -> TraceResult<i64> {
-        let next = self.connection().query_row(
+        let Some(row) = self.connection().query_one(
             "SELECT COALESCE(MAX(sequence), 0) + 1
              FROM command_steps
              WHERE trace_id = ?1",
-            params![trace_id.0.as_str()],
-            |row| row.get(0),
-        )?;
-        Ok(next)
+            &[text(&trace_id.0)],
+        )?
+        else {
+            return Ok(1);
+        };
+
+        Ok(row.i64(0)?)
     }
 }
 
 pub struct AuditSink {
-    connection: Connection,
+    connection: SqliteConnection,
 }
 
 impl AuditSink {
     pub fn open(path: impl AsRef<Path>) -> TraceResult<Self> {
-        let connection = Connection::open(path)?;
+        let connection = SqliteConnection::open(path)?;
         let sink = Self { connection };
         migrate_trace_schema(&sink.connection)?;
         Ok(sink)
     }
 
     pub fn in_memory() -> TraceResult<Self> {
-        let connection = Connection::open_in_memory()?;
+        let connection = SqliteConnection::open_in_memory()?;
         let sink = Self { connection };
         migrate_trace_schema(&sink.connection)?;
         Ok(sink)
     }
 
-    pub fn from_connection(connection: Connection) -> TraceResult<Self> {
+    pub fn from_connection(connection: SqliteConnection) -> TraceResult<Self> {
         let sink = Self { connection };
         migrate_trace_schema(&sink.connection)?;
         Ok(sink)
@@ -627,13 +627,13 @@ impl AuditSink {
                 payload_json,
                 created_at
             ) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-            params![
-                audit_event.event_id.0.as_str(),
-                audit_event.trace_id.as_ref().map(|id| id.0.as_str()),
-                audit_event.event_type.as_str(),
-                audit_event.summary.as_str(),
-                payload_json.as_str(),
-                format_time(audit_event.created_at)?,
+            &[
+                text(&audit_event.event_id.0),
+                optional_text(audit_event.trace_id.as_ref().map(|id| id.0.clone())),
+                text(&audit_event.event_type),
+                text(&audit_event.summary),
+                text(payload_json),
+                text(format_time(audit_event.created_at)?),
             ],
         )?;
 
@@ -641,29 +641,28 @@ impl AuditSink {
     }
 
     pub fn events_for_trace(&self, trace_id: &TraceId) -> TraceResult<Vec<AuditEvent>> {
-        let mut statement = self.connection.prepare(
-            "SELECT
-                event_id,
-                trace_id,
-                event_type,
-                summary,
-                payload_json,
-                created_at
-            FROM audit_log
-            WHERE trace_id = ?1
-            ORDER BY created_at ASC",
-        )?;
-
-        let rows = statement.query_map(params![trace_id.0.as_str()], audit_event_row_from_row)?;
-        let mut events = Vec::new();
-        for row in rows {
-            events.push(AuditEvent::try_from(row?)?);
-        }
-        Ok(events)
+        self.connection
+            .query_all(
+                "SELECT
+                    event_id,
+                    trace_id,
+                    event_type,
+                    summary,
+                    payload_json,
+                    created_at
+                FROM audit_log
+                WHERE trace_id = ?1
+                ORDER BY created_at ASC",
+                &[text(&trace_id.0)],
+            )?
+            .into_iter()
+            .map(AuditEventRow::try_from)
+            .map(|row| row.and_then(AuditEvent::try_from))
+            .collect()
     }
 }
 
-fn migrate_trace_schema(connection: &Connection) -> TraceResult<()> {
+fn migrate_trace_schema(connection: &SqliteConnection) -> TraceResult<()> {
     connection.execute_batch(
         "CREATE TABLE IF NOT EXISTS evidence_refs (
             evidence_id TEXT PRIMARY KEY,
@@ -752,6 +751,21 @@ struct TraceRow {
     finished_at: Option<String>,
 }
 
+impl TryFrom<SqlRow> for TraceRow {
+    type Error = TraceError;
+
+    fn try_from(row: SqlRow) -> Result<Self, Self::Error> {
+        Ok(Self {
+            trace_id: row.text(0)?,
+            raw_user_input_ref: row.text(1)?,
+            profile: row.text(2)?,
+            status: row.text(3)?,
+            started_at: row.text(4)?,
+            finished_at: row.optional_text(5)?,
+        })
+    }
+}
+
 impl TryFrom<TraceRow> for CommandTrace {
     type Error = TraceError;
 
@@ -767,17 +781,6 @@ impl TryFrom<TraceRow> for CommandTrace {
     }
 }
 
-fn trace_row_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<TraceRow> {
-    Ok(TraceRow {
-        trace_id: row.get("trace_id")?,
-        raw_user_input_ref: row.get("raw_user_input_ref")?,
-        profile: row.get("profile")?,
-        status: row.get("status")?,
-        started_at: row.get("started_at")?,
-        finished_at: row.get("finished_at")?,
-    })
-}
-
 struct StepRow {
     step_id: String,
     trace_id: String,
@@ -787,6 +790,23 @@ struct StepRow {
     message: Option<String>,
     created_at: String,
     evidence_refs_json: String,
+}
+
+impl TryFrom<SqlRow> for StepRow {
+    type Error = TraceError;
+
+    fn try_from(row: SqlRow) -> Result<Self, Self::Error> {
+        Ok(Self {
+            step_id: row.text(0)?,
+            trace_id: row.text(1)?,
+            sequence: row.i64(2)?,
+            name: row.text(3)?,
+            status: row.text(4)?,
+            message: row.optional_text(5)?,
+            created_at: row.text(6)?,
+            evidence_refs_json: row.text(7)?,
+        })
+    }
 }
 
 impl TryFrom<StepRow> for CommandStep {
@@ -806,19 +826,6 @@ impl TryFrom<StepRow> for CommandStep {
     }
 }
 
-fn step_row_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<StepRow> {
-    Ok(StepRow {
-        step_id: row.get("step_id")?,
-        trace_id: row.get("trace_id")?,
-        sequence: row.get("sequence")?,
-        name: row.get("name")?,
-        status: row.get("status")?,
-        message: row.get("message")?,
-        created_at: row.get("created_at")?,
-        evidence_refs_json: row.get("evidence_refs_json")?,
-    })
-}
-
 struct GateCheckRow {
     gate_check_id: String,
     trace_id: String,
@@ -828,6 +835,23 @@ struct GateCheckRow {
     reason: String,
     evidence_refs_json: String,
     created_at: String,
+}
+
+impl TryFrom<SqlRow> for GateCheckRow {
+    type Error = TraceError;
+
+    fn try_from(row: SqlRow) -> Result<Self, Self::Error> {
+        Ok(Self {
+            gate_check_id: row.text(0)?,
+            trace_id: row.text(1)?,
+            step_id: row.optional_text(2)?,
+            gate_name: row.text(3)?,
+            outcome: row.text(4)?,
+            reason: row.text(5)?,
+            evidence_refs_json: row.text(6)?,
+            created_at: row.text(7)?,
+        })
+    }
 }
 
 impl TryFrom<GateCheckRow> for GateCheck {
@@ -847,19 +871,6 @@ impl TryFrom<GateCheckRow> for GateCheck {
     }
 }
 
-fn gate_check_row_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<GateCheckRow> {
-    Ok(GateCheckRow {
-        gate_check_id: row.get("gate_check_id")?,
-        trace_id: row.get("trace_id")?,
-        step_id: row.get("step_id")?,
-        gate_name: row.get("gate_name")?,
-        outcome: row.get("outcome")?,
-        reason: row.get("reason")?,
-        evidence_refs_json: row.get("evidence_refs_json")?,
-        created_at: row.get("created_at")?,
-    })
-}
-
 struct AuditEventRow {
     event_id: String,
     trace_id: Option<String>,
@@ -867,6 +878,21 @@ struct AuditEventRow {
     summary: String,
     payload_json: String,
     created_at: String,
+}
+
+impl TryFrom<SqlRow> for AuditEventRow {
+    type Error = TraceError;
+
+    fn try_from(row: SqlRow) -> Result<Self, Self::Error> {
+        Ok(Self {
+            event_id: row.text(0)?,
+            trace_id: row.optional_text(1)?,
+            event_type: row.text(2)?,
+            summary: row.text(3)?,
+            payload_json: row.text(4)?,
+            created_at: row.text(5)?,
+        })
+    }
 }
 
 impl TryFrom<AuditEventRow> for AuditEvent {
@@ -884,15 +910,8 @@ impl TryFrom<AuditEventRow> for AuditEvent {
     }
 }
 
-fn audit_event_row_from_row(row: &rusqlite::Row<'_>) -> rusqlite::Result<AuditEventRow> {
-    Ok(AuditEventRow {
-        event_id: row.get("event_id")?,
-        trace_id: row.get("trace_id")?,
-        event_type: row.get("event_type")?,
-        summary: row.get("summary")?,
-        payload_json: row.get("payload_json")?,
-        created_at: row.get("created_at")?,
-    })
+fn optional_text(value: Option<String>) -> SqlValue {
+    value.map_or(SqlValue::Null, SqlValue::Text)
 }
 
 fn evidence_ids_to_json(evidence_refs: &[EvidenceId]) -> TraceResult<String> {
@@ -1023,7 +1042,7 @@ mod tests {
     fn audit_sink_appends_events_for_trace() {
         let path = std::env::temp_dir().join(format!(
             "edgehome-trace-test-{}.sqlite",
-            Uuid::new_v4().simple()
+            new_id_with_prefix("tmp")
         ));
         let store = TraceStore::open(&path).expect("trace store");
         let raw_user_input = store
