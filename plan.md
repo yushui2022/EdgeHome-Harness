@@ -1625,22 +1625,39 @@ ARM cross compile
 本次提交 hash 是什么
 ```
 
-## 22. 当前最近一步
+## 22. 当前完成状态
 
-当前仓库还只有文档。
+V1 已按本计划从 Milestone 0 推进到 Milestone 15。
 
-下一次开始实现时，应从：
+当前已完成：
 
 ```text
-Milestone 0：Repository Foundation
+M0  Repository Foundation
+M1  Domain Contracts
+M2  Config Profiles
+M3  Evidence Store and Command Trace
+M4  CLI Skeleton and Mock Pipeline
+M5  Input Guard, Parser, Normalizer
+M6  Device Registry, Capability Model, State Cache
+M7  Gate Engine and Policy Engine
+M8  Dry-run, MockExecutor, Execution Transaction
+M9  Memory and Context Assembler
+M10 Ollama Adapter, MiniCPM5 Profile, Output Governor
+M11 Full Harness Pipeline Integration
+M12 Eval, Replay, Metrics
+M13 HomeAssistantExecutor
+M14 2GB RAM Profile and Deployment Notes
+M15 Documentation Sync and Demo Script
 ```
 
-开始。
+V1 完成后的继续扩展必须遵守：
 
-不要直接写 Ollama adapter。
-
-不要直接写 Home Assistant。
-
-不要直接写 Web UI。
-
-先创建 Rust workspace、core contracts、config profiles、evidence/trace 基础。
+```text
+plan.md 仍然是唯一实施路线
+任何新 milestone 先写入 plan.md，再实现
+不为 demo 跳过 evidence / gate / trace / audit
+不让模型绕过 OutputGovernor
+不让真实执行绕过 ExecutionPlan
+不把 Home Assistant 变成项目本体
+不宣传所有米家设备都纯离线
+```

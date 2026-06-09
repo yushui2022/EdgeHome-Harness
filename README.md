@@ -2025,6 +2025,45 @@ Rust Harness 负责输出治理、schema 校验、语义标准化、设备注册
 EdgeHome Harness 把 1B 小模型的输出当成不可信候选，通过 Rust 里的证据门控、设备能力校验、安全策略、运行时治理和审计回放，把它变成可执行或可拒绝的本地智能家居命令。
 ```
 
+## 快速复现
+
+最短验证路径：
+
+```powershell
+$env:CARGO_TARGET_DIR="$env:TEMP\edgehome-target"
+cargo fmt --all --check
+cargo test
+cargo run -p edgehome-cli -- --db-path edgehome-demo.sqlite eval cases/zh-home.yaml
+cargo run -p edgehome-cli -- --db-path edgehome-demo.sqlite dry-run --mock "晚上十点后把走廊灯调到30%"
+```
+
+完整面试 demo：
+
+```powershell
+.\scripts\demo.ps1
+```
+
+关键文档：
+
+```text
+docs/model-parameters.md
+docs/2gb-profile.md
+docs/deployment-modes.md
+docs/home-assistant-demo.md
+docs/eval-report-example.md
+```
+
+这几个入口持续表达同一个边界：
+
+```text
+这是 1B 端侧小模型 Harness 项目。
+智能家居是产品形态和验证场景。
+Ollama structured outputs 只保证 JSON 语法更稳。
+Harness 保证业务安全、证据门控、运行时稳定、dry-run、audit 和 replay。
+模型输出只是 candidate。
+Executor 只接受 ExecutionPlan。
+```
+
 ## License
 
 License 尚未决定。
