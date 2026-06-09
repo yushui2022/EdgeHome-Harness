@@ -110,7 +110,10 @@ dependencies = [
  "clap",
  "edgehome-config",
  "edgehome-core",
+ "edgehome-executor",
+ "edgehome-gate",
  "edgehome-parser",
+ "edgehome-registry",
  "edgehome-storage",
  "edgehome-trace",
  "serde",
@@ -143,6 +146,16 @@ version = "0.1.0"
 [[package]]
 name = "edgehome-executor"
 version = "0.1.0"
+dependencies = [
+ "edgehome-core",
+ "edgehome-gate",
+ "edgehome-registry",
+ "edgehome-trace",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "time",
+]
 
 [[package]]
 name = "edgehome-gate"

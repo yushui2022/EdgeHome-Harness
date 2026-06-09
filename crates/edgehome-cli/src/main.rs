@@ -4,13 +4,13 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, bail};
 use clap::{Parser, Subcommand};
 use edgehome_config::{RuntimeProfile, load_profile};
-use edgehome_core::{ModelCandidate, NormalizedCommand, UserInput};
+use edgehome_core::{ModelCandidate, NormalizedCommand, PolicyDecision, UserInput};
+use edgehome_executor::DryRunPlanner;
+use edgehome_gate::{GateEngine, GateEvaluationRequest};
 use edgehome_parser::{RulePreParser, SemanticNormalizer};
+use edgehome_registry::{DeviceRegistry, StateFreshness};
 use edgehome_storage::{EvidenceKind, EvidenceStore, NewEvidence, SourceSystem};
-use edgehome_trace::{
-    AuditSink, GateOutcome, NewAuditEvent, NewCommandStep, NewGateCheck, StepStatus, TraceId,
-    TraceStore,
-};
+use edgehome_trace::{AuditSink, NewAuditEvent, NewCommandStep, StepStatus, TraceId, TraceStore};
 use serde::Serialize;
 use serde_json::{Value, json};
 
@@ -86,14 +86,26 @@ fn main() -> anyhow::Result<()> {
             require_mock(mock)?;
             let profile = load_profile(&cli.config_dir, &cli.profile)
                 .with_context(|| format!("failed to load profile `{}`", cli.profile))?;
-            let output = run_mock_pipeline(&cli.db_path, &profile, input, MockMode::Parse)?;
+            let output = run_mock_pipeline(
+                &cli.db_path,
+                &cli.config_dir,
+                &profile,
+                input,
+                MockMode::Parse,
+            )?;
             print_json(&output)?;
         }
         Commands::DryRun { mock, input } => {
             require_mock(mock)?;
             let profile = load_profile(&cli.config_dir, &cli.profile)
                 .with_context(|| format!("failed to load profile `{}`", cli.profile))?;
-            let output = run_mock_pipeline(&cli.db_path, &profile, input, MockMode::DryRun)?;
+            let output = run_mock_pipeline(
+                &cli.db_path,
+                &cli.config_dir,
+                &profile,
+                input,
+                MockMode::DryRun,
+            )?;
             print_json(&output)?;
         }
         Commands::Trace {
@@ -117,6 +129,7 @@ fn require_mock(mock: bool) -> anyhow::Result<()> {
 
 fn run_mock_pipeline(
     db_path: &Path,
+    config_dir: &Path,
     profile: &RuntimeProfile,
     input: String,
     mode: MockMode,
@@ -190,71 +203,125 @@ fn run_mock_pipeline(
             .with_evidence_refs(vec![parsed_json_ref.id.clone(), normalized_ref.id.clone()]),
     )?;
 
-    if normalized.can_enter_policy_gate() {
-        trace_store.append_gate_check(
-            &trace.trace_id,
-            NewGateCheck::new(
-                "policy_engine_pending",
-                GateOutcome::Warning,
-                "M4 mock pipeline stops before M7 policy engine; command is not executable",
-            )
-            .with_evidence_refs(vec![normalized_ref.id.clone()]),
-        )?;
-    } else {
-        trace_store.append_gate_check(
-            &trace.trace_id,
-            NewGateCheck::new(
-                "normalization_gate",
-                GateOutcome::Rejected,
-                "normalized command cannot enter policy gate",
-            )
-            .with_evidence_refs(vec![normalized_ref.id.clone()]),
-        )?;
-    }
+    let registry_path = config_dir.join("devices.yaml");
+    let registry = DeviceRegistry::load_from_path(&registry_path).with_context(|| {
+        format!(
+            "failed to load device registry `{}`",
+            registry_path.display()
+        )
+    })?;
+    let gate_engine = GateEngine::new(&trace_store, &registry);
+    let gate_evaluation = gate_engine.evaluate(
+        GateEvaluationRequest::new(trace.trace_id.clone(), normalized.clone())
+            .with_evidence_refs(vec![
+                raw_user_input.id.clone(),
+                raw_model_output.id.clone(),
+                parsed_json_ref.id.clone(),
+                normalized_ref.id.clone(),
+            ])
+            .with_state_freshness(StateFreshness::Fresh)
+            .with_dry_run_ready(mode == MockMode::DryRun),
+    )?;
 
+    let gate_status = if gate_evaluation.policy_decision == PolicyDecision::Deny {
+        StepStatus::Rejected
+    } else {
+        StepStatus::Succeeded
+    };
+    trace_store.append_step(
+        &trace.trace_id,
+        NewCommandStep::new("gate_engine", gate_status).with_evidence_refs(vec![
+            raw_user_input.id.clone(),
+            raw_model_output.id.clone(),
+            parsed_json_ref.id.clone(),
+            normalized_ref.id.clone(),
+        ]),
+    )?;
+
+    let mut dry_run_plan = None;
     if mode == MockMode::DryRun {
-        trace_store.append_step(
-            &trace.trace_id,
-            NewCommandStep::new("dry_run_blocked_until_policy", StepStatus::Fallback)
-                .with_message("M4 records a traceable mock dry-run request but does not execute")
-                .with_evidence_refs(vec![normalized_ref.id.clone()]),
-        )?;
+        if gate_evaluation.policy_decision == PolicyDecision::Deny
+            || !gate_evaluation.blocking_reasons.is_empty()
+        {
+            trace_store.append_step(
+                &trace.trace_id,
+                NewCommandStep::new("dry_run_rejected_by_gate", StepStatus::Rejected)
+                    .with_message("dry-run planner only accepts non-denied gated commands")
+                    .with_evidence_refs(vec![normalized_ref.id.clone()]),
+            )?;
+        } else if let Some(device_id) = normalized.device_id.as_ref() {
+            let device = registry.get_device(device_id)?;
+            let planned = DryRunPlanner.plan(
+                &trace.trace_id,
+                &normalized,
+                device,
+                gate_evaluation.policy_decision.clone(),
+            )?;
+            let dry_run_ref = trace_store.record_evidence(NewEvidence::new(
+                EvidenceKind::DryRunPlan,
+                SourceSystem::Executor,
+                "mock dry-run plan",
+                serde_json::to_value(&planned)?,
+            ))?;
+            trace_store.append_step(
+                &trace.trace_id,
+                NewCommandStep::new("dry_run_plan", StepStatus::Succeeded)
+                    .with_evidence_refs(vec![normalized_ref.id.clone(), dry_run_ref.id.clone()]),
+            )?;
+            dry_run_plan = Some(planned);
+        } else {
+            trace_store.append_step(
+                &trace.trace_id,
+                NewCommandStep::new("dry_run_missing_device", StepStatus::Rejected)
+                    .with_message("dry-run planner requires a resolved device_id")
+                    .with_evidence_refs(vec![normalized_ref.id.clone()]),
+            )?;
+        }
     }
 
     let audit_event_type = match mode {
         MockMode::Parse => "mock_parse_completed",
-        MockMode::DryRun => "mock_dry_run_recorded",
+        MockMode::DryRun if dry_run_plan.is_some() => "mock_dry_run_plan_generated",
+        MockMode::DryRun => "mock_dry_run_rejected",
     };
+    let policy_decision = gate_evaluation.policy_decision.clone();
+    let dry_run_ready = dry_run_plan.is_some();
     audit_sink.append(
         NewAuditEvent::new(
             audit_event_type,
-            "mock pipeline completed with trace",
+            "mock pipeline completed with gated policy decision",
             json!({
                 "mode": mode.as_str(),
                 "trace_id": trace.trace_id.0.as_str(),
-                "policy_status": "pending_m7_policy_engine",
+                "policy_decision": policy_decision,
+                "dry_run_ready": dry_run_ready,
                 "executable": false,
+                "execute_enabled": false,
             }),
         )
         .with_trace_id(trace.trace_id.clone()),
     )?;
 
+    let execution_plan = dry_run_plan.as_ref().map(|plan| plan.plan.clone());
     Ok(json!({
         "trace_id": trace.trace_id,
         "mode": mode.as_str(),
         "mock": true,
         "model_candidate": candidate,
         "normalized_command": normalized,
+        "gate_evaluation": gate_evaluation,
         "evidence_refs": {
             "raw_user_input": raw_user_input.id,
             "raw_model_output": raw_model_output.id,
             "parsed_json": parsed_json_ref.id,
             "normalized_command": normalized_ref.id,
         },
-        "policy_status": "pending_m7_policy_engine",
-        "execution_plan": null,
+        "policy_decision": policy_decision,
+        "dry_run_plan": dry_run_plan,
+        "execution_plan": execution_plan,
         "executable": false,
-        "note": "M4 mock pipeline records evidence/trace/audit only; real policy and dry-run planner arrive in M7/M8"
+        "execute_enabled": false,
+        "note": "M8 mock pipeline runs gate/policy and can produce dry-run; real execute remains disabled by default"
     }))
 }
 
