@@ -173,6 +173,17 @@ dependencies = [
 [[package]]
 name = "edgehome-memory"
 version = "0.1.0"
+dependencies = [
+ "edgehome-config",
+ "edgehome-core",
+ "edgehome-gate",
+ "edgehome-storage",
+ "edgehome-trace",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "time",
+]
 
 [[package]]
 name = "edgehome-ollama"
