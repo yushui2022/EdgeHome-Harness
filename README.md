@@ -45,23 +45,15 @@ Rust Harness 负责把候选变成可验证的命令链路，并决定是否允�
 ### 总体分层图
 
 ```mermaid
-flowchart TB
-  User["用户自然语言指令"] --> Guard["Input Guard\n长度限制 / 注入标记 / 危险语句标记"]
-  Guard --> PreParser["Rule Pre-Parser\n确定性规则先吃掉简单槽位"]
-  PreParser --> Context["Context Assembler\n短时记忆 / 设备候选 / JSON schema"]
-  Context --> Model["Ollama structured outputs\nMiniCPM5-1B"]
-  Model --> Governor["Output Governor\n超时 / 截断 / 重试 / 降级 / 熔断"]
-  Governor --> Contract["Contract Layer\nJSON Parser / Schema / Semantic Normalizer"]
-  Contract --> Evidence["Evidence Store\nrefs + SQLite evidence index"]
-  Evidence --> Registry["Device Registry\n别名 / device_id / capability / backend"]
-  Registry --> Gates["Gate Engine\ncapability / freshness / policy / confirmation"]
-  Gates --> Plan["Dry-run Planner\n生成 ExecutionPlan"]
-  Plan --> Router["Executor Router\nMock / Home Assistant / miIO / MQTT"]
-  Router --> Executor["Backend Executor\n真实后端调用"]
-  Executor --> Verify["Post-State Verifier\n执行后状态核验"]
-  Verify --> Audit["Audit / Replay / Eval\nCommandTrace / GateCheck / Metrics"]
-  Audit --> Memory["Memory Update Gate\n短时状态 / 长期偏好 / 安全记忆"]
-  Memory --> Context
+flowchart LR
+  Input["用户指令"] --> Harness["Rust Harness Core\n约束 / 校验 / 门控"]
+  Harness <--> Model["MiniCPM5-1B\n候选 JSON"]
+  Harness --> Gates["Evidence Gates\n证据 / 能力 / 状态 / 策略"]
+  Gates --> Plan["ExecutionPlan\nDry-run / 确认 / 执行"]
+  Plan --> Backends["Device Backends\nHA / miIO / MQTT"]
+  Gates --> Trace["Trace Store\nAudit / Replay / Eval"]
+  Trace --> Memory["Memory\n短时 / 长期 / 安全"]
+  Memory --> Harness
 ```
 
 这张图表达一个核心原则：
@@ -70,6 +62,8 @@ flowchart TB
 模型只在中间产生候选。
 真正的安全、执行、记忆、审计都在 Rust Harness 里。
 ```
+
+更细的子模块会在后面的时序图、状态机和“核心架构分层”里展开。
 
 ### 单次请求时序图
 
