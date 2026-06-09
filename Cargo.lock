@@ -112,6 +112,8 @@ dependencies = [
  "edgehome-core",
  "edgehome-executor",
  "edgehome-gate",
+ "edgehome-memory",
+ "edgehome-ollama",
  "edgehome-parser",
  "edgehome-registry",
  "edgehome-storage",

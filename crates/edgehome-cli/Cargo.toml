@@ -17,6 +17,8 @@ edgehome-config = { path = "../edgehome-config" }
 edgehome-core = { path = "../edgehome-core" }
 edgehome-executor = { path = "../edgehome-executor" }
 edgehome-gate = { path = "../edgehome-gate" }
+edgehome-memory = { path = "../edgehome-memory" }
+edgehome-ollama = { path = "../edgehome-ollama" }
 edgehome-parser = { path = "../edgehome-parser" }
 edgehome-registry = { path = "../edgehome-registry" }
 edgehome-storage = { path = "../edgehome-storage" }

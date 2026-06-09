@@ -172,6 +172,30 @@ impl RulePreParser {
                 },
                 ..ModelCandidate::default()
             }),
+            "打开前门门锁" | "打开入户门锁" => Some(ModelCandidate {
+                intent: Intent::ControlDevice,
+                room: Some(Room::Entrance),
+                device_alias: Some("前门门锁".to_owned()),
+                device_type: DeviceType::Lock,
+                action: Action::Unlock,
+                ..ModelCandidate::default()
+            }),
+            "关闭所有摄像头" | "关闭客厅摄像头" => Some(ModelCandidate {
+                intent: Intent::ControlDevice,
+                room: Some(Room::LivingRoom),
+                device_alias: Some("所有摄像头".to_owned()),
+                device_type: DeviceType::Camera,
+                action: Action::TurnOff,
+                ..ModelCandidate::default()
+            }),
+            "关闭燃气报警器" | "关闭厨房燃气报警器" => Some(ModelCandidate {
+                intent: Intent::ControlDevice,
+                room: Some(Room::Kitchen),
+                device_alias: Some("燃气报警器".to_owned()),
+                device_type: DeviceType::GasDevice,
+                action: Action::TurnOff,
+                ..ModelCandidate::default()
+            }),
             "再暗一点" | "把刚才那个灯再调暗一点" => Some(ModelCandidate {
                 intent: Intent::ControlDevice,
                 room: Some(Room::Unknown),
@@ -311,6 +335,15 @@ impl SemanticNormalizer {
             }
             (Room::Bedroom, DeviceType::AirConditioner, Action::SetTemperature) => {
                 DeviceId::new("bedroom_air_conditioner").ok()
+            }
+            (Room::Entrance, DeviceType::Lock, Action::Unlock | Action::Open) => {
+                DeviceId::new("front_door_lock").ok()
+            }
+            (Room::LivingRoom, DeviceType::Camera, Action::TurnOff | Action::TurnOn) => {
+                DeviceId::new("living_room_camera").ok()
+            }
+            (Room::Kitchen, DeviceType::GasDevice, Action::TurnOff | Action::TurnOn) => {
+                DeviceId::new("gas_alarm").ok()
             }
             _ => None,
         }
@@ -580,5 +613,40 @@ mod tests {
         assert_eq!(command.params.brightness, Some(30));
         assert_eq!(command.params.time_after, Some("22:00".to_owned()));
         assert!(command.can_enter_policy_gate());
+    }
+
+    #[test]
+    fn dangerous_home_commands_are_standardized_for_policy_gate() {
+        let cases = [
+            (
+                "打开前门门锁",
+                DeviceId::new("front_door_lock").expect("device id"),
+                DeviceType::Lock,
+                Action::Unlock,
+            ),
+            (
+                "关闭所有摄像头",
+                DeviceId::new("living_room_camera").expect("device id"),
+                DeviceType::Camera,
+                Action::TurnOff,
+            ),
+            (
+                "关闭燃气报警器",
+                DeviceId::new("gas_alarm").expect("device id"),
+                DeviceType::GasDevice,
+                Action::TurnOff,
+            ),
+        ];
+
+        for (text, expected_device_id, expected_device_type, expected_action) in cases {
+            let input = UserInput::new(text).expect("input");
+            let candidate = RulePreParser.pre_parse(&input).expect("candidate");
+            let command = SemanticNormalizer.normalize(&candidate).expect("command");
+
+            assert_eq!(command.device_id, Some(expected_device_id));
+            assert_eq!(command.device_type, expected_device_type);
+            assert_eq!(command.action, expected_action);
+            assert!(command.can_enter_policy_gate());
+        }
     }
 }
