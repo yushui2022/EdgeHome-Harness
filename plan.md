@@ -1,58 +1,58 @@
-# EdgeHome Harness Plan
+# EdgeHome Harness 计划
 
-## 1. Project Goal
+## 1. 项目目标
 
-Build a Rust-based harness for 1B edge language models that can parse smart home and IoT commands into safe, validated, auditable actions under 2GB RAM constraints.
+构建一个基于 Rust 的 Harness，用于 1B 级端侧语言模型，在 2GB RAM 约束下，将智能家居和 IoT 指令解析成安全、可校验、可审计的动作。
 
-The project focuses on:
+项目聚焦：
 
 ```text
-1B edge small models
-smart home / IoT commands
-JSON / intent parsing
-business validation
-local execution safety
-2GB RAM stability
-MiniCPM5 / Qwen evaluation
+1B 端侧小模型
+智能家居 / IoT 指令
+JSON / intent 解析
+业务校验
+本地执行安全
+2GB RAM 稳定性
+MiniCPM5 / Qwen 评测
 ```
 
-The first runtime integration will be Ollama structured outputs.
+第一个运行时集成将使用 Ollama structured outputs。
 
-The first model comparison will be:
+第一组模型对比将是：
 
 ```text
 MiniCPM5-1B
 Qwen3.5-0.8B
 ```
 
-## 2. Key Principle
+## 2. 核心原则
 
-Ollama structured output guarantees JSON syntax. EdgeHome Harness guarantees local action safety.
+Ollama structured output 保证 JSON 语法。EdgeHome Harness 保证本地动作安全。
 
 ```text
-Ollama JSON constraint:
-  validates format
+Ollama JSON 约束：
+  校验格式
 
-EdgeHome Harness:
-  validates business meaning
-  validates device capability
-  enforces policy
-  prevents unsafe execution
-  prevents runaway runtime behavior
-  provides audit logs
+EdgeHome Harness：
+  校验业务含义
+  校验设备能力
+  强制执行策略
+  防止不安全执行
+  防止失控的运行时行为
+  提供审计日志
 ```
 
-The project should always treat model output as untrusted.
+项目应始终将模型输出视为不可信输入。
 
-## 3. MVP Definition
+## 3. MVP 定义
 
-The MVP is complete when this command works end to end:
+当下面这条命令可以端到端工作时，MVP 即完成：
 
 ```bash
 edgehome dry-run "晚上十点后把走廊灯调到30%"
 ```
 
-Expected output:
+期望输出：
 
 ```json
 {
@@ -67,49 +67,49 @@ Expected output:
 }
 ```
 
-The MVP must include:
+MVP 必须包含：
 
 ```text
 Rust CLI
 Ollama adapter
-model output cleaner
-JSON extraction
+模型输出清洗器
+JSON 提取
 schema validation
-semantic normalization
-business validation
-policy decision
+语义标准化
+业务校验
+策略决策
 mock dry-run executor
-SQLite audit log
+SQLite 审计日志
 YAML eval runner
-MiniCPM5 vs Qwen test cases
+MiniCPM5 vs Qwen 测试用例
 ```
 
-The MVP must not include:
+MVP 不应包含：
 
 ```text
-real door lock control
-real gas device control
-multi-step autonomous agent loops
-cloud dependency
+真实门锁控制
+真实燃气设备控制
+多步自主 Agent loop
+云端依赖
 Node.js daemon
-Python production service
+Python 生产服务
 ```
 
-## 4. Milestones
+## 4. 里程碑
 
-### Milestone 0: Repository Foundation
+### Milestone 0：仓库基础
 
-Tasks:
+任务：
 
 ```text
-create Rust workspace
-create crate layout
-add formatter and lint config
-add README and plan
-add initial CI later
+创建 Rust workspace
+创建 crate 结构
+添加格式化和 lint 配置
+添加 README 和 plan
+后续添加初始 CI
 ```
 
-Workspace layout:
+Workspace 结构：
 
 ```text
 crates/
@@ -124,30 +124,30 @@ crates/
   edgehome-server/
 ```
 
-Acceptance criteria:
+验收标准：
 
 ```text
-cargo check passes
-edgehome CLI binary builds
+cargo check 通过
+edgehome CLI binary 可以构建
 ```
 
-### Milestone 1: Core Types and Schema
+### Milestone 1：核心类型与 Schema
 
-Tasks:
+任务：
 
 ```text
-define Intent enum
-define Room enum
-define Device enum
-define Action enum
-define RiskLevel enum
-define Command struct
-define ModelCandidate struct
-define PolicyDecision enum
-define ExecutionPlan struct
+定义 Intent enum
+定义 Room enum
+定义 Device enum
+定义 Action enum
+定义 RiskLevel enum
+定义 Command struct
+定义 ModelCandidate struct
+定义 PolicyDecision enum
+定义 ExecutionPlan struct
 ```
 
-Initial intents:
+初始 intents：
 
 ```text
 turn_on
@@ -159,7 +159,7 @@ create_rule
 unknown
 ```
 
-Initial rooms:
+初始 rooms：
 
 ```text
 living_room
@@ -170,7 +170,7 @@ bathroom
 unknown
 ```
 
-Initial devices:
+初始 devices：
 
 ```text
 light
@@ -181,57 +181,57 @@ lock
 unknown
 ```
 
-Acceptance criteria:
+验收标准：
 
 ```text
-all core types serialize and deserialize
-JSON schema can be generated or maintained for Ollama format
-unit tests cover enum parsing and serialization
+所有核心类型都可以 serialize 和 deserialize
+可以生成或维护给 Ollama format 使用的 JSON schema
+单元测试覆盖 enum parsing 和 serialization
 ```
 
-### Milestone 2: Ollama Structured Output Adapter
+### Milestone 2：Ollama Structured Output Adapter
 
-Tasks:
+任务：
 
 ```text
-call Ollama /api/chat
-support model name config
-support JSON schema format
-support timeout
-support temperature/top_p/top_k/repeat_penalty/num_predict
-support non-streaming first
-capture raw model output
+调用 Ollama /api/chat
+支持模型名配置
+支持 JSON schema format
+支持 timeout
+支持 temperature/top_p/top_k/repeat_penalty/num_predict
+先支持 non-streaming
+捕获原始模型输出
 ```
 
-Default models:
+默认模型：
 
 ```text
 openbmb/minicpm5:q4_K_M
-qwen3.5:0.8b or local equivalent
+qwen3.5:0.8b 或本地等价模型
 ```
 
-Acceptance criteria:
+验收标准：
 
 ```text
-edgehome parse can call Ollama
-raw output is stored
-model errors are returned as structured errors
-timeout works
+edgehome parse 可以调用 Ollama
+原始输出会被保存
+模型错误会以结构化错误返回
+timeout 生效
 ```
 
-### Milestone 3: Output Cleaner and Parser
+### Milestone 3：输出清洗器和 Parser
 
-Tasks:
+任务：
 
 ```text
-strip <think>...</think>
-strip markdown code fences
-extract first JSON object
-handle extra text before/after JSON
-fail closed when no JSON is found
+移除 <think>...</think>
+移除 markdown 代码块
+提取第一个 JSON 对象
+处理 JSON 前后的多余文本
+找不到 JSON 时 fail closed
 ```
 
-Examples to handle:
+需要处理的示例：
 
 ```text
 <think>...</think>{"intent":"turn_off"}
@@ -241,223 +241,223 @@ Examples to handle:
 Here is the JSON: {"intent":"turn_off"}
 ```
 
-Acceptance criteria:
+验收标准：
 
 ```text
-cleaner unit tests pass
-invalid output does not panic
-invalid output does not execute
+cleaner 单元测试通过
+非法输出不会 panic
+非法输出不会被执行
 ```
 
-### Milestone 4: Semantic Normalization
+### Milestone 4：语义标准化
 
-Tasks:
+任务：
 
 ```text
-Chinese room mapping
-Chinese device mapping
-Chinese action mapping
-brightness extraction
-temperature extraction
-time expression normalization
-device alias handling
+中文房间映射
+中文设备映射
+中文动作映射
+亮度提取
+温度提取
+时间表达标准化
+设备别名处理
 ```
 
-Examples:
+示例：
 
 ```text
 走廊 -> hallway
 客厅 -> living_room
 走廊灯 -> room=hallway, device=light
 关掉 -> turn_off
-调到 -> set_brightness when target is light
+调到 -> 当目标是 light 时为 set_brightness
 30% -> 30
 晚上十点后 -> 22:00
 ```
 
-Acceptance criteria:
+验收标准：
 
 ```text
-normalization tests cover common Chinese smart-home commands
-model raw Chinese output can be converted into canonical command format
+normalization tests 覆盖常见中文智能家居指令
+模型原始中文输出可以转换为 canonical command format
 ```
 
-### Milestone 5: Business Validator
+### Milestone 5：业务校验器
 
-Tasks:
+任务：
 
 ```text
-device registry
-device capability table
-value range validation
-room/device existence checks
-action compatibility checks
+设备注册表
+设备能力表
+数值范围校验
+房间 / 设备存在性检查
+动作兼容性检查
 ```
 
-Rules:
+规则：
 
 ```text
-light supports turn_on, turn_off, set_brightness
-air_conditioner supports turn_on, turn_off, set_temperature
-curtain supports open, close, set_position later
-lock requires confirmation for lock/unlock
-camera requires confirmation for disable
-gas devices are blocked
+light 支持 turn_on, turn_off, set_brightness
+air_conditioner 支持 turn_on, turn_off, set_temperature
+curtain 后续支持 open, close, set_position
+lock 的 lock/unlock 需要确认
+camera 的 disable 需要确认
+gas devices 被阻断
 ```
 
-Acceptance criteria:
+验收标准：
 
 ```text
-invalid device/action combinations are rejected
-missing devices are rejected
-out-of-range values are rejected
+非法 device/action 组合会被拒绝
+不存在的设备会被拒绝
+越界数值会被拒绝
 ```
 
-### Milestone 6: Policy Engine
+### Milestone 6：Policy Engine
 
-Tasks:
+任务：
 
 ```text
-assign risk levels
-make allow/confirm/deny decisions
-support policy config
-support deny-by-default for unknown actions
+分配风险等级
+做出 allow/confirm/deny 决策
+支持策略配置
+对 unknown actions 默认拒绝
 ```
 
-Risk model:
+风险模型：
 
 ```text
 read -> allow
 low -> allow
-medium -> audit or confirm
+medium -> audit 或 confirm
 high -> require confirmation
 blocked -> deny
 ```
 
-Acceptance criteria:
+验收标准：
 
 ```text
-lock/camera actions require confirmation
-gas/medical/critical devices are denied
-unknown devices and unknown actions are denied
+lock/camera 动作需要确认
+gas/medical/critical devices 被拒绝
+unknown devices 和 unknown actions 被拒绝
 ```
 
-### Milestone 7: Mock Executor and Dry Run
+### Milestone 7：Mock Executor 和 Dry Run
 
-Tasks:
+任务：
 
 ```text
-create Executor trait
-implement MockExecutor
-implement dry-run output
-block direct execution by default
+创建 Executor trait
+实现 MockExecutor
+实现 dry-run 输出
+默认阻止直接执行
 ```
 
-Acceptance criteria:
+验收标准：
 
 ```text
-edgehome dry-run returns executable plan
-edgehome execute refuses high-risk commands unless explicitly confirmed
-MVP does not control real devices
+edgehome dry-run 返回可执行计划
+edgehome execute 在没有明确确认时拒绝高风险指令
+MVP 不控制真实设备
 ```
 
-### Milestone 8: Audit Log
+### Milestone 8：审计日志
 
-Tasks:
+任务：
 
 ```text
-SQLite audit database
-store raw input
-store model name
-store raw model output
-store cleaned output
-store normalized command
-store validation result
-store policy decision
-store dry-run result
-store latency
+SQLite 审计数据库
+存储原始输入
+存储模型名
+存储原始模型输出
+存储清洗后的输出
+存储标准化后的指令
+存储校验结果
+存储策略决策
+存储 dry-run 结果
+存储延迟
 ```
 
-Acceptance criteria:
+验收标准：
 
 ```text
-every parse/dry-run writes an audit record
-audit records can be queried by CLI
+每次 parse/dry-run 都写入一条审计记录
+审计记录可以通过 CLI 查询
 ```
 
-### Milestone 9: Eval Runner
+### Milestone 9：Eval Runner
 
-Tasks:
+任务：
 
 ```text
-read YAML cases
-run parse pipeline
-compare expected command fields
-compute metrics
-compare MiniCPM5 and Qwen
-export JSON/Markdown report
+读取 YAML cases
+运行 parse pipeline
+对比 expected command fields
+计算 metrics
+对比 MiniCPM5 和 Qwen
+导出 JSON/Markdown report
 ```
 
-Metrics:
+指标：
 
 ```text
-intent accuracy
-room accuracy
-device accuracy
-action accuracy
-slot accuracy
-schema valid rate
-normalization success rate
-policy correctness
-latency average
-latency p95
-dead-loop or timeout count
+intent 准确率
+room 准确率
+device 准确率
+action 准确率
+slot 准确率
+schema 合法率
+标准化成功率
+策略正确率
+平均延迟
+p95 延迟
+死循环或 timeout 数量
 ```
 
-Acceptance criteria:
+验收标准：
 
 ```text
-edgehome eval cases/zh-home.yaml runs
-report compares MiniCPM5-1B and Qwen3.5-0.8B
+edgehome eval cases/zh-home.yaml 可以运行
+报告对比 MiniCPM5-1B 和 Qwen3.5-0.8B
 ```
 
-### Milestone 10: 2GB RAM Profile
+### Milestone 10：2GB RAM Profile
 
-Tasks:
+任务：
 
 ```text
-document test environment
-run with MiniCPM5-1B Q4
-run with Qwen3.5-0.8B
-measure RSS and latency
-record context length and num_predict settings
-test under constrained memory
+记录测试环境
+使用 MiniCPM5-1B Q4 运行
+使用 Qwen3.5-0.8B 运行
+测量 RSS 和延迟
+记录 context length 和 num_predict 设置
+在受限内存下测试
 ```
 
-Target settings:
+目标设置：
 
 ```text
 num_ctx=1024
 num_predict=80-128
 temperature=0-0.2
 headless Linux
-no desktop UI
+无桌面 UI
 Rust daemon
 model sidecar
 ```
 
-Acceptance criteria:
+验收标准：
 
 ```text
-2GB profile documented
-memory peak recorded
-latency recorded
-failure modes documented
+2GB profile 已记录
+内存峰值已记录
+延迟已记录
+失败模式已记录
 ```
 
-## 5. Initial Test Cases
+## 5. 初始测试用例
 
-Create `cases/zh-home.yaml` with examples:
+创建 `cases/zh-home.yaml`，包含示例：
 
 ```yaml
 - input: "把客厅灯关掉"
@@ -494,9 +494,9 @@ Create `cases/zh-home.yaml` with examples:
   expected_policy: deny
 ```
 
-## 6. Development Order
+## 6. 开发顺序
 
-Recommended order:
+推荐顺序：
 
 ```text
 1. Rust workspace and core types
@@ -513,39 +513,39 @@ Recommended order:
 12. 2GB RAM profile
 ```
 
-Do not implement real device control before policy, audit, and eval are working.
+在 policy、audit 和 eval 工作之前，不要实现真实设备控制。
 
-## 7. Model Strategy
+## 7. 模型策略
 
-MiniCPM5-1B is the primary pure-text candidate.
+MiniCPM5-1B 是主要的纯文本候选模型。
 
-Qwen3.5-0.8B is the comparison candidate and may be useful when multimodal support is required.
+Qwen3.5-0.8B 是对比候选模型，并且在需要多模态支持时可能有价值。
 
-The harness must assume:
+Harness 必须假设：
 
 ```text
-model output is untrusted
-model output can contain think blocks
-model output can contain markdown
-model output can be semantically wrong
-model output can be slow or timeout
-model output can be valid JSON but unsafe
+模型输出不可信
+模型输出可能包含 think blocks
+模型输出可能包含 markdown
+模型输出可能语义错误
+模型输出可能很慢或 timeout
+模型输出可能是合法 JSON 但不安全
 ```
 
-## 8. First Success Criteria
+## 8. 第一成功标准
 
-The first real success is not a chat demo.
+第一个真正的成功不是聊天 demo。
 
-The first real success is:
+第一个真正的成功是：
 
 ```text
 edgehome eval cases/zh-home.yaml
 ```
 
-showing:
+展示：
 
 ```text
-MiniCPM5-1B and Qwen3.5-0.8B comparison
+MiniCPM5-1B 和 Qwen3.5-0.8B 对比
 valid JSON rate
 intent/slot accuracy
 policy correctness
@@ -553,17 +553,17 @@ latency
 memory profile
 ```
 
-The second success is:
+第二个成功是：
 
 ```text
 edgehome dry-run "晚上十点后把走廊灯调到30%"
 ```
 
-returning a safe execution plan without controlling a real device.
+返回一个不会控制真实设备的安全执行计划。
 
-## 9. Later Extensions
+## 9. 后续扩展
 
-After MVP:
+MVP 之后：
 
 ```text
 Home Assistant adapter
@@ -578,5 +578,5 @@ cross-compile for ARM Linux
 2GB board benchmark
 ```
 
-Do not add these before the MVP pipeline is stable.
+在 MVP pipeline 稳定之前，不要添加这些内容。
 
