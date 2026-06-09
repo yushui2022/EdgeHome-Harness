@@ -168,6 +168,14 @@ dependencies = [
 [[package]]
 name = "edgehome-registry"
 version = "0.1.0"
+dependencies = [
+ "edgehome-core",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "thiserror",
+ "time",
+]
 
 [[package]]
 name = "edgehome-storage"

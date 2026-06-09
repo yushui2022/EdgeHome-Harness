@@ -1,0 +1,63 @@
+devices:
+  - device_id: living_room_main_light
+    aliases: ["客厅灯", "客厅主灯", "屋里大灯"]
+    room: living_room
+    device_type: light
+    backend: mock
+    backend_entity_id: mock.light.living_room_main
+    risk_level: low
+  - device_id: hallway_light
+    aliases: ["走廊灯", "走廊灯带"]
+    room: hallway
+    device_type: light
+    backend: mock
+    backend_entity_id: mock.light.hallway
+    risk_level: low
+  - device_id: bedroom_air_conditioner
+    aliases: ["卧室空调", "主卧空调"]
+    room: bedroom
+    device_type: air_conditioner
+    backend: mock
+    backend_entity_id: mock.climate.bedroom
+    risk_level: medium
+  - device_id: front_door_lock
+    aliases: ["前门门锁", "入户门锁"]
+    room: entrance
+    device_type: lock
+    backend: mock
+    backend_entity_id: mock.lock.front_door
+    risk_level: high
+  - device_id: gas_alarm
+    aliases: ["燃气报警器", "厨房燃气报警器"]
+    room: kitchen
+    device_type: gas_device
+    backend: mock
+    backend_entity_id: mock.sensor.gas_alarm
+    risk_level: blocked
+
+capabilities:
+  light:
+    - action: turn_on
+    - action: turn_off
+    - action: set_brightness
+      min: 0
+      max: 100
+      unit: percent
+    - action: increase_brightness
+    - action: decrease_brightness
+  air_conditioner:
+    - action: turn_on
+    - action: turn_off
+    - action: set_temperature
+      min: 16
+      max: 30
+      unit: celsius
+    - action: set_mode
+  lock:
+    - action: lock
+    - action: unlock
+    - action: open
+    - action: close
+  gas_device:
+    - action: turn_on
+    - action: turn_off
