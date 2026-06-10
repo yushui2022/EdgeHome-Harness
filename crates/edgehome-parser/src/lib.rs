@@ -248,7 +248,7 @@ impl RulePreParser {
                 },
                 ..ModelCandidate::default()
             }),
-            _ => None,
+            _ => parse_simple_alias_command(&text),
         }
     }
 }
@@ -417,6 +417,61 @@ fn contains_any(value: &str, needles: &[&str]) -> bool {
 
 fn normalize_spaces(value: &str) -> String {
     value.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+fn parse_simple_alias_command(text: &str) -> Option<ModelCandidate> {
+    let (action, alias) = if let Some(alias) = text.strip_prefix("打开") {
+        (Action::TurnOn, alias)
+    } else if let Some(alias) = text.strip_prefix("关闭") {
+        (Action::TurnOff, alias)
+    } else if let Some(alias) = text
+        .strip_suffix("打开")
+        .and_then(|body| body.strip_prefix("把"))
+    {
+        (Action::TurnOn, alias)
+    } else if let Some(alias) = text
+        .strip_suffix("关掉")
+        .and_then(|body| body.strip_prefix("把"))
+    {
+        (Action::TurnOff, alias)
+    } else {
+        return None;
+    };
+
+    let alias = alias.trim();
+    if alias.is_empty() {
+        return None;
+    }
+
+    let device_type = infer_device_type_from_alias(alias);
+    if device_type == DeviceType::Unknown {
+        return None;
+    }
+
+    Some(ModelCandidate {
+        intent: Intent::ControlDevice,
+        room: Some(Room::Unknown),
+        device_alias: Some(alias.to_owned()),
+        device_type,
+        action,
+        ..ModelCandidate::default()
+    })
+}
+
+fn infer_device_type_from_alias(alias: &str) -> DeviceType {
+    if alias.contains("空调") {
+        DeviceType::AirConditioner
+    } else if alias.contains("灯") {
+        DeviceType::Light
+    } else if alias.contains("摄像头") {
+        DeviceType::Camera
+    } else if alias.contains("门锁") || alias.contains("门") {
+        DeviceType::Lock
+    } else if alias.contains("燃气") || alias.contains("报警器") {
+        DeviceType::GasDevice
+    } else {
+        DeviceType::Unknown
+    }
 }
 
 fn remove_tag_blocks(raw: &str, start_tag: &str, end_tag: &str) -> String {
@@ -688,6 +743,20 @@ mod tests {
             command.params.raw_value,
             Some("relative_command".to_owned())
         );
+        assert!(!command.can_enter_policy_gate());
+    }
+
+    #[test]
+    fn simple_alias_command_keeps_alias_for_registry_or_memory_resolution() {
+        let input = UserInput::new("打开小夜灯").expect("input");
+        let candidate = RulePreParser.pre_parse(&input).expect("candidate");
+        let command = SemanticNormalizer.normalize(&candidate).expect("command");
+
+        assert_eq!(candidate.device_alias.as_deref(), Some("小夜灯"));
+        assert_eq!(candidate.device_type, DeviceType::Light);
+        assert_eq!(candidate.action, Action::TurnOn);
+        assert_eq!(command.room, Room::Unknown);
+        assert_eq!(command.device_id, None);
         assert!(!command.can_enter_policy_gate());
     }
 

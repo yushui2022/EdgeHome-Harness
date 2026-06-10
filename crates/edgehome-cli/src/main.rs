@@ -5,11 +5,17 @@ use std::path::{Path, PathBuf};
 use anyhow::Context;
 use clap::{Parser, Subcommand};
 use edgehome_config::{RuntimeProfile, load_profile};
-use edgehome_core::{ModelCandidate, NormalizedCommand, PolicyDecision, UserInput};
+use edgehome_core::{
+    DeviceId, DeviceType, ModelCandidate, NormalizedCommand, PolicyDecision, UserInput,
+};
 use edgehome_eval::{EvalReport, evaluate_case_output, load_cases};
 use edgehome_executor::DryRunPlanner;
 use edgehome_gate::{GateEngine, GateEvaluationRequest};
-use edgehome_memory::{ContextAssembler, PromptContext, ShortSessionMemory};
+use edgehome_memory::{
+    ContextAssembler, ExplicitMemoryWriteDetection, ExplicitMemoryWriteDetector,
+    LongTermPreferenceStore, MemoryItem, MemoryKind, MemoryScope, MemoryWriteRequest,
+    NewMemoryItem, PromptContext, ShortSessionMemory,
+};
 use edgehome_ollama::{
     ChatMessage, MiniCpm5Profile, OllamaClient, OutputGovernor, StructuredOutputRequest,
 };
@@ -187,12 +193,38 @@ fn run_mock_pipeline(
             .with_evidence_refs(vec![raw_user_input.id.clone()]),
     )?;
 
+    let registry_path = config_dir.join("devices.yaml");
+    let registry = DeviceRegistry::load_from_path(&registry_path).with_context(|| {
+        format!(
+            "failed to load device registry `{}`",
+            registry_path.display()
+        )
+    })?;
+    let long_memory_store = LongTermPreferenceStore::open(db_path)?;
+
+    if let Some(memory_write_output) = handle_explicit_memory_write(
+        &trace_store,
+        &audit_sink,
+        &trace.trace_id,
+        &input,
+        &registry,
+        &long_memory_store,
+    )? {
+        return Ok(memory_write_output);
+    }
+
     let short_memory = if profile.memory_enabled {
         load_short_session_memory(&trace_store, usize::from(profile.max_short_memory_turns))?
     } else {
         ShortSessionMemory::new(1)
     };
-    let prompt_context = ContextAssembler::from_profile(profile).assemble(&short_memory, &[]);
+    let long_items = if profile.memory_enabled {
+        long_memory_store.list_relevant(&input.text, 3)?
+    } else {
+        Vec::new()
+    };
+    let prompt_context =
+        ContextAssembler::from_profile(profile).assemble(&short_memory, &long_items);
     let memory_context_ref = if prompt_context.text.is_empty() {
         None
     } else {
@@ -245,6 +277,28 @@ fn run_mock_pipeline(
 
     let mut normalized = normalize_mock_candidate(&candidate)?;
     if profile.memory_enabled {
+        if let Some((resolved, source)) =
+            resolve_alias_from_memory_or_registry(&normalized, &candidate, &long_items, &registry)?
+        {
+            let alias_resolution = trace_store.record_evidence(NewEvidence::new(
+                EvidenceKind::MemoryItem,
+                SourceSystem::Memory,
+                "alias memory resolved command target",
+                json!({
+                    "source": source,
+                    "before": normalized.clone(),
+                    "after": resolved.clone(),
+                }),
+            ))?;
+            trace_store.append_step(
+                &trace.trace_id,
+                NewCommandStep::new("alias_memory_resolution", StepStatus::Succeeded)
+                    .with_evidence_refs(vec![alias_resolution.id.clone()]),
+            )?;
+            normalized = resolved;
+        }
+    }
+    if profile.memory_enabled {
         if let Some(resolved) = short_memory.resolve_relative_command(&normalized) {
             if resolved != normalized {
                 let memory_resolution = trace_store.record_evidence(NewEvidence::new(
@@ -283,13 +337,6 @@ fn run_mock_pipeline(
             .with_evidence_refs(vec![parsed_json_ref.id.clone(), normalized_ref.id.clone()]),
     )?;
 
-    let registry_path = config_dir.join("devices.yaml");
-    let registry = DeviceRegistry::load_from_path(&registry_path).with_context(|| {
-        format!(
-            "failed to load device registry `{}`",
-            registry_path.display()
-        )
-    })?;
     let gate_engine = GateEngine::new(&trace_store, &registry);
     let mut gate_evidence_refs = vec![
         raw_user_input.id.clone(),
@@ -575,6 +622,208 @@ fn system_prompt(prompt_context: &PromptContext) -> String {
         prompt.push_str(&prompt_context.text);
     }
     prompt
+}
+
+fn handle_explicit_memory_write(
+    trace_store: &TraceStore,
+    audit_sink: &AuditSink,
+    trace_id: &TraceId,
+    input: &UserInput,
+    registry: &DeviceRegistry,
+    long_memory_store: &LongTermPreferenceStore,
+) -> anyhow::Result<Option<Value>> {
+    match ExplicitMemoryWriteDetector::detect(&input.text) {
+        ExplicitMemoryWriteDetection::None => Ok(None),
+        ExplicitMemoryWriteDetection::Rejected { reason } => {
+            memory_write_rejected(trace_store, audit_sink, trace_id, &input.text, reason).map(Some)
+        }
+        ExplicitMemoryWriteDetection::DeviceAlias {
+            target_alias,
+            new_alias,
+        } => {
+            let Ok(target) = registry.resolve_alias(&target_alias) else {
+                return memory_write_rejected(
+                    trace_store,
+                    audit_sink,
+                    trace_id,
+                    &input.text,
+                    format!("unknown target alias `{target_alias}`"),
+                )
+                .map(Some);
+            };
+
+            let request_ref = trace_store.record_evidence(NewEvidence::new(
+                EvidenceKind::MemoryWriteRequest,
+                SourceSystem::User,
+                "explicit device alias memory write",
+                json!({
+                    "input": input.text.as_str(),
+                    "target_alias": target_alias.as_str(),
+                    "new_alias": new_alias.as_str(),
+                    "target_device_id": target.device_id.0.as_str(),
+                }),
+            ))?;
+
+            let item = NewMemoryItem::new(
+                MemoryScope::Device,
+                MemoryKind::DeviceAlias,
+                new_alias.clone(),
+                json!({
+                    "device_id": target.device_id.0.as_str(),
+                    "target_alias": target_alias.as_str(),
+                    "room": target.room.clone(),
+                    "device_type": target.device_type.clone(),
+                }),
+                request_ref.id.clone(),
+            );
+            let saved = long_memory_store.put_confirmed(MemoryWriteRequest {
+                item,
+                user_confirmed: true,
+            })?;
+            let saved_ref = trace_store.record_evidence(NewEvidence::new(
+                EvidenceKind::MemoryItem,
+                SourceSystem::Memory,
+                "confirmed long-term memory item",
+                serde_json::to_value(&saved)?,
+            ))?;
+            trace_store.append_step(
+                trace_id,
+                NewCommandStep::new("long_memory_write", StepStatus::Succeeded)
+                    .with_evidence_refs(vec![request_ref.id.clone(), saved_ref.id.clone()]),
+            )?;
+            audit_sink.append(
+                NewAuditEvent::new(
+                    "long_memory_write_completed",
+                    "explicit user memory write persisted",
+                    json!({
+                        "trace_id": trace_id.0.as_str(),
+                        "memory_id": saved.id.as_str(),
+                        "kind": saved.kind,
+                        "key": saved.key.as_str(),
+                        "executable": false,
+                    }),
+                )
+                .with_trace_id(trace_id.clone()),
+            )?;
+
+            Ok(Some(json!({
+                "trace_id": trace_id,
+                "mode": "memory_write",
+                "memory_write": {
+                    "status": "saved",
+                    "item": saved,
+                },
+                "executable": false,
+                "execute_enabled": false,
+                "note": "explicit long-term memory write handled by Rust harness; no device execution was attempted"
+            })))
+        }
+    }
+}
+
+fn memory_write_rejected(
+    trace_store: &TraceStore,
+    audit_sink: &AuditSink,
+    trace_id: &TraceId,
+    input_text: &str,
+    reason: String,
+) -> anyhow::Result<Value> {
+    let rejected_ref = trace_store.record_evidence(NewEvidence::new(
+        EvidenceKind::MemoryWriteRequest,
+        SourceSystem::User,
+        "rejected explicit memory write",
+        json!({
+            "input": input_text,
+            "reason": reason,
+        }),
+    ))?;
+    trace_store.append_step(
+        trace_id,
+        NewCommandStep::new("long_memory_write_rejected", StepStatus::Rejected)
+            .with_message(reason.clone())
+            .with_evidence_refs(vec![rejected_ref.id.clone()]),
+    )?;
+    audit_sink.append(
+        NewAuditEvent::new(
+            "long_memory_write_rejected",
+            "explicit user memory write rejected",
+            json!({
+                "trace_id": trace_id.0.as_str(),
+                "reason": reason.as_str(),
+                "executable": false,
+            }),
+        )
+        .with_trace_id(trace_id.clone()),
+    )?;
+
+    Ok(json!({
+        "trace_id": trace_id,
+        "mode": "memory_write",
+        "memory_write": {
+            "status": "rejected",
+            "reason": reason,
+        },
+        "executable": false,
+        "execute_enabled": false,
+        "note": "long-term memory writes must be explicit, resolvable, and safety-preserving"
+    }))
+}
+
+fn resolve_alias_from_memory_or_registry(
+    command: &NormalizedCommand,
+    candidate: &ModelCandidate,
+    long_items: &[MemoryItem],
+    registry: &DeviceRegistry,
+) -> anyhow::Result<Option<(NormalizedCommand, String)>> {
+    if command.device_id.is_some() {
+        return Ok(None);
+    }
+
+    let Some(alias) = candidate.device_alias.as_deref() else {
+        return Ok(None);
+    };
+    if alias.starts_with("relative:") {
+        return Ok(None);
+    }
+
+    if let Some(item) = long_items
+        .iter()
+        .find(|item| item.kind == MemoryKind::DeviceAlias && item.key == alias)
+    {
+        if let Some(device_id) = item.value.get("device_id").and_then(Value::as_str) {
+            let device_id = DeviceId::new(device_id)?;
+            let device = registry.get_device(&device_id)?;
+            if command.device_type != DeviceType::Unknown
+                && command.device_type != device.device_type
+            {
+                return Ok(None);
+            }
+            let resolved = command_for_device(command, device);
+            return Ok(Some((resolved, format!("long_memory:{}", item.id))));
+        }
+    }
+
+    if let Ok(device) = registry.resolve_alias(alias) {
+        if command.device_type != DeviceType::Unknown && command.device_type != device.device_type {
+            return Ok(None);
+        }
+        let resolved = command_for_device(command, device);
+        return Ok(Some((resolved, "device_registry_alias".to_owned())));
+    }
+
+    Ok(None)
+}
+
+fn command_for_device(
+    command: &NormalizedCommand,
+    device: &edgehome_registry::DeviceRecord,
+) -> NormalizedCommand {
+    let mut resolved = command.clone();
+    resolved.room = device.room.clone();
+    resolved.device_id = Some(device.device_id.clone());
+    resolved.device_type = device.device_type.clone();
+    resolved.risk = device.risk_level.clone();
+    resolved
 }
 
 fn load_short_session_memory(

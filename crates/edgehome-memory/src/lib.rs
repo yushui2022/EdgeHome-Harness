@@ -360,6 +360,38 @@ pub struct MemoryWriteRequest {
     pub user_confirmed: bool,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case", tag = "kind")]
+pub enum ExplicitMemoryWriteDetection {
+    None,
+    DeviceAlias {
+        target_alias: String,
+        new_alias: String,
+    },
+    Rejected {
+        reason: String,
+    },
+}
+
+pub struct ExplicitMemoryWriteDetector;
+
+impl ExplicitMemoryWriteDetector {
+    pub fn detect(raw: &str) -> ExplicitMemoryWriteDetection {
+        let text = normalize_memory_text(raw);
+        if text.is_empty() {
+            return ExplicitMemoryWriteDetection::None;
+        }
+
+        if looks_like_long_term_safety_weakening(&text) {
+            return ExplicitMemoryWriteDetection::Rejected {
+                reason: "long-term memory cannot weaken safety policy".to_owned(),
+            };
+        }
+
+        parse_device_alias_memory(&text).unwrap_or(ExplicitMemoryWriteDetection::None)
+    }
+}
+
 pub struct LongTermPreferenceStore {
     connection: SqliteConnection,
 }
@@ -486,6 +518,7 @@ impl LongTermPreferenceStore {
             .filter(|item| {
                 query.is_empty()
                     || item.key.contains(query)
+                    || query.contains(&item.key)
                     || item.value.to_string().contains(query)
             })
             .collect::<Vec<_>>();
@@ -739,6 +772,51 @@ fn truncate_chars(value: &str, max_chars: usize) -> (String, bool) {
     (output, true)
 }
 
+fn normalize_memory_text(raw: &str) -> String {
+    raw.trim()
+        .trim_end_matches(['。', '.', '！', '!', '，', ','])
+        .split_whitespace()
+        .collect::<Vec<_>>()
+        .join("")
+}
+
+fn parse_device_alias_memory(text: &str) -> Option<ExplicitMemoryWriteDetection> {
+    let body = text
+        .strip_prefix("以后把")
+        .or_else(|| text.strip_prefix("记住把"))?;
+    let (target_alias, new_alias) = split_alias_pair(body)?;
+    if target_alias.is_empty() || new_alias.is_empty() || target_alias == new_alias {
+        return Some(ExplicitMemoryWriteDetection::Rejected {
+            reason: "invalid device alias memory".to_owned(),
+        });
+    }
+
+    Some(ExplicitMemoryWriteDetection::DeviceAlias {
+        target_alias: target_alias.to_owned(),
+        new_alias: new_alias.to_owned(),
+    })
+}
+
+fn split_alias_pair(body: &str) -> Option<(&str, &str)> {
+    if let Some((target, alias)) = body.split_once("叫做") {
+        return Some((target.trim(), alias.trim()));
+    }
+    if let Some((target, alias)) = body.split_once("叫") {
+        return Some((target.trim(), alias.trim()));
+    }
+    None
+}
+
+fn looks_like_long_term_safety_weakening(text: &str) -> bool {
+    text.starts_with("以后")
+        && ["门锁", "燃气", "报警器", "摄像头"]
+            .iter()
+            .any(|needle| text.contains(needle))
+        && ["自动打开", "不需要确认", "不用确认", "跳过确认", "直接打开"]
+            .iter()
+            .any(|needle| text.contains(needle))
+}
+
 fn looks_like_safety_weakening(value: &Value) -> bool {
     let text = value.to_string().to_lowercase();
     [
@@ -876,6 +954,41 @@ mod tests {
         assert_eq!(loaded.key, "屋里大灯");
         assert_eq!(loaded.value["device_id"], "living_room_main_light");
         assert_eq!(store.list_all().expect("all").len(), 1);
+    }
+
+    #[test]
+    fn explicit_memory_detector_extracts_device_alias_write() {
+        assert_eq!(
+            ExplicitMemoryWriteDetector::detect("以后把玄关灯叫小夜灯"),
+            ExplicitMemoryWriteDetection::DeviceAlias {
+                target_alias: "玄关灯".to_owned(),
+                new_alias: "小夜灯".to_owned(),
+            }
+        );
+
+        assert_eq!(
+            ExplicitMemoryWriteDetector::detect("记住把走廊灯叫做夜灯。"),
+            ExplicitMemoryWriteDetection::DeviceAlias {
+                target_alias: "走廊灯".to_owned(),
+                new_alias: "夜灯".to_owned(),
+            }
+        );
+    }
+
+    #[test]
+    fn explicit_memory_detector_ignores_one_shot_control() {
+        assert_eq!(
+            ExplicitMemoryWriteDetector::detect("打开卧室灯"),
+            ExplicitMemoryWriteDetection::None
+        );
+    }
+
+    #[test]
+    fn explicit_memory_detector_rejects_safety_weakening() {
+        assert!(matches!(
+            ExplicitMemoryWriteDetector::detect("以后门锁都自动打开"),
+            ExplicitMemoryWriteDetection::Rejected { .. }
+        ));
     }
 
     #[test]

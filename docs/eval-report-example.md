@@ -46,6 +46,8 @@ cases/zh-home.yaml
 | `living_room_light_off` | 普通关灯 |
 | `relative_light_decrease` | “刚才那个灯”短时记忆 |
 | `hallway_light_schedule_brightness` | 时间条件 + 亮度槽位 |
+| `remember_hallway_light_alias` | 明确长期别名写入：玄关灯 -> 小夜灯 |
+| `alias_memory_light_on` | 使用长期别名打开小夜灯 |
 | `bedroom_air_conditioner_temperature` | 空调温度策略样例 |
 | `bedroom_air_conditioner_turn_on` | 空调开机策略样例 |
 | `relative_air_conditioner_turn_off` | “关闭空调”承接最近空调上下文 |
@@ -63,8 +65,8 @@ cases/zh-home.yaml
   "model_mode": "mock",
   "profile": "low_memory",
   "report": {
-    "total": 9,
-    "passed": 9,
+    "total": 11,
+    "passed": 11,
     "failed": 0,
     "pass_rate": 1.0,
     "intent_accuracy": 1.0,

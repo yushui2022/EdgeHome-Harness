@@ -7,7 +7,7 @@ devices:
     backend_entity_id: mock.light.living_room_main
     risk_level: low
   - device_id: hallway_light
-    aliases: ["走廊灯", "走廊灯带"]
+    aliases: ["走廊灯", "走廊灯带", "玄关灯"]
     room: hallway
     device_type: light
     backend: mock

@@ -33,6 +33,21 @@
     policy_decision: allow
     dry_run_ready: true
 
+- id: remember_hallway_light_alias
+  input: "以后把玄关灯叫小夜灯"
+  expected: {}
+
+- id: alias_memory_light_on
+  input: "打开小夜灯"
+  expected:
+    intent: control_device
+    room: hallway
+    device_id: hallway_light
+    device_type: light
+    action: turn_on
+    policy_decision: allow
+    dry_run_ready: true
+
 - id: bedroom_air_conditioner_temperature
   input: "把卧室空调调到26度"
   expected:

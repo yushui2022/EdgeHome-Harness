@@ -497,6 +497,8 @@ powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome
 普通关灯
 短时相对指令
 时间 + 亮度槽位
+明确长期别名写入
+长期别名解析
 空调温度
 空调开关
 门锁策略样例
@@ -507,7 +509,7 @@ powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome
 最新本地基线应接近：
 
 ```text
-passed = 9
+passed = 11
 failed = 0
 intent_accuracy = 1.0
 slot_accuracy = 1.0
@@ -578,4 +580,3 @@ V2 不做这些承诺：
 不把证据系统作为普通动作的同步门禁
 不让模型直接控制真实设备
 ```
-
