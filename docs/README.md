@@ -12,6 +12,7 @@ deployment-modes.md  Mode A/B/C 部署方式、Home Assistant 接入边界
 home-assistant-demo.md  Home Assistant demo 后端、安全边界、token 管理
 eval-report-example.md  eval / replay 样例报告和面试表达
 demo-walkthrough.md  面试演示脚本顺序、展示点和非目标
+small-model-harness-blog.md  对外宣传博客草稿：为什么做小模型 Harness、当前进展和目标
 ```
 
 注意：
