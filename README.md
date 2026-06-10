@@ -336,6 +336,39 @@ latency
 memory pressure
 ```
 
+M20 后，`replay` 和 `trace export` 会额外生成 `TraceFrame`。
+它不是新的数据库表，而是从现有 evidence、steps、gate checks、audit events 中提炼出来的调试帧。
+
+TraceFrame 汇总字段包括：
+
+```text
+trace_id
+input_text
+model_name
+model_params
+runtime_profile
+memory_snapshot_summary
+prompt_hash
+raw_model_output
+output_governor
+cleaned_json
+schema_result
+normalized_command
+device_resolution
+capability_result
+execution_plan
+executor_result
+failure_reason
+latency_ms
+retry_count
+```
+
+导出命令：
+
+```powershell
+cargo run -q -p edgehome-cli -- --db-path edgehome-eval.sqlite trace export <trace_id>
+```
+
 Replay 用于回答：
 
 ```text

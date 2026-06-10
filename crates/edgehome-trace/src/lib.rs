@@ -301,6 +301,35 @@ pub struct AuditEvent {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TraceFrame {
+    pub trace_id: TraceId,
+    #[serde(with = "time::serde::rfc3339")]
+    pub timestamp: OffsetDateTime,
+    pub input_text: Option<String>,
+    pub model_name: Option<String>,
+    pub model_params: Option<Value>,
+    pub runtime_profile: String,
+    pub memory_snapshot_summary: Option<Value>,
+    pub prompt_hash: Option<String>,
+    pub raw_model_output: Option<Value>,
+    pub output_governor: Option<Value>,
+    pub cleaned_json: Option<Value>,
+    pub schema_result: String,
+    pub normalized_command: Option<Value>,
+    pub device_resolution: Option<Value>,
+    pub capability_result: Option<Value>,
+    pub execution_plan: Option<Value>,
+    pub executor_result: Option<Value>,
+    pub failure_reason: Option<String>,
+    pub latency_ms: Option<i128>,
+    pub memory_pressure: Option<Value>,
+    pub retry_count: Option<u64>,
+    pub step_count: usize,
+    pub gate_count: usize,
+    pub audit_count: usize,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct NewAuditEvent {
     pub trace_id: Option<TraceId>,
     pub event_type: String,

@@ -88,6 +88,34 @@ eval 输出里每个 case 都有 `trace_id`。
 cargo run -p edgehome-cli -- --db-path edgehome-eval.sqlite replay <trace_id>
 ```
 
+只导出 TraceFrame：
+
+```powershell
+cargo run -p edgehome-cli -- --db-path edgehome-eval.sqlite trace export <trace_id>
+```
+
+TraceFrame 会把原始 evidence 汇总成更适合调试的单帧结构：
+
+```json
+{
+  "input_text": "把客厅灯关掉",
+  "model_name": "MockModel",
+  "runtime_profile": "low_memory",
+  "prompt_hash": "6023786e3c1b4285",
+  "schema_result": "passed",
+  "device_resolution": {
+    "gate_name": "DeviceResolvedGate",
+    "outcome": "accepted"
+  },
+  "capability_result": {
+    "gate_name": "CapabilityGate",
+    "outcome": "accepted"
+  },
+  "latency_ms": 438,
+  "gate_count": 9
+}
+```
+
 危险动作示例：
 
 ```text

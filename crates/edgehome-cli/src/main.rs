@@ -23,8 +23,11 @@ use edgehome_ollama::{
 use edgehome_parser::{InputGuard, RulePreParser, SemanticNormalizer};
 use edgehome_registry::{DeviceRegistry, StateFreshness};
 use edgehome_storage::sqlite::integer;
-use edgehome_storage::{EvidenceKind, EvidenceStore, NewEvidence, SourceSystem};
-use edgehome_trace::{AuditSink, NewAuditEvent, NewCommandStep, StepStatus, TraceId, TraceStore};
+use edgehome_storage::{EvidenceKind, EvidenceRef, EvidenceStore, NewEvidence, SourceSystem};
+use edgehome_trace::{
+    AuditEvent, AuditSink, CommandStep, CommandTrace, GateCheck, GateOutcome, NewAuditEvent,
+    NewCommandStep, StepStatus, TraceFrame, TraceId, TraceStore,
+};
 use serde::Serialize;
 use serde_json::{Value, json};
 
@@ -83,6 +86,7 @@ enum ConfigCommand {
 #[derive(Debug, Subcommand)]
 enum TraceCommand {
     Show { trace_id: String },
+    Export { trace_id: String },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -150,6 +154,12 @@ fn main() -> anyhow::Result<()> {
             command: TraceCommand::Show { trace_id },
         } => {
             let output = show_trace(&cli.db_path, TraceId(trace_id))?;
+            print_json(&output)?;
+        }
+        Commands::Trace {
+            command: TraceCommand::Export { trace_id },
+        } => {
+            let output = export_trace_frame(&cli.db_path, TraceId(trace_id))?;
             print_json(&output)?;
         }
     }
@@ -255,6 +265,8 @@ fn run_mock_pipeline(
             "mock": use_mock,
             "raw_output": raw_model_output_text,
             "output_governor": candidate_run.output_governor_report,
+            "model_params": candidate_run.model_params,
+            "prompt_hash": candidate_run.prompt_hash,
             "context_chars": prompt_context.text.chars().count(),
         }),
     ))?;
@@ -487,28 +499,62 @@ fn run_eval(
 }
 
 fn show_trace(db_path: &Path, trace_id: TraceId) -> anyhow::Result<Value> {
-    ensure_db_parent(db_path)?;
-
-    let trace_store = TraceStore::open(db_path)?;
-    let evidence_store = EvidenceStore::open(db_path)?;
-    let audit_sink = AuditSink::open(db_path)?;
-
-    let trace = trace_store.read_trace(&trace_id)?;
-    let raw_user_input = evidence_store.read(&trace.raw_user_input_ref)?;
-    let steps = trace_store.steps_for_trace(&trace_id)?;
-    let gate_checks = trace_store.gate_checks_for_trace(&trace_id)?;
-    let audit_events = audit_sink.events_for_trace(&trace_id)?;
+    let bundle = load_trace_bundle(db_path, trace_id)?;
+    let trace_frame = build_trace_frame(&bundle);
+    let raw_user_input = latest_evidence(&bundle.evidence, EvidenceKind::RawUserInput)
+        .map(|item| item.content.clone());
 
     Ok(json!({
-        "trace": trace,
+        "trace_frame": trace_frame,
+        "trace": bundle.trace,
         "raw_user_input": raw_user_input,
-        "steps": steps,
-        "gate_checks": gate_checks,
-        "audit_events": audit_events,
+        "steps": bundle.steps,
+        "gate_checks": bundle.gate_checks,
+        "audit_events": bundle.audit_events,
     }))
 }
 
 fn replay_trace(db_path: &Path, trace_id: TraceId) -> anyhow::Result<Value> {
+    let bundle = load_trace_bundle(db_path, trace_id)?;
+    let trace_frame = build_trace_frame(&bundle);
+    let normalized_command = latest_evidence(&bundle.evidence, EvidenceKind::NormalizedCommand)
+        .map(|item| item.content.clone());
+    let dry_run_plan = latest_evidence(&bundle.evidence, EvidenceKind::DryRunPlan)
+        .map(|item| item.content.clone());
+    let policy_snapshot = latest_evidence(&bundle.evidence, EvidenceKind::PolicyRuleSnapshot)
+        .map(|item| item.content.clone());
+
+    Ok(json!({
+        "trace_frame": trace_frame,
+        "trace": bundle.trace,
+        "steps": bundle.steps,
+        "gate_checks": bundle.gate_checks,
+        "audit_events": bundle.audit_events,
+        "replay_summary": {
+            "normalized_command": normalized_command,
+            "policy_snapshot": policy_snapshot,
+            "dry_run_plan": dry_run_plan,
+            "gate_count": bundle.gate_checks.len(),
+            "audit_count": bundle.audit_events.len(),
+        },
+        "evidence": bundle.evidence,
+    }))
+}
+
+fn export_trace_frame(db_path: &Path, trace_id: TraceId) -> anyhow::Result<TraceFrame> {
+    let bundle = load_trace_bundle(db_path, trace_id)?;
+    Ok(build_trace_frame(&bundle))
+}
+
+struct TraceBundle {
+    trace: CommandTrace,
+    steps: Vec<CommandStep>,
+    gate_checks: Vec<GateCheck>,
+    audit_events: Vec<AuditEvent>,
+    evidence: Vec<EvidenceRef>,
+}
+
+fn load_trace_bundle(db_path: &Path, trace_id: TraceId) -> anyhow::Result<TraceBundle> {
     ensure_db_parent(db_path)?;
 
     let trace_store = TraceStore::open(db_path)?;
@@ -539,36 +585,112 @@ fn replay_trace(db_path: &Path, trace_id: TraceId) -> anyhow::Result<Value> {
     }
     evidence.sort_by_key(|item| item.created_at);
 
-    let normalized_command = evidence
-        .iter()
-        .rev()
-        .find(|item| item.kind == EvidenceKind::NormalizedCommand)
-        .map(|item| item.content.clone());
-    let dry_run_plan = evidence
-        .iter()
-        .rev()
-        .find(|item| item.kind == EvidenceKind::DryRunPlan)
-        .map(|item| item.content.clone());
-    let policy_snapshot = evidence
-        .iter()
-        .rev()
-        .find(|item| item.kind == EvidenceKind::PolicyRuleSnapshot)
-        .map(|item| item.content.clone());
+    Ok(TraceBundle {
+        trace,
+        steps,
+        gate_checks,
+        audit_events,
+        evidence,
+    })
+}
 
-    Ok(json!({
-        "trace": trace,
-        "steps": steps,
-        "gate_checks": gate_checks,
-        "audit_events": audit_events,
-        "replay_summary": {
-            "normalized_command": normalized_command,
-            "policy_snapshot": policy_snapshot,
-            "dry_run_plan": dry_run_plan,
-            "gate_count": gate_checks.len(),
-            "audit_count": audit_events.len(),
+fn build_trace_frame(bundle: &TraceBundle) -> TraceFrame {
+    let raw_user_input = latest_evidence(&bundle.evidence, EvidenceKind::RawUserInput);
+    let raw_model_output = latest_evidence(&bundle.evidence, EvidenceKind::RawModelOutput);
+    let parsed_json = latest_evidence(&bundle.evidence, EvidenceKind::ParsedJson);
+    let normalized_command = latest_evidence(&bundle.evidence, EvidenceKind::NormalizedCommand);
+    let dry_run_plan = latest_evidence(&bundle.evidence, EvidenceKind::DryRunPlan);
+    let executor_result = latest_evidence(&bundle.evidence, EvidenceKind::ExecutorResponse);
+    let memory_context = bundle.evidence.iter().rev().find(|item| {
+        item.kind == EvidenceKind::MemoryItem && item.summary == "prompt memory context"
+    });
+
+    TraceFrame {
+        trace_id: bundle.trace.trace_id.clone(),
+        timestamp: bundle.trace.started_at,
+        input_text: raw_user_input
+            .and_then(|item| item.content.get("text"))
+            .and_then(Value::as_str)
+            .map(str::to_owned),
+        model_name: raw_model_output
+            .and_then(|item| item.content.get("model"))
+            .and_then(Value::as_str)
+            .map(str::to_owned),
+        model_params: raw_model_output
+            .and_then(|item| item.content.get("model_params"))
+            .cloned(),
+        runtime_profile: bundle.trace.profile.clone(),
+        memory_snapshot_summary: memory_context.map(|item| item.content.clone()),
+        prompt_hash: raw_model_output
+            .and_then(|item| item.content.get("prompt_hash"))
+            .and_then(Value::as_str)
+            .map(str::to_owned),
+        raw_model_output: raw_model_output
+            .and_then(|item| item.content.get("raw_output"))
+            .cloned(),
+        output_governor: raw_model_output
+            .and_then(|item| item.content.get("output_governor"))
+            .cloned(),
+        cleaned_json: parsed_json.map(|item| item.content.clone()),
+        schema_result: if parsed_json.is_some() {
+            "passed".to_owned()
+        } else {
+            "missing".to_owned()
         },
-        "evidence": evidence,
-    }))
+        normalized_command: normalized_command.map(|item| item.content.clone()),
+        device_resolution: gate_check_value(&bundle.gate_checks, "DeviceResolvedGate"),
+        capability_result: gate_check_value(&bundle.gate_checks, "CapabilityGate"),
+        execution_plan: dry_run_plan.map(|item| item.content.clone()),
+        executor_result: executor_result.map(|item| item.content.clone()),
+        failure_reason: trace_failure_reason(&bundle.steps, &bundle.gate_checks),
+        latency_ms: trace_latency_ms(&bundle.trace, &bundle.steps),
+        memory_pressure: None,
+        retry_count: Some(0),
+        step_count: bundle.steps.len(),
+        gate_count: bundle.gate_checks.len(),
+        audit_count: bundle.audit_events.len(),
+    }
+}
+
+fn latest_evidence(evidence: &[EvidenceRef], kind: EvidenceKind) -> Option<&EvidenceRef> {
+    evidence.iter().rev().find(|item| item.kind == kind)
+}
+
+fn gate_check_value(gate_checks: &[GateCheck], gate_name: &str) -> Option<Value> {
+    gate_checks
+        .iter()
+        .rev()
+        .find(|check| check.gate_name == gate_name)
+        .map(|check| {
+            json!({
+                "gate_name": check.gate_name,
+                "outcome": check.outcome,
+                "reason": check.reason,
+            })
+        })
+}
+
+fn trace_failure_reason(steps: &[CommandStep], gate_checks: &[GateCheck]) -> Option<String> {
+    steps
+        .iter()
+        .find(|step| {
+            matches!(
+                step.status,
+                StepStatus::Rejected | StepStatus::Failed | StepStatus::Fallback
+            )
+        })
+        .and_then(|step| step.message.clone().or_else(|| Some(step.name.clone())))
+        .or_else(|| {
+            gate_checks
+                .iter()
+                .find(|check| check.outcome == GateOutcome::Rejected)
+                .map(|check| format!("{}: {}", check.gate_name, check.reason))
+        })
+}
+
+fn trace_latency_ms(trace: &CommandTrace, steps: &[CommandStep]) -> Option<i128> {
+    let last_step = steps.last()?;
+    Some((last_step.created_at - trace.started_at).whole_milliseconds())
 }
 
 struct CandidateRun {
@@ -576,6 +698,8 @@ struct CandidateRun {
     raw_output: String,
     model_name: String,
     output_governor_report: Option<OutputGovernorReport>,
+    model_params: Value,
+    prompt_hash: Option<String>,
 }
 
 fn generate_candidate(
@@ -591,16 +715,18 @@ fn generate_candidate(
             candidate,
             model_name: "MockModel".to_owned(),
             output_governor_report: None,
+            model_params: json!({ "mock": true }),
+            prompt_hash: Some(stable_prompt_hash(&input.text)),
         });
     }
 
     let model_profile = MiniCpm5Profile::from_runtime_profile(profile);
+    let system = system_prompt(prompt_context);
+    let user = input.text.clone();
+    let prompt_hash = stable_prompt_hash(&format!("{system}\n{user}"));
     let request = StructuredOutputRequest::new(
         &model_profile,
-        vec![
-            ChatMessage::system(system_prompt(prompt_context)),
-            ChatMessage::user(input.text.clone()),
-        ],
+        vec![ChatMessage::system(system), ChatMessage::user(user)],
     );
     let response = OllamaClient::new(&profile.ollama_base_url)
         .with_timeout_ms(profile.timeout_ms)
@@ -615,6 +741,8 @@ fn generate_candidate(
         raw_output: response.raw_content,
         model_name: response.model,
         output_governor_report: Some(governed.report),
+        model_params: serde_json::to_value(model_profile.options())?,
+        prompt_hash: Some(prompt_hash),
     })
 }
 
@@ -627,6 +755,15 @@ fn system_prompt(prompt_context: &PromptContext) -> String {
         prompt.push_str(&prompt_context.text);
     }
     prompt
+}
+
+fn stable_prompt_hash(value: &str) -> String {
+    let mut hash = 0xcbf29ce484222325u64;
+    for byte in value.as_bytes() {
+        hash ^= u64::from(*byte);
+        hash = hash.wrapping_mul(0x100000001b3);
+    }
+    format!("{hash:016x}")
 }
 
 fn handle_explicit_memory_write(
