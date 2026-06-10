@@ -204,6 +204,7 @@ translates_climate_temperature_to_service_call
 rejects_entity_id_with_path_injection
 executor_execute_is_disabled_by_default
 executor_uses_route_to_translate_plan
+executor_rejects_non_home_assistant_dry_run_plan
 dry_run_planner_translates_home_assistant_payload
 ```
 

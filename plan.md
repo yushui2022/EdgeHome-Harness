@@ -415,16 +415,16 @@ M19 Output Governor telemetry = 已完成
 M20 TraceFrame 与 Evidence-Backed Replay = 已完成
 M21 Eval Case Matrix 与模型参数评测 = 已完成
 M22 Release Gate = 已完成
-M23 Executor Boundary 与设备后端边界 = 下一步
-M24 2GB Profile 验证与降级策略 = 待开始
+M23 Executor Boundary 与设备后端边界 = 已完成
+M24 2GB Profile 验证与降级策略 = 下一步
 M25 面试 Demo Walkthrough = 待开始
 M26 README / docs 最终同步 = 待开始
 ```
 
-M22 完成后，下一轮 `/goal` 的默认入口是：
+M23 完成后，下一轮 `/goal` 的默认入口是：
 
 ```text
-M23 Executor Boundary 与设备后端边界
+M24 2GB Profile 验证与降级策略
 ```
 
 ## 7. M16 架构叙事修正
@@ -908,6 +908,7 @@ README 不夸大米家适配
 docs/deployment-modes.md 说明 HA demo 边界
 真实执行需要显式配置开关
 eval 不依赖真实设备
+HomeAssistantExecutor 拒绝非 home_assistant backend 的 dry-run plan
 ```
 
 ## 15. M24 2GB Profile 验证与降级策略

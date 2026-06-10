@@ -431,6 +431,15 @@ Home Assistant 是 demo backend，不是项目本体。
 eval 不依赖真实设备。
 ```
 
+M23 之后，执行边界按代码和文档共同约束：
+
+```text
+MockExecutor 是默认路径，execute_enabled 默认 false。
+HomeAssistantExecutor 只作为 demo backend，execute_enabled 默认 false。
+HomeAssistantExecutor 会拒绝非 home_assistant backend 的 dry-run plan。
+真实执行必须由显式配置开启，并且只能接收 Harness 生成的 ExecutionPlan。
+```
+
 Executor 只能接受：
 
 ```text

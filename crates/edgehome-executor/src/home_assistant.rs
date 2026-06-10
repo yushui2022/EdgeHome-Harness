@@ -710,4 +710,24 @@ mod tests {
 
         assert_eq!(service_call.service_name(), "light.turn_off");
     }
+
+    #[test]
+    fn executor_rejects_non_home_assistant_dry_run_plan() {
+        let config = HomeAssistantConfig::default();
+        let client = HomeAssistantClient::new(&config, None);
+        let executor = HomeAssistantExecutor::new(client, false);
+        let dry_run = DryRunPlan {
+            backend: "mock".to_owned(),
+            payload: json!({ "backend": "mock" }),
+            plan: plan(Action::TurnOff, CommandParams::default()),
+        };
+
+        let error = executor.dry_run(&dry_run).expect_err("backend mismatch");
+
+        assert!(matches!(
+            error,
+            ExecutorError::ExecutorBackendMismatch { expected, actual }
+                if expected == "home_assistant" && actual == "mock"
+        ));
+    }
 }

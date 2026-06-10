@@ -161,6 +161,17 @@ HA dry-run service translation
 HA service call translation
 ```
 
+M23 验收边界：
+
+```text
+MockExecutor 是默认执行路径。
+HomeAssistantExecutor 是 demo backend。
+真实 execute 默认关闭，需要显式 execute_enabled = true。
+HomeAssistantExecutor 会拒绝非 home_assistant backend 的 dry-run plan。
+eval / release gate 不依赖真实设备。
+MIoT / miIO / MQTT / Matter 只作为未来 backend 扩展描述。
+```
+
 配置样例：
 
 ```text
