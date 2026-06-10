@@ -572,6 +572,7 @@ impl SafetyMemory {
 pub struct ContextAssemblerConfig {
     pub memory_enabled: bool,
     pub max_short_memory_turns: usize,
+    pub max_long_term_items: usize,
     pub max_context_chars: usize,
     pub include_long_term: bool,
 }
@@ -581,6 +582,7 @@ impl From<&RuntimeProfile> for ContextAssemblerConfig {
         Self {
             memory_enabled: profile.memory_enabled,
             max_short_memory_turns: usize::from(profile.max_short_memory_turns),
+            max_long_term_items: 3,
             max_context_chars: profile.max_context_chars,
             include_long_term: profile.memory_enabled,
         }
@@ -594,12 +596,16 @@ pub struct PromptContext {
     pub long_items_used: usize,
     pub evidence_refs: Vec<EvidenceId>,
     pub truncated: bool,
+    pub budget_chars: usize,
 }
 
 #[derive(Debug, Clone)]
 pub struct ContextAssembler {
     config: ContextAssemblerConfig,
 }
+
+pub type ContextCompiler = ContextAssembler;
+pub type MemoryContextBlock = PromptContext;
 
 impl ContextAssembler {
     pub fn new(config: ContextAssemblerConfig) -> Self {
@@ -622,6 +628,7 @@ impl ContextAssembler {
                 long_items_used: 0,
                 evidence_refs: Vec::new(),
                 truncated: false,
+                budget_chars: self.config.max_context_chars,
             };
         }
 
@@ -659,7 +666,7 @@ impl ContextAssembler {
 
         let mut long_items_used = 0;
         if self.config.include_long_term {
-            for item in long_items {
+            for item in long_items.iter().take(self.config.max_long_term_items) {
                 lines.push(format!(
                     "memory kind={:?} key={} value={} ref={}",
                     item.kind,
@@ -680,6 +687,7 @@ impl ContextAssembler {
             long_items_used,
             evidence_refs,
             truncated,
+            budget_chars: self.config.max_context_chars,
         }
     }
 }
@@ -1045,6 +1053,7 @@ mod tests {
         let assembler = ContextAssembler::new(ContextAssemblerConfig {
             memory_enabled: true,
             max_short_memory_turns: 3,
+            max_long_term_items: 3,
             max_context_chars: 500,
             include_long_term: true,
         });
@@ -1062,6 +1071,7 @@ mod tests {
         let assembler = ContextAssembler::new(ContextAssemblerConfig {
             memory_enabled: false,
             max_short_memory_turns: 0,
+            max_long_term_items: 0,
             max_context_chars: 1,
             include_long_term: false,
         });
@@ -1071,5 +1081,80 @@ mod tests {
         assert!(context.text.is_empty());
         assert_eq!(context.short_turns_used, 0);
         assert_eq!(context.long_items_used, 0);
+        assert_eq!(context.budget_chars, 1);
+    }
+
+    #[test]
+    fn context_assembler_limits_long_term_items_inside_compiler() {
+        let items = (0..5)
+            .map(|index| MemoryItem {
+                id: format!("mem_{index}"),
+                scope: MemoryScope::Device,
+                kind: MemoryKind::DeviceAlias,
+                key: format!("alias_{index}"),
+                value: json!({ "device_id": "living_room_main_light" }),
+                source_evidence_id: EvidenceId(format!("ev_{index}")),
+                confidence_milli: 1000,
+                created_at: OffsetDateTime::now_utc(),
+                expires_at: None,
+                safety_effect: SafetyEffect::Neutral,
+            })
+            .collect::<Vec<_>>();
+        let assembler = ContextAssembler::new(ContextAssemblerConfig {
+            memory_enabled: true,
+            max_short_memory_turns: 3,
+            max_long_term_items: 3,
+            max_context_chars: 500,
+            include_long_term: true,
+        });
+
+        let context = assembler.assemble(&ShortSessionMemory::default(), &items);
+
+        assert_eq!(context.long_items_used, 3);
+        assert_eq!(
+            context.evidence_refs,
+            vec![
+                EvidenceId("ev_0".to_owned()),
+                EvidenceId("ev_1".to_owned()),
+                EvidenceId("ev_2".to_owned())
+            ]
+        );
+        assert!(!context.text.contains("alias_4"));
+    }
+
+    #[test]
+    fn context_assembler_can_disable_only_long_term_injection() {
+        let mut short = ShortSessionMemory::new(3);
+        short.append(
+            "把客厅灯调到70%",
+            command(Some("living_room_main_light"), Action::SetBrightness),
+            Some(TraceId("tr_prev".to_owned())),
+        );
+        let item = MemoryItem {
+            id: "mem_1".to_owned(),
+            scope: MemoryScope::Device,
+            kind: MemoryKind::DeviceAlias,
+            key: "小夜灯".to_owned(),
+            value: json!({ "device_id": "hallway_light" }),
+            source_evidence_id: evidence_id(),
+            confidence_milli: 1000,
+            created_at: OffsetDateTime::now_utc(),
+            expires_at: None,
+            safety_effect: SafetyEffect::Neutral,
+        };
+        let assembler = ContextAssembler::new(ContextAssemblerConfig {
+            memory_enabled: true,
+            max_short_memory_turns: 1,
+            max_long_term_items: 3,
+            max_context_chars: 500,
+            include_long_term: false,
+        });
+
+        let context = assembler.assemble(&short, &[item]);
+
+        assert!(context.text.contains("last_target"));
+        assert_eq!(context.short_turns_used, 1);
+        assert_eq!(context.long_items_used, 0);
+        assert!(context.evidence_refs.is_empty());
     }
 }

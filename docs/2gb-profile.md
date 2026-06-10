@@ -140,6 +140,7 @@ reason
 短时记忆：最多 3 轮
 长期记忆：SQLite 持久化
 prompt 注入：只注入摘要和 ref id
+长期注入：ContextCompiler 内部最多取 3 条
 总字符预算：max_context_chars <= 500
 低资源 fallback：memory_enabled=false 时上下文为空
 ```
@@ -149,6 +150,7 @@ prompt 注入：只注入摘要和 ref id
 ```text
 crates/edgehome-memory/src/lib.rs
 ContextAssembler
+ContextCompiler
 ContextAssemblerConfig
 PromptContext
 ```

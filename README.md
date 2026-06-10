@@ -260,6 +260,14 @@ Rust + SQLite + 结构化状态
 低内存时禁用长期偏好注入
 ```
 
+实现上，`edgehome-memory` 暴露 `ContextCompiler` / `MemoryContextBlock` 语义：
+
+```text
+调用方即使传入更多长期记忆，ContextCompiler 仍然只取预算内条目。
+低内存策略可以只保留短时 last_target，关闭长期偏好注入。
+PromptContext 会记录 budget_chars、short_turns_used、long_items_used 和 evidence_refs。
+```
+
 ## Output Governor
 
 1B 小模型最大的问题不是“不会聊天”，而是：
