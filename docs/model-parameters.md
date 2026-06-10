@@ -199,6 +199,22 @@ invalid JSON
 schema failed
 ```
 
+M19 后，`OutputGovernor` 不只返回成功或失败，还会生成结构化 report：
+
+```text
+raw_bytes
+raw_chars
+max_output_bytes
+max_output_chars
+repeat_detected
+accepted
+failure_kind
+failure_message
+recommended_fallback
+```
+
+Ollama 路径下，这个 report 会写入 raw model output evidence，供后续 trace/replay/eval 统计使用。
+
 失败之后由 `RetryPolicy` 决定 fallback：
 
 ```text

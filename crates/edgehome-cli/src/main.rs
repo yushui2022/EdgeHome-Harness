@@ -17,7 +17,8 @@ use edgehome_memory::{
     NewMemoryItem, PromptContext, ShortSessionMemory,
 };
 use edgehome_ollama::{
-    ChatMessage, MiniCpm5Profile, OllamaClient, OutputGovernor, StructuredOutputRequest,
+    ChatMessage, MiniCpm5Profile, OllamaClient, OutputGovernor, OutputGovernorReport,
+    StructuredOutputRequest,
 };
 use edgehome_parser::{InputGuard, RulePreParser, SemanticNormalizer};
 use edgehome_registry::{DeviceRegistry, StateFreshness};
@@ -253,6 +254,7 @@ fn run_mock_pipeline(
             "model": candidate_run.model_name,
             "mock": use_mock,
             "raw_output": raw_model_output_text,
+            "output_governor": candidate_run.output_governor_report,
             "context_chars": prompt_context.text.chars().count(),
         }),
     ))?;
@@ -573,6 +575,7 @@ struct CandidateRun {
     candidate: ModelCandidate,
     raw_output: String,
     model_name: String,
+    output_governor_report: Option<OutputGovernorReport>,
 }
 
 fn generate_candidate(
@@ -587,6 +590,7 @@ fn generate_candidate(
             raw_output: serde_json::to_string(&candidate)?,
             candidate,
             model_name: "MockModel".to_owned(),
+            output_governor_report: None,
         });
     }
 
@@ -602,14 +606,15 @@ fn generate_candidate(
         .with_timeout_ms(profile.timeout_ms)
         .chat_structured(&request)
         .with_context(|| format!("failed to call Ollama at `{}`", profile.ollama_base_url))?;
-    let candidate = OutputGovernor::from_profile(&model_profile)
-        .govern(&response.raw_content)
+    let governed = OutputGovernor::from_profile(&model_profile)
+        .govern_with_report(&response.raw_content)
         .context("Ollama output governor rejected model response")?;
 
     Ok(CandidateRun {
-        candidate,
+        candidate: governed.candidate,
         raw_output: response.raw_content,
         model_name: response.model,
+        output_governor_report: Some(governed.report),
     })
 }
 

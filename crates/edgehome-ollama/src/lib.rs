@@ -477,6 +477,59 @@ pub enum OutputFailureKind {
     SchemaFailed,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct OutputGovernorReport {
+    pub raw_bytes: usize,
+    pub raw_chars: usize,
+    pub max_output_bytes: usize,
+    pub max_output_chars: usize,
+    pub repeat_detected: bool,
+    pub accepted: bool,
+    pub failure_kind: Option<OutputFailureKind>,
+    pub failure_message: Option<String>,
+    pub recommended_fallback: Option<FallbackMode>,
+}
+
+impl OutputGovernorReport {
+    fn new(raw: &str, config: &OutputGovernorConfig) -> Self {
+        Self {
+            raw_bytes: raw.len(),
+            raw_chars: raw.chars().count(),
+            max_output_bytes: config.max_output_bytes,
+            max_output_chars: config.max_output_chars,
+            repeat_detected: detect_dead_loop(raw),
+            accepted: false,
+            failure_kind: None,
+            failure_message: None,
+            recommended_fallback: None,
+        }
+    }
+
+    fn reject(&mut self, kind: OutputFailureKind, message: impl Into<String>, retry_count: u8) {
+        self.failure_kind = Some(kind);
+        self.failure_message = Some(message.into());
+        self.recommended_fallback = Some(
+            RetryPolicy {
+                max_retries: retry_count,
+            }
+            .mode_for_attempt(1, kind),
+        );
+    }
+
+    fn accept(&mut self) {
+        self.accepted = true;
+        self.failure_kind = None;
+        self.failure_message = None;
+        self.recommended_fallback = None;
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct GovernedOutput {
+    pub candidate: ModelCandidate,
+    pub report: OutputGovernorReport,
+}
+
 #[derive(Debug, Clone)]
 pub struct OutputGovernor {
     config: OutputGovernorConfig,
@@ -492,56 +545,93 @@ impl OutputGovernor {
     }
 
     pub fn govern(&self, raw: &str) -> OllamaResult<ModelCandidate> {
-        self.inspect(raw)?;
-        parse_model_output(raw).map_err(|error| match error {
-            ParserError::JsonNotFound
-            | ParserError::InvalidJson(_)
-            | ParserError::DuplicateKey(_) => OllamaError::OutputRejected {
-                kind: OutputFailureKind::InvalidJson,
-                message: error.to_string(),
-            },
-            ParserError::InvalidSchemaVersion(_)
-            | ParserError::SchemaValidation(_)
-            | ParserError::BrightnessOutOfRange(_) => OllamaError::OutputRejected {
-                kind: OutputFailureKind::SchemaFailed,
-                message: error.to_string(),
-            },
-            other => OllamaError::Parser(other),
-        })
+        self.govern_with_report(raw).map(|output| output.candidate)
+    }
+
+    pub fn govern_with_report(&self, raw: &str) -> OllamaResult<GovernedOutput> {
+        let (report, result) = self.try_govern_with_report(raw);
+        result.map(|candidate| GovernedOutput { candidate, report })
+    }
+
+    pub fn try_govern_with_report(
+        &self,
+        raw: &str,
+    ) -> (OutputGovernorReport, OllamaResult<ModelCandidate>) {
+        let mut report = self.inspect_report(raw);
+        if let Some(kind) = report.failure_kind {
+            let message = report
+                .failure_message
+                .clone()
+                .unwrap_or_else(|| "model output rejected".to_owned());
+            return (report, Err(rejected(kind, message)));
+        }
+
+        match parse_model_output(raw) {
+            Ok(candidate) => {
+                report.accept();
+                (report, Ok(candidate))
+            }
+            Err(error) => {
+                let (kind, message) = classify_parser_failure(&error);
+                report.reject(kind, message.clone(), self.config.retry_count);
+                (report, Err(rejected(kind, message)))
+            }
+        }
     }
 
     pub fn inspect(&self, raw: &str) -> OllamaResult<()> {
-        if raw.trim().is_empty() {
-            return Err(rejected(OutputFailureKind::Empty, "model output is empty"));
-        }
-        if raw.len() > self.config.max_output_bytes {
-            return Err(rejected(
-                OutputFailureKind::TooManyBytes,
-                format!(
-                    "model output bytes {} exceed {}",
-                    raw.len(),
-                    self.config.max_output_bytes
-                ),
-            ));
-        }
-        let char_count = raw.chars().count();
-        if char_count > self.config.max_output_chars {
-            return Err(rejected(
-                OutputFailureKind::TooManyChars,
-                format!(
-                    "model output chars {} exceed {}",
-                    char_count, self.config.max_output_chars
-                ),
-            ));
-        }
-        if detect_dead_loop(raw) {
-            return Err(rejected(
-                OutputFailureKind::DeadLoop,
-                "model output appears to repeat the same fragment",
-            ));
+        let report = self.inspect_report(raw);
+        if let Some(kind) = report.failure_kind {
+            let message = report
+                .failure_message
+                .unwrap_or_else(|| "model output rejected".to_owned());
+            return Err(rejected(kind, message));
         }
 
         Ok(())
+    }
+
+    pub fn inspect_report(&self, raw: &str) -> OutputGovernorReport {
+        let mut report = OutputGovernorReport::new(raw, &self.config);
+        if raw.trim().is_empty() {
+            report.reject(
+                OutputFailureKind::Empty,
+                "model output is empty",
+                self.config.retry_count,
+            );
+            return report;
+        }
+        if report.raw_bytes > self.config.max_output_bytes {
+            report.reject(
+                OutputFailureKind::TooManyBytes,
+                format!(
+                    "model output bytes {} exceed {}",
+                    report.raw_bytes, self.config.max_output_bytes
+                ),
+                self.config.retry_count,
+            );
+            return report;
+        }
+        if report.raw_chars > self.config.max_output_chars {
+            report.reject(
+                OutputFailureKind::TooManyChars,
+                format!(
+                    "model output chars {} exceed {}",
+                    report.raw_chars, self.config.max_output_chars
+                ),
+                self.config.retry_count,
+            );
+            return report;
+        }
+        if report.repeat_detected {
+            report.reject(
+                OutputFailureKind::DeadLoop,
+                "model output appears to repeat the same fragment",
+                self.config.retry_count,
+            );
+        }
+
+        report
     }
 }
 
@@ -634,6 +724,20 @@ fn rejected(kind: OutputFailureKind, message: impl Into<String>) -> OllamaError 
         kind,
         message: message.into(),
     }
+}
+
+fn classify_parser_failure(error: &ParserError) -> (OutputFailureKind, String) {
+    let kind = match error {
+        ParserError::JsonNotFound | ParserError::InvalidJson(_) | ParserError::DuplicateKey(_) => {
+            OutputFailureKind::InvalidJson
+        }
+        ParserError::InvalidSchemaVersion(_)
+        | ParserError::SchemaValidation(_)
+        | ParserError::BrightnessOutOfRange(_)
+        | ParserError::InputTooLong { .. }
+        | ParserError::IllegalControlCharacter => OutputFailureKind::SchemaFailed,
+    };
+    (kind, error.to_string())
 }
 
 fn detect_dead_loop(raw: &str) -> bool {
@@ -788,6 +892,21 @@ mod tests {
     }
 
     #[test]
+    fn output_governor_report_records_success_budget() {
+        let profile = MiniCpm5Profile::low_memory_default();
+        let governor = OutputGovernor::from_profile(&profile);
+
+        let output = governor
+            .govern_with_report(&valid_candidate_json())
+            .expect("governed output");
+
+        assert!(output.report.accepted);
+        assert_eq!(output.report.failure_kind, None);
+        assert!(output.report.raw_chars > 0);
+        assert_eq!(output.report.max_output_chars, 1024);
+    }
+
+    #[test]
     fn output_governor_rejects_overlong_output() {
         let governor = OutputGovernor::new(OutputGovernorConfig {
             max_output_bytes: 64,
@@ -804,6 +923,36 @@ mod tests {
                 ..
             }
         ));
+    }
+
+    #[test]
+    fn output_governor_report_classifies_dead_loop_and_fallback() {
+        let governor = OutputGovernor::new(OutputGovernorConfig {
+            max_output_bytes: 2048,
+            max_output_chars: 2048,
+            retry_count: 1,
+        });
+
+        let (report, result) =
+            governor.try_govern_with_report("重复输出重复输出重复输出重复输出重复输出重复输出");
+
+        assert!(result.is_err());
+        assert!(!report.accepted);
+        assert!(report.repeat_detected);
+        assert_eq!(report.failure_kind, Some(OutputFailureKind::DeadLoop));
+        assert_eq!(report.recommended_fallback, Some(FallbackMode::CompactJson));
+    }
+
+    #[test]
+    fn output_governor_report_classifies_invalid_json() {
+        let governor = OutputGovernor::from_profile(&MiniCpm5Profile::low_memory_default());
+
+        let (report, result) = governor.try_govern_with_report("turn_off");
+
+        assert!(result.is_err());
+        assert_eq!(report.failure_kind, Some(OutputFailureKind::InvalidJson));
+        assert_eq!(report.recommended_fallback, Some(FallbackMode::CompactJson));
+        assert!(report.failure_message.is_some());
     }
 
     #[test]
