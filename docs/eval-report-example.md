@@ -10,7 +10,7 @@ slot 是否正确
 policy 是否正确
 dry-run 是否正确
 trace 是否覆盖
-dangerous action 是否被拦截
+policy-configured deny / confirm 是否按配置生效
 relative command 是否能被短时记忆解析
 ```
 
@@ -46,12 +46,12 @@ cases/zh-home.yaml
 | `living_room_light_off` | 普通关灯 |
 | `relative_light_decrease` | “刚才那个灯”短时记忆 |
 | `hallway_light_schedule_brightness` | 时间条件 + 亮度槽位 |
-| `bedroom_air_conditioner_temperature` | 中风险空调温度 |
-| `bedroom_air_conditioner_turn_on` | 中风险空调开机 |
+| `bedroom_air_conditioner_temperature` | 空调温度策略样例 |
+| `bedroom_air_conditioner_turn_on` | 空调开机策略样例 |
 | `relative_air_conditioner_turn_off` | “关闭空调”承接最近空调上下文 |
-| `front_door_lock_unlock` | 高风险门锁二次确认 |
-| `camera_turn_off` | 高风险摄像头二次确认 |
-| `gas_alarm_turn_off_denied` | blocked 燃气设备拒绝 |
+| `front_door_lock_unlock` | policy-configured 门锁确认样例 |
+| `camera_turn_off` | policy-configured 摄像头确认样例 |
+| `gas_alarm_turn_off_denied` | policy-configured 燃气设备拒绝 |
 
 ## 样例报告
 
@@ -137,8 +137,8 @@ EdgeHome Harness 必须继续验证：
 设备是否存在
 能力是否支持
 状态是否新鲜
-风险等级是否允许
-是否需要二次确认
+静态 policy config 是否允许
+是否按配置要求确认
 是否生成 dry-run
 是否写入 audit
 是否可 replay
@@ -151,5 +151,5 @@ EdgeHome Harness 必须继续验证：
 ```text
 我没有只做一个“模型输出 JSON”的 demo。
 我做了 eval/replay 体系，评估 intent、slot、policy、dry-run 和 trace coverage。
-这样能证明 Harness 本身有效：模型错了不会进执行，危险动作会被 gate 拦截，所有 allow / deny 都能回放证据链。
+这样能证明 Harness 本身有效：模型错了不会进执行，不符合 policy config 的动作不会进入 executor，所有关键步骤都能通过 trace/replay 复盘。
 ```

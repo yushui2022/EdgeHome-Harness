@@ -5,6 +5,7 @@
 核心文档：
 
 ```text
+architecture-v2.md   V2 架构定调：Runtime Memory 主路径，Trace/Replay/Eval 观测闭环
 2gb-profile.md       2GB RAM 约束、low_memory profile、内存压力降级
 model-parameters.md  MiniCPM5-1B / Ollama 参数、输出治理、调参顺序
 deployment-modes.md  Mode A/B/C 部署方式、Home Assistant 接入边界

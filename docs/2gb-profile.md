@@ -45,8 +45,8 @@ JSON 输出越长，死循环风险和解析成本越高
 短输出
 短记忆
 强 schema
-强 gate
-可回放 evidence
+确定性校验
+可回放 trace
 失败时快速降级
 ```
 
@@ -199,16 +199,16 @@ Gate / policy 约束业务安全
 SQLite 在 2GB 设备上的角色：
 
 ```text
-存 evidence refs
-存 trace steps
-存 gate checks
+存 trace records
+存 replay metadata
+存 eval reports
 存 audit events
 存长期偏好和安全记忆
 ```
 
 SQLite 不应该被当成高频时序数据库。
 
-V1 只记录命令级证据链：
+V2 只记录命令级 TraceFrame：
 
 ```text
 raw_user_input
@@ -221,9 +221,13 @@ device_state_snapshot
 policy_rule_snapshot
 dry_run_plan
 executor_response
+failure_reason
+retry_count
+latency_ms
+memory_pressure
 ```
 
-这让系统可以 replay，但不会把设备每秒状态轮询全写进去。
+这让系统可以 replay，但不会把普通实时动作变成同步证据审批，也不会把设备每秒状态轮询全写进去。
 
 ## 验证命令
 

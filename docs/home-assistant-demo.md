@@ -137,7 +137,7 @@ HA dry-run 结果应该包含：
 execute_enabled = true
 ExecutionPlan 已生成
 PolicyDecision != deny
-高风险动作已经用户确认
+配置为 require_confirmation 的动作已经用户确认
 ExecutionTransaction 通过
 RateLimiter 通过
 IdempotencyChecker 通过
@@ -183,8 +183,8 @@ EdgeHome Harness 可以通过 Home Assistant 接入已有智能家居设备。
 ```text
 1. 先跑 eval，证明 Harness 指标
 2. 跑 dry-run，展示 ExecutionPlan
-3. replay trace，展示 evidence / gate / audit
-4. 展示危险动作被 deny
+3. replay trace，展示 trace / policy / audit
+4. 展示 policy-configured deny 样例
 5. 展示短时记忆解析“刚才那个灯”
 6. 最后展示 HA dry-run service payload
 ```

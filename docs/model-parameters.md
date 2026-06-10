@@ -1,13 +1,13 @@
 # Model Parameters
 
-本文记录 EdgeHome Harness 第一版模型参数策略。
+本文记录 EdgeHome Harness V2 模型参数策略。
 
 核心原则：
 
 ```text
 MiniCPM5-1B 只负责生成候选 JSON。
 参数调优只服务结构化输出稳定性，不服务开放聊天。
-任何模型输出都不能绕过 parser、validator、gate、policy、dry-run。
+任何模型输出都不能绕过 parser、validator、deterministic policy、dry-run。
 ```
 
 ## 第一版主模型
@@ -153,12 +153,12 @@ JSON 形状更稳定
 不能解决：
 
 ```text
-业务是否安全
+业务 hard constraints 是否满足
 设备是否存在
 动作是否被设备支持
-门锁是否需要二次确认
-燃气设备是否禁止自动操作
-模型是否把“所有摄像头”解释成安全动作
+静态 policy config 是否要求确认
+静态 policy config 是否禁止某类操作
+模型是否把模糊指令解释成不存在的设备
 系统是否会在 2GB 内存下撑爆
 执行是否真的成功
 ```
@@ -301,5 +301,5 @@ cargo run -p edgehome-cli -- --db-path edgehome-model-eval.sqlite eval cases/zh-
 我把 1B 小模型固定在低温、短输出、小上下文的结构化任务里。
 Ollama structured outputs 只负责 JSON 语法，OutputGovernor 负责输出预算和死循环治理。
 如果模型仍然失败，RetryPolicy 会把链路降到 compact / enum / rule-only。
-最终是否允许执行由 Rust Harness 的 schema、registry、capability、policy、ExecutionPlan 决定。
+最终是否进入执行计划由 Rust Harness 的 schema、registry、capability、deterministic policy 和 ExecutionPlan 决定。
 ```

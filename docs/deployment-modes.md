@@ -19,7 +19,7 @@ flowchart LR
   Harness["Rust Harness"]
   Ollama["Ollama"]
   Model["MiniCPM5-1B"]
-  SQLite["SQLite evidence / memory / audit"]
+  SQLite["SQLite trace / memory / audit"]
   HA["Home Assistant"]
   Miio["miIO / MIoT local subset"]
   Devices["Smart home devices"]
@@ -243,7 +243,7 @@ execute_enabled = false
 ExecutionPlan 已生成
 GateEngine 已通过
 PolicyDecision 不是 deny
-高风险动作已经 user_confirmed
+配置为 require_confirmation 的动作已经 user_confirmed
 ExecutionTransaction 检查 idempotency / rate limit / post-state
 ```
 
@@ -297,6 +297,6 @@ V1 推荐顺序：
 
 ```text
 我没有把智能家居后端作为项目本体。
-项目本体是 Rust Harness：它约束 1B 小模型，把不可信 JSON 变成有证据链、有 gate、有 policy、有 dry-run、有 audit 的 ExecutionPlan。
+项目本体是 Rust Harness：它约束 1B 小模型，把不可信 JSON 变成经过 schema、capability、policy config、dry-run 和 trace 的 ExecutionPlan。
 Home Assistant 只是第一阶段真实设备 demo 后端，因为它能让我专注展示 Harness，而不是陷入每个厂商协议的碎片化适配。
 ```
