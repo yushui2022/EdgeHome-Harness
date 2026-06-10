@@ -66,6 +66,12 @@ pub struct EvalCaseResult {
     pub slots_correct: Option<bool>,
     pub policy_correct: Option<bool>,
     pub dry_run_correct: Option<bool>,
+    pub schema_valid: Option<bool>,
+    pub fallback_used: bool,
+    pub dead_loop_detected: bool,
+    pub retry_count: u64,
+    pub latency_ms: Option<i64>,
+    pub failure_reason: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -79,6 +85,14 @@ pub struct EvalReport {
     pub policy_accuracy: f32,
     pub dry_run_accuracy: f32,
     pub trace_coverage: f32,
+    pub schema_valid_rate: f32,
+    pub memory_resolution_accuracy: f32,
+    pub fallback_rate: f32,
+    pub dead_loop_rate: f32,
+    pub retry_rate: f32,
+    pub latency_avg_ms: Option<f32>,
+    pub latency_p95_ms: Option<i64>,
+    pub low_memory_degrade_count: usize,
     pub results: Vec<EvalCaseResult>,
 }
 
@@ -111,6 +125,41 @@ pub fn evaluate_case_output(case: &EvalCase, output: &Value) -> EvalResult<EvalC
         .unwrap_or(false);
     let trace_id = output
         .get("trace_id")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
+    let trace_frame = output.get("trace_frame");
+    let schema_valid = if output.get("mode").and_then(Value::as_str) == Some("memory_write") {
+        None
+    } else {
+        Some(
+            trace_frame
+                .and_then(|frame| frame.get("schema_result"))
+                .and_then(Value::as_str)
+                .map(|value| value == "passed")
+                .unwrap_or_else(|| normalized.is_some()),
+        )
+    };
+    let output_governor = trace_frame.and_then(|frame| frame.get("output_governor"));
+    let fallback_used = output_governor
+        .and_then(|governor| governor.get("recommended_fallback"))
+        .is_some_and(|fallback| !fallback.is_null());
+    let dead_loop_detected = output_governor
+        .and_then(|governor| governor.get("repeat_detected"))
+        .and_then(Value::as_bool)
+        .unwrap_or(false)
+        || output_governor
+            .and_then(|governor| governor.get("failure_kind"))
+            .and_then(Value::as_str)
+            .is_some_and(|kind| kind == "dead_loop");
+    let retry_count = trace_frame
+        .and_then(|frame| frame.get("retry_count"))
+        .and_then(Value::as_u64)
+        .unwrap_or(0);
+    let latency_ms = trace_frame
+        .and_then(|frame| frame.get("latency_ms"))
+        .and_then(Value::as_i64);
+    let failure_reason = trace_frame
+        .and_then(|frame| frame.get("failure_reason"))
         .and_then(Value::as_str)
         .map(str::to_owned);
 
@@ -218,6 +267,12 @@ pub fn evaluate_case_output(case: &EvalCase, output: &Value) -> EvalResult<EvalC
         slots_correct,
         policy_correct,
         dry_run_correct,
+        schema_valid,
+        fallback_used,
+        dead_loop_detected,
+        retry_count,
+        latency_ms,
+        failure_reason,
     })
 }
 
@@ -242,6 +297,37 @@ impl EvalReport {
                     .count(),
                 total,
             ),
+            schema_valid_rate: option_accuracy(results.iter().map(|result| result.schema_valid)),
+            memory_resolution_accuracy: memory_resolution_accuracy(&results),
+            fallback_rate: ratio(
+                results.iter().filter(|result| result.fallback_used).count(),
+                total,
+            ),
+            dead_loop_rate: ratio(
+                results
+                    .iter()
+                    .filter(|result| result.dead_loop_detected)
+                    .count(),
+                total,
+            ),
+            retry_rate: ratio(
+                results
+                    .iter()
+                    .filter(|result| result.retry_count > 0)
+                    .count(),
+                total,
+            ),
+            latency_avg_ms: latency_avg_ms(&results),
+            latency_p95_ms: latency_p95_ms(&results),
+            low_memory_degrade_count: results
+                .iter()
+                .filter(|result| {
+                    result
+                        .failure_reason
+                        .as_deref()
+                        .is_some_and(|reason| reason.contains("memory pressure"))
+                })
+                .count(),
             results,
         }
     }
@@ -295,6 +381,40 @@ fn option_accuracy(values: impl Iterator<Item = Option<bool>>) -> f32 {
     ratio(values.iter().filter(|value| **value).count(), values.len())
 }
 
+fn memory_resolution_accuracy(results: &[EvalCaseResult]) -> f32 {
+    let values = results
+        .iter()
+        .filter(|result| result.id.contains("relative") || result.id.contains("alias_memory"))
+        .map(|result| result.slots_correct);
+    option_accuracy(values)
+}
+
+fn latency_avg_ms(results: &[EvalCaseResult]) -> Option<f32> {
+    let values = results
+        .iter()
+        .filter_map(|result| result.latency_ms)
+        .collect::<Vec<_>>();
+    if values.is_empty() {
+        return None;
+    }
+
+    Some(values.iter().sum::<i64>() as f32 / values.len() as f32)
+}
+
+fn latency_p95_ms(results: &[EvalCaseResult]) -> Option<i64> {
+    let mut values = results
+        .iter()
+        .filter_map(|result| result.latency_ms)
+        .collect::<Vec<_>>();
+    if values.is_empty() {
+        return None;
+    }
+
+    values.sort_unstable();
+    let index = ((values.len() as f32 * 0.95).ceil() as usize).saturating_sub(1);
+    values.get(index).copied()
+}
+
 fn ratio(numerator: usize, denominator: usize) -> f32 {
     if denominator == 0 {
         1.0
@@ -330,6 +450,16 @@ mod tests {
             "trace_id": "tr_test",
             "policy_decision": "allow",
             "dry_run_plan": { "plan": {} },
+            "trace_frame": {
+                "schema_result": "passed",
+                "output_governor": {
+                    "accepted": true,
+                    "repeat_detected": false,
+                    "recommended_fallback": null
+                },
+                "retry_count": 0,
+                "latency_ms": 12
+            },
             "normalized_command": {
                 "schema_version": "command.v1",
                 "intent": "control_device",
@@ -349,6 +479,9 @@ mod tests {
 
         assert!(result.passed);
         assert_eq!(result.failures, Vec::<String>::new());
+        assert_eq!(result.schema_valid, Some(true));
+        assert!(!result.fallback_used);
+        assert_eq!(result.latency_ms, Some(12));
     }
 
     #[test]
@@ -364,9 +497,15 @@ mod tests {
                 slots_correct: Some(true),
                 policy_correct: Some(true),
                 dry_run_correct: Some(true),
+                schema_valid: Some(true),
+                fallback_used: false,
+                dead_loop_detected: false,
+                retry_count: 0,
+                latency_ms: Some(10),
+                failure_reason: None,
             },
             EvalCaseResult {
-                id: "bad".to_owned(),
+                id: "relative_bad".to_owned(),
                 input: "bad".to_owned(),
                 trace_id: None,
                 passed: false,
@@ -375,6 +514,12 @@ mod tests {
                 slots_correct: Some(false),
                 policy_correct: Some(true),
                 dry_run_correct: Some(false),
+                schema_valid: Some(false),
+                fallback_used: true,
+                dead_loop_detected: true,
+                retry_count: 1,
+                latency_ms: Some(30),
+                failure_reason: Some("fallback".to_owned()),
             },
         ]);
 
@@ -383,5 +528,12 @@ mod tests {
         assert_eq!(report.pass_rate, 0.5);
         assert_eq!(report.policy_accuracy, 1.0);
         assert_eq!(report.trace_coverage, 0.5);
+        assert_eq!(report.schema_valid_rate, 0.5);
+        assert_eq!(report.memory_resolution_accuracy, 0.0);
+        assert_eq!(report.fallback_rate, 0.5);
+        assert_eq!(report.dead_loop_rate, 0.5);
+        assert_eq!(report.retry_rate, 0.5);
+        assert_eq!(report.latency_avg_ms, Some(20.0));
+        assert_eq!(report.latency_p95_ms, Some(30));
     }
 }

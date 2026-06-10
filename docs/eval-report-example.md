@@ -12,6 +12,11 @@ dry-run 是否正确
 trace 是否覆盖
 policy-configured deny / confirm 是否按配置生效
 relative command 是否能被短时记忆解析
+schema 是否通过
+fallback 是否触发
+dead loop 是否被检测
+retry 是否发生
+latency 是否可观测
 ```
 
 ## 运行命令
@@ -73,10 +78,21 @@ cases/zh-home.yaml
     "slot_accuracy": 1.0,
     "policy_accuracy": 1.0,
     "dry_run_accuracy": 1.0,
-    "trace_coverage": 1.0
+    "trace_coverage": 1.0,
+    "schema_valid_rate": 1.0,
+    "memory_resolution_accuracy": 1.0,
+    "fallback_rate": 0.0,
+    "dead_loop_rate": 0.0,
+    "retry_rate": 0.0,
+    "latency_avg_ms": 473.1,
+    "latency_p95_ms": 530,
+    "low_memory_degrade_count": 0
   }
 }
 ```
+
+`latency_avg_ms` 和 `latency_p95_ms` 是本地运行值，会随机器、数据库和构建状态波动。
+README 和面试演示里只能引用真实跑出来的值，不能把这两个数字当成固定 benchmark。
 
 ## Replay 示例
 
@@ -103,6 +119,11 @@ TraceFrame 会把原始 evidence 汇总成更适合调试的单帧结构：
   "runtime_profile": "low_memory",
   "prompt_hash": "6023786e3c1b4285",
   "schema_result": "passed",
+  "output_governor": {
+    "accepted": true,
+    "repeat_detected": false,
+    "recommended_fallback": null
+  },
   "device_resolution": {
     "gate_name": "DeviceResolvedGate",
     "outcome": "accepted"
@@ -112,6 +133,7 @@ TraceFrame 会把原始 evidence 汇总成更适合调试的单帧结构：
     "outcome": "accepted"
   },
   "latency_ms": 438,
+  "retry_count": 0,
   "gate_count": 9
 }
 ```
@@ -172,6 +194,18 @@ EdgeHome Harness 必须继续验证：
 是否生成 dry-run
 是否写入 audit
 是否可 replay
+```
+
+M21 的 eval 指标会从 TraceFrame 提取更多 Harness 状态：
+
+```text
+schema_valid_rate：JSON 进入业务 schema 后是否稳定通过
+memory_resolution_accuracy：相对指令和别名指令是否被记忆正确补全
+fallback_rate：OutputGovernor 是否要求降级
+dead_loop_rate：是否检测到复读或死循环输出
+retry_rate：是否发生重试
+latency_avg_ms / latency_p95_ms：链路延迟是否可观测
+low_memory_degrade_count：是否发生低内存降级
 ```
 
 ## 面试表达

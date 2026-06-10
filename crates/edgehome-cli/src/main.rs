@@ -444,8 +444,10 @@ fn run_mock_pipeline(
     )?;
 
     let execution_plan = dry_run_plan.as_ref().map(|plan| plan.plan.clone());
+    let trace_frame = build_trace_frame(&load_trace_bundle(db_path, trace.trace_id.clone())?);
     Ok(json!({
         "trace_id": trace.trace_id,
+        "trace_frame": trace_frame,
         "mode": mode.as_str(),
         "mock": use_mock,
         "model_mode": if use_mock { "mock" } else { "ollama" },
@@ -671,20 +673,20 @@ fn gate_check_value(gate_checks: &[GateCheck], gate_name: &str) -> Option<Value>
 }
 
 fn trace_failure_reason(steps: &[CommandStep], gate_checks: &[GateCheck]) -> Option<String> {
-    steps
+    gate_checks
         .iter()
-        .find(|step| {
-            matches!(
-                step.status,
-                StepStatus::Rejected | StepStatus::Failed | StepStatus::Fallback
-            )
-        })
-        .and_then(|step| step.message.clone().or_else(|| Some(step.name.clone())))
+        .find(|check| check.outcome == GateOutcome::Rejected)
+        .map(|check| format!("{}: {}", check.gate_name, check.reason))
         .or_else(|| {
-            gate_checks
+            steps
                 .iter()
-                .find(|check| check.outcome == GateOutcome::Rejected)
-                .map(|check| format!("{}: {}", check.gate_name, check.reason))
+                .find(|step| {
+                    matches!(
+                        step.status,
+                        StepStatus::Rejected | StepStatus::Failed | StepStatus::Fallback
+                    )
+                })
+                .and_then(|step| step.message.clone().or_else(|| Some(step.name.clone())))
         })
 }
 

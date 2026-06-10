@@ -557,6 +557,14 @@ slot_accuracy = 1.0
 policy_accuracy = 1.0
 dry_run_accuracy = 1.0
 trace_coverage = 1.0
+schema_valid_rate = 1.0
+memory_resolution_accuracy = 1.0
+fallback_rate = 0.0
+dead_loop_rate = 0.0
+retry_rate = 0.0
+latency_avg_ms = 来自本地实际运行
+latency_p95_ms = 来自本地实际运行
+low_memory_degrade_count = 0
 ```
 
 注意：
@@ -565,6 +573,9 @@ trace_coverage = 1.0
 指标必须来自本地 eval 输出。
 不要在 README 中编造未跑过的 benchmark。
 ```
+
+M21 之后，eval 不只比较最终命令是否正确，也会读取每个 case 输出里的 `trace_frame`，统计 schema、fallback、死循环、重试、延迟和记忆解析指标。
+这能证明 Harness 管住了小模型的运行边界，而不是只证明某次 mock 输出刚好对。
 
 ## 项目 Roadmap
 

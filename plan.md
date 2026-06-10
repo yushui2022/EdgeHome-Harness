@@ -402,6 +402,31 @@ M27 可选扩展
 每完成一个稳定小阶段就 commit。
 ```
 
+### 6.1 当前执行状态
+
+截至 2026-06-10，V2 已经进入 M21 收尾阶段。
+后续 `/goal` 模式必须从这个状态继续，不要回头重做已经验收并提交的里程碑。
+
+```text
+M16 架构叙事修正 = 已完成
+M17 轻量 Runtime Memory v2 / alias flow = 已完成
+M18 Context Compiler 与低内存注入策略 = 已完成
+M19 Output Governor telemetry = 已完成
+M20 TraceFrame 与 Evidence-Backed Replay = 已完成
+M21 Eval Case Matrix 与模型参数评测 = 已完成
+M22 Release Gate = 下一步
+M23 Executor Boundary 与设备后端边界 = 待开始
+M24 2GB Profile 验证与降级策略 = 待开始
+M25 面试 Demo Walkthrough = 待开始
+M26 README / docs 最终同步 = 待开始
+```
+
+M21 收尾完成后，下一轮 `/goal` 的默认入口是：
+
+```text
+M22 Release Gate
+```
+
 ## 7. M16 架构叙事修正
 
 ### 目标

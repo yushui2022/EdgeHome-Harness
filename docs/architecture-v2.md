@@ -136,6 +136,21 @@ Eval 负责回归：
 同一批 case 比较不同 prompt/parser/memory 策略
 ```
 
+M21 之后，eval 会优先读取单次请求输出中的 `trace_frame`，把 TraceFrame 里的工程状态变成指标：
+
+```text
+schema_valid_rate
+memory_resolution_accuracy
+fallback_rate
+dead_loop_rate
+retry_rate
+latency_avg_ms
+latency_p95_ms
+low_memory_degrade_count
+```
+
+这一步很关键：评测对象不只是“模型有没有答对”，而是“Rust Harness 有没有稳定治理小模型、记忆、输出预算和失败路径”。
+
 ## Evidence 的新位置
 
 V2 中 Evidence 的价值不在普通动作执行门禁，而在：
@@ -195,4 +210,3 @@ retry_rate <= 0.30
 证据系统用于 trace、replay、eval 和 release gate。
 这样既保留了可追溯工程能力，又不会把智能家居控制做成慢速审批流。
 ```
-
