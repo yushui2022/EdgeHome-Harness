@@ -524,6 +524,15 @@ cargo run -q -p edgehome-cli -- config show
 cargo run -q -p edgehome-cli -- --db-path edgehome-eval.sqlite eval cases/zh-home.yaml
 ```
 
+运行 release gate：
+
+```powershell
+cargo run -q -p edgehome-cli -- --db-path edgehome-eval.sqlite eval cases/zh-home.yaml --gate
+```
+
+`--gate` 会在 eval report 之外输出 `gate` 字段。
+如果门禁不通过，CLI 会在打印完整报告后以非 0 状态码退出，方便 CI 或 `/goal` 自动执行时阻止回归。
+
 运行 demo：
 
 ```powershell
@@ -576,6 +585,22 @@ low_memory_degrade_count = 0
 
 M21 之后，eval 不只比较最终命令是否正确，也会读取每个 case 输出里的 `trace_frame`，统计 schema、fallback、死循环、重试、延迟和记忆解析指标。
 这能证明 Harness 管住了小模型的运行边界，而不是只证明某次 mock 输出刚好对。
+
+M22 之后，Evidence-Gated Release 成为版本质量门禁。
+它不阻塞普通智能家居动作，但会阻止有回归的 prompt、参数、parser、memory 或 policy 改动进入主线。
+
+默认 gate 标准：
+
+```text
+total_cases >= 1
+pass_rate >= 1.0
+schema_valid_rate >= 1.0
+dead_loop_rate <= 0.0
+trace_coverage >= 1.0
+intent_accuracy >= 0.95
+slot_accuracy >= 0.90
+retry_rate <= 0.30
+```
 
 ## 项目 Roadmap
 

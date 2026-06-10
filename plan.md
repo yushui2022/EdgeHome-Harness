@@ -414,17 +414,17 @@ M18 Context Compiler 与低内存注入策略 = 已完成
 M19 Output Governor telemetry = 已完成
 M20 TraceFrame 与 Evidence-Backed Replay = 已完成
 M21 Eval Case Matrix 与模型参数评测 = 已完成
-M22 Release Gate = 下一步
-M23 Executor Boundary 与设备后端边界 = 待开始
+M22 Release Gate = 已完成
+M23 Executor Boundary 与设备后端边界 = 下一步
 M24 2GB Profile 验证与降级策略 = 待开始
 M25 面试 Demo Walkthrough = 待开始
 M26 README / docs 最终同步 = 待开始
 ```
 
-M21 收尾完成后，下一轮 `/goal` 的默认入口是：
+M22 完成后，下一轮 `/goal` 的默认入口是：
 
 ```text
-M22 Release Gate
+M23 Executor Boundary 与设备后端边界
 ```
 
 ## 7. M16 架构叙事修正
@@ -833,16 +833,19 @@ README 有一组可复现指标示例
 
 ### CLI 目标
 
-可以实现或规划：
+已实现：
 
 ```text
 edgehome eval cases/zh-home.yaml --gate
-edgehome replay --gate traces/*.jsonl
 ```
+
+`edgehome replay --gate traces/*.jsonl` 保留为后续扩展，不属于 M22 必须完成项。
 
 ### 默认 gate 标准
 
 ```text
+total_cases >= 1
+pass_rate >= 1.0
 schema_valid_rate = 1.0
 dead_loop_rate = 0.0
 trace_coverage = 1.0

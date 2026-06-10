@@ -96,6 +96,57 @@ pub struct EvalReport {
     pub results: Vec<EvalCaseResult>,
 }
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EvalGateConfig {
+    pub min_total_cases: usize,
+    pub min_pass_rate: f32,
+    pub min_schema_valid_rate: f32,
+    pub max_dead_loop_rate: f32,
+    pub min_trace_coverage: f32,
+    pub min_intent_accuracy: f32,
+    pub min_slot_accuracy: f32,
+    pub max_retry_rate: f32,
+}
+
+impl Default for EvalGateConfig {
+    fn default() -> Self {
+        Self {
+            min_total_cases: 1,
+            min_pass_rate: 1.0,
+            min_schema_valid_rate: 1.0,
+            max_dead_loop_rate: 0.0,
+            min_trace_coverage: 1.0,
+            min_intent_accuracy: 0.95,
+            min_slot_accuracy: 0.90,
+            max_retry_rate: 0.30,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EvalGateReport {
+    pub passed: bool,
+    pub checks: Vec<EvalGateCheck>,
+    pub failing_cases: Vec<EvalGateCaseFailure>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EvalGateCheck {
+    pub name: String,
+    pub actual: f32,
+    pub expected: String,
+    pub passed: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EvalGateCaseFailure {
+    pub id: String,
+    pub input: String,
+    pub trace_id: Option<String>,
+    pub failures: Vec<String>,
+    pub failure_reason: Option<String>,
+}
+
 pub fn load_cases(path: impl AsRef<Path>) -> EvalResult<Vec<EvalCase>> {
     let path = path.as_ref();
     let content = std::fs::read_to_string(path).map_err(|source| EvalError::ReadCases {
@@ -333,6 +384,62 @@ impl EvalReport {
     }
 }
 
+pub fn evaluate_release_gate(report: &EvalReport, config: &EvalGateConfig) -> EvalGateReport {
+    let checks = vec![
+        min_check(
+            "total_cases",
+            report.total as f32,
+            config.min_total_cases as f32,
+        ),
+        min_check("pass_rate", report.pass_rate, config.min_pass_rate),
+        min_check(
+            "schema_valid_rate",
+            report.schema_valid_rate,
+            config.min_schema_valid_rate,
+        ),
+        max_check(
+            "dead_loop_rate",
+            report.dead_loop_rate,
+            config.max_dead_loop_rate,
+        ),
+        min_check(
+            "trace_coverage",
+            report.trace_coverage,
+            config.min_trace_coverage,
+        ),
+        min_check(
+            "intent_accuracy",
+            report.intent_accuracy,
+            config.min_intent_accuracy,
+        ),
+        min_check(
+            "slot_accuracy",
+            report.slot_accuracy,
+            config.min_slot_accuracy,
+        ),
+        max_check("retry_rate", report.retry_rate, config.max_retry_rate),
+    ];
+    let failing_cases = report
+        .results
+        .iter()
+        .filter(|result| !result.passed)
+        .map(|result| EvalGateCaseFailure {
+            id: result.id.clone(),
+            input: result.input.clone(),
+            trace_id: result.trace_id.clone(),
+            failures: result.failures.clone(),
+            failure_reason: result.failure_reason.clone(),
+        })
+        .collect::<Vec<_>>();
+    let passed = checks.iter().all(|check| check.passed) && failing_cases.is_empty();
+
+    EvalGateReport {
+        passed,
+        checks,
+        failing_cases,
+    }
+}
+
 fn compare_slot<T>(
     failures: &mut Vec<String>,
     slot_checks: &mut Vec<bool>,
@@ -413,6 +520,24 @@ fn latency_p95_ms(results: &[EvalCaseResult]) -> Option<i64> {
     values.sort_unstable();
     let index = ((values.len() as f32 * 0.95).ceil() as usize).saturating_sub(1);
     values.get(index).copied()
+}
+
+fn min_check(name: &str, actual: f32, expected: f32) -> EvalGateCheck {
+    EvalGateCheck {
+        name: name.to_owned(),
+        actual,
+        expected: format!(">= {expected}"),
+        passed: actual + f32::EPSILON >= expected,
+    }
+}
+
+fn max_check(name: &str, actual: f32, expected: f32) -> EvalGateCheck {
+    EvalGateCheck {
+        name: name.to_owned(),
+        actual,
+        expected: format!("<= {expected}"),
+        passed: actual <= expected + f32::EPSILON,
+    }
 }
 
 fn ratio(numerator: usize, denominator: usize) -> f32 {
@@ -535,5 +660,88 @@ mod tests {
         assert_eq!(report.retry_rate, 0.5);
         assert_eq!(report.latency_avg_ms, Some(20.0));
         assert_eq!(report.latency_p95_ms, Some(30));
+    }
+
+    #[test]
+    fn release_gate_passes_clean_report() {
+        let report = EvalReport::from_results(vec![EvalCaseResult {
+            id: "ok".to_owned(),
+            input: "把客厅灯关掉".to_owned(),
+            trace_id: Some("tr_ok".to_owned()),
+            passed: true,
+            failures: Vec::new(),
+            intent_correct: Some(true),
+            slots_correct: Some(true),
+            policy_correct: Some(true),
+            dry_run_correct: Some(true),
+            schema_valid: Some(true),
+            fallback_used: false,
+            dead_loop_detected: false,
+            retry_count: 0,
+            latency_ms: Some(10),
+            failure_reason: None,
+        }]);
+
+        let gate = evaluate_release_gate(&report, &EvalGateConfig::default());
+
+        assert!(gate.passed);
+        assert!(gate.failing_cases.is_empty());
+        assert!(gate.checks.iter().all(|check| check.passed));
+    }
+
+    #[test]
+    fn release_gate_reports_failed_cases_and_checks() {
+        let report = EvalReport::from_results(vec![
+            EvalCaseResult {
+                id: "ok".to_owned(),
+                input: "把客厅灯关掉".to_owned(),
+                trace_id: Some("tr_ok".to_owned()),
+                passed: true,
+                failures: Vec::new(),
+                intent_correct: Some(true),
+                slots_correct: Some(true),
+                policy_correct: Some(true),
+                dry_run_correct: Some(true),
+                schema_valid: Some(true),
+                fallback_used: false,
+                dead_loop_detected: false,
+                retry_count: 0,
+                latency_ms: Some(10),
+                failure_reason: None,
+            },
+            EvalCaseResult {
+                id: "bad_json".to_owned(),
+                input: "坏 JSON".to_owned(),
+                trace_id: None,
+                passed: false,
+                failures: vec!["trace_id missing".to_owned()],
+                intent_correct: Some(false),
+                slots_correct: Some(false),
+                policy_correct: Some(true),
+                dry_run_correct: Some(false),
+                schema_valid: Some(false),
+                fallback_used: true,
+                dead_loop_detected: true,
+                retry_count: 1,
+                latency_ms: Some(20),
+                failure_reason: Some("schema failed".to_owned()),
+            },
+        ]);
+
+        let gate = evaluate_release_gate(&report, &EvalGateConfig::default());
+
+        assert!(!gate.passed);
+        assert_eq!(gate.failing_cases.len(), 1);
+        assert_eq!(gate.failing_cases[0].id, "bad_json");
+        assert!(
+            gate.checks
+                .iter()
+                .any(|check| check.name == "schema_valid_rate" && !check.passed)
+        );
+        assert!(
+            gate.checks
+                .iter()
+                .any(|check| check.name == "dead_loop_rate" && !check.passed)
+        );
     }
 }

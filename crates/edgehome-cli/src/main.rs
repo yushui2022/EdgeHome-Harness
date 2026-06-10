@@ -8,7 +8,9 @@ use edgehome_config::{RuntimeProfile, load_profile};
 use edgehome_core::{
     DeviceId, DeviceType, ModelCandidate, NormalizedCommand, PolicyDecision, UserInput,
 };
-use edgehome_eval::{EvalReport, evaluate_case_output, load_cases};
+use edgehome_eval::{
+    EvalGateConfig, EvalReport, evaluate_case_output, evaluate_release_gate, load_cases,
+};
 use edgehome_executor::DryRunPlanner;
 use edgehome_gate::{GateEngine, GateEvaluationRequest};
 use edgehome_memory::{
@@ -68,6 +70,8 @@ enum Commands {
         cases_path: PathBuf,
         #[arg(long)]
         ollama: bool,
+        #[arg(long)]
+        gate: bool,
     },
     Replay {
         trace_id: String,
@@ -134,7 +138,11 @@ fn main() -> anyhow::Result<()> {
             )?;
             print_json(&output)?;
         }
-        Commands::Eval { cases_path, ollama } => {
+        Commands::Eval {
+            cases_path,
+            ollama,
+            gate,
+        } => {
             let profile = load_profile(&cli.config_dir, &cli.profile)
                 .with_context(|| format!("failed to load profile `{}`", cli.profile))?;
             let output = run_eval(
@@ -143,8 +151,12 @@ fn main() -> anyhow::Result<()> {
                 &profile,
                 &cases_path,
                 !ollama,
+                gate,
             )?;
             print_json(&output)?;
+            if gate_failed(&output) {
+                std::process::exit(1);
+            }
         }
         Commands::Replay { trace_id } => {
             let output = replay_trace(&cli.db_path, TraceId(trace_id))?;
@@ -475,6 +487,7 @@ fn run_eval(
     profile: &RuntimeProfile,
     cases_path: &Path,
     use_mock: bool,
+    gate_enabled: bool,
 ) -> anyhow::Result<Value> {
     let cases = load_cases(cases_path)?;
     let mut results = Vec::with_capacity(cases.len());
@@ -492,12 +505,30 @@ fn run_eval(
     }
 
     let report = EvalReport::from_results(results);
-    Ok(json!({
+    let gate = gate_enabled.then(|| evaluate_release_gate(&report, &EvalGateConfig::default()));
+    let mut output = json!({
         "cases_path": cases_path.display().to_string(),
         "profile": profile.name.to_string(),
         "model_mode": if use_mock { "mock" } else { "ollama" },
         "report": report,
-    }))
+    });
+
+    if let Some(gate) = gate {
+        output
+            .as_object_mut()
+            .expect("eval output is an object")
+            .insert("gate".to_owned(), json!(gate));
+    }
+
+    Ok(output)
+}
+
+fn gate_failed(output: &Value) -> bool {
+    output
+        .get("gate")
+        .and_then(|gate| gate.get("passed"))
+        .and_then(Value::as_bool)
+        == Some(false)
 }
 
 fn show_trace(db_path: &Path, trace_id: TraceId) -> anyhow::Result<Value> {

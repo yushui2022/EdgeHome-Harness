@@ -28,6 +28,15 @@ cargo run -p edgehome-cli -- --db-path edgehome-eval.sqlite eval cases/zh-home.y
 
 默认使用 mock model。
 
+作为 release gate 运行：
+
+```powershell
+cargo run -p edgehome-cli -- --db-path edgehome-eval.sqlite eval cases/zh-home.yaml --gate
+```
+
+`--gate` 会在报告里加入 `gate` 字段。
+如果任一门禁规则失败，CLI 会先打印完整 JSON，再返回非 0 exit code。
+
 使用本地 Ollama / MiniCPM5：
 
 ```powershell
@@ -93,6 +102,34 @@ cases/zh-home.yaml
 
 `latency_avg_ms` 和 `latency_p95_ms` 是本地运行值，会随机器、数据库和构建状态波动。
 README 和面试演示里只能引用真实跑出来的值，不能把这两个数字当成固定 benchmark。
+
+开启 `--gate` 后，输出会额外包含：
+
+```json
+{
+  "gate": {
+    "passed": true,
+    "checks": [
+      {
+        "name": "schema_valid_rate",
+        "actual": 1.0,
+        "expected": ">= 1",
+        "passed": true
+      },
+      {
+        "name": "dead_loop_rate",
+        "actual": 0.0,
+        "expected": "<= 0",
+        "passed": true
+      }
+    ],
+    "failing_cases": []
+  }
+}
+```
+
+失败时，`failing_cases` 会列出 case id、输入、trace id、失败字段和 `failure_reason`。
+这就是 Evidence-Gated Release 的核心：不是让证据链卡住用户开灯，而是让证据链卡住会破坏 Harness 稳定性的代码变更。
 
 ## Replay 示例
 
@@ -214,6 +251,6 @@ low_memory_degrade_count：是否发生低内存降级
 
 ```text
 我没有只做一个“模型输出 JSON”的 demo。
-我做了 eval/replay 体系，评估 intent、slot、policy、dry-run 和 trace coverage。
-这样能证明 Harness 本身有效：模型错了不会进执行，不符合 policy config 的动作不会进入 executor，所有关键步骤都能通过 trace/replay 复盘。
+我做了 eval/replay/release gate 体系，评估 intent、slot、policy、dry-run、trace coverage、schema、dead loop、retry 和 memory resolution。
+这样能证明 Harness 本身有效：模型错了不会进执行，不符合 policy config 的动作不会进入 executor，所有关键步骤都能通过 trace/replay 复盘，版本改动还要通过 gate 才能算没有回归。
 ```

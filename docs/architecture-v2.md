@@ -186,6 +186,8 @@ Evidence 真正 gate 的对象是版本质量。
 示例标准：
 
 ```text
+total_cases >= 1
+pass_rate >= 1.0
 schema_valid_rate = 1.0
 dead_loop_rate = 0.0
 trace_coverage = 1.0
@@ -198,6 +200,7 @@ retry_rate <= 0.30
 
 ```text
 新的 prompt、参数、parser、memory 策略只有通过 eval gate，才算没有破坏 Harness 稳定性。
+gate 失败时，CLI 必须返回非 0，并在报告里列出失败 case 和失败检查项。
 ```
 
 ## 面试表达
