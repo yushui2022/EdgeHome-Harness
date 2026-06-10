@@ -1,10 +1,10 @@
 # EdgeHome Harness
 
-EdgeHome Harness 是一个面向 **1B 端侧小模型** 的 **Rust Agent Harness** 项目。
+EdgeHome Harness 是一个面向 **1B 端侧小模型** 的 **Rust Agent Harness** 项目，面向低资源边缘设备上的结构化智能家居指令解析、执行约束和工程观测。
 
-它的产品形态是智能家居本地控制中台，但项目本体不是智能家居 App，也不是米家 App、小米音箱或 Home Assistant 的替代品。
+项目以“智能家居本地控制中台”作为垂直应用场景，但核心价值不在于替代现有智能家居 App、米家 App、小米音箱或 Home Assistant，而在于展示端侧小模型进入真实执行链路前所需要的 Harness 工程能力。
 
-项目真正要证明的是：
+项目目标：
 
 ```text
 如何把一个容易复读、死循环、输出不稳定的 1B 本地小模型，
@@ -25,7 +25,7 @@ EdgeHome Harness =
 + 智能家居本地控制场景
 ```
 
-更工程化地说：
+核心设计：
 
 ```text
 MiniCPM5-1B 只负责生成候选 JSON。
@@ -37,7 +37,33 @@ Trace / Replay / Eval 负责失败复盘、参数比较和版本回归。
 智能家居控制只是验证 Harness 能力的垂直场景。
 ```
 
-## 为什么不是普通智能家居 Demo
+## 当前状态
+
+EdgeHome Harness 当前定位为可复现的工程原型和面试展示项目。
+
+已经完成：
+
+```text
+Rust Harness 主链路
+mock model / mock executor 演示路径
+Runtime Memory
+Output Governor
+Device Registry / PolicyGate
+Trace / Replay / Eval / Release Gate
+low_memory profile
+Home Assistant demo backend 边界
+```
+
+当前未声明：
+
+```text
+真实 2GB ARM 板卡长期 benchmark
+全量米家 / MIoT / miIO / Matter / MQTT 适配
+可直接商用的智能家居网关产品
+替代米家 App、小米音箱或 Home Assistant
+```
+
+## 项目价值
 
 如果只是做一个“用户说开灯，模型输出 JSON，然后调用设备”的 demo，Ollama structured outputs 已经能解决一部分格式问题。
 
@@ -51,7 +77,7 @@ Ollama structured outputs 能做：
 降低解释文本混入概率
 ```
 
-EdgeHome Harness 必须继续解决：
+EdgeHome Harness 关注的是 structured outputs 之外的工程问题：
 
 ```text
 模型是否死循环
@@ -75,13 +101,13 @@ ModelOutput != Command
 模型输出永远只是候选。
 真正能进入执行层的只能是 Rust Harness 生成并校验过的 `ExecutionPlan`。
 
-## 架构修正
+## 架构原则
 
-早期版本曾考虑把证据系统放在在线执行门控里，要求普通动作也等待完整证据链。
+普通智能家居动作需要低延迟响应，不适合把每一次开关灯都设计成慢速审批流。
 
-这个设计更适合报销、审批、工单、合同审核这类慢速强证据企业 Agent，不适合智能家居本地实时控制。
+因此本项目没有把证据系统放在普通动作的同步执行门禁里。
 
-V2 已经把架构修正为：
+当前架构原则：
 
 ```text
 Runtime Memory 是在线主路径。
@@ -110,7 +136,7 @@ flowchart TD
     E --> F["观测闭环层<br/>Trace / Replay / Eval Gate"]
 ```
 
-这张图只表达一件事：小模型在最前面，业务真相和执行许可都在 Rust Harness 后面。
+该分层强调：小模型位于候选生成层，业务真相、执行许可和失败治理都由 Rust Harness 负责。
 
 ## 在线主路径
 
@@ -146,7 +172,7 @@ flowchart LR
 14. Memory Writer 更新短时状态或明确长期偏好。
 ```
 
-模型永远不能直接接触：
+模型不会直接接触：
 
 ```text
 Home Assistant token
@@ -247,7 +273,7 @@ flowchart TD
 
 ## Output Governor
 
-1B 小模型最大的问题不是“不会聊天”，而是：
+在智能家居指令场景中，1B 小模型的主要风险不是开放对话质量，而是：
 
 ```text
 输出解释文本
@@ -341,7 +367,7 @@ Home Assistant 是 demo backend，不是项目本体。
 eval 不依赖真实设备。
 ```
 
-Executor 不能接受：
+Executor 不接受：
 
 ```text
 用户原始输入
@@ -454,9 +480,9 @@ edgehome-eval       eval case loading and metrics
 edgehome-cli        config, parse, dry-run, eval, replay, trace commands
 ```
 
-## 当前已实现能力
+## 已实现范围
 
-当前可以写成已实现：
+当前仓库已经实现并验证的能力：
 
 ```text
 Rust workspace 与多 crate 分层
@@ -475,7 +501,7 @@ low_memory profile 与 pressure decision CLI
 scripts/demo.ps1 面试演示脚本
 ```
 
-当前只能写成后续可选，不能写成已实现：
+规划中或非默认能力：
 
 ```text
 全量米家本地控制
@@ -580,11 +606,11 @@ retry_rate = 0.0
 gate.passed = true
 ```
 
-注意：
+说明：
 
 ```text
 latency_avg_ms 和 latency_p95_ms 必须来自本地 eval 输出。
-不要在 README 中编造未跑过的 benchmark。
+README 不固定宣传未复现的 benchmark 数值。
 ```
 
 ## Demo Walkthrough
@@ -637,22 +663,22 @@ docs/deployment-modes.md
 docs/home-assistant-demo.md
 ```
 
-## 面试表达
+## 推荐介绍语
 
-可以这样解释项目：
+可以这样介绍项目：
 
 ```text
-我没有只做一个“模型输出 JSON”的 demo。
-这个项目围绕 1B 端侧小模型做了完整 Harness：
+EdgeHome Harness 不是一个简单的“模型输出 JSON 后调用设备”的 demo。
+它围绕 1B 端侧小模型构建了一套 Rust Harness：
 
-第一，小模型只输出候选 JSON，不直接执行。
-第二，Rust 管理结构化记忆，解决“再暗一点”“刚才那个”等多轮指代。
-第三，Output Governor 处理死循环、复读、坏 JSON、超时和重试。
-第四，Device Registry 和 capability model 保证设备和动作可控。
-第五，Trace / Replay / Eval 让失败可以复盘，模型参数和 prompt 可以回归评测。
-第六，2GB low_memory profile 约束上下文、输出、重试和记忆注入。
+1. 小模型只输出候选 JSON，不直接执行。
+2. Rust 管理结构化记忆，处理“再暗一点”“刚才那个”等多轮指代。
+3. Output Governor 处理死循环、复读、坏 JSON、超时和重试。
+4. Device Registry 和 capability model 保证设备与动作可控。
+5. Trace / Replay / Eval 支持失败复盘、参数比较和版本回归。
+6. 2GB low_memory profile 约束上下文、输出、重试和记忆注入。
 
-智能家居只是落地场景，项目核心是端侧小模型 Agent Harness 工程。
+智能家居是垂直落地场景，项目核心是端侧小模型 Agent Harness 工程。
 ```
 
 ## 非目标
