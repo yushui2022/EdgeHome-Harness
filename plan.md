@@ -18,6 +18,42 @@ PROJECT_PLAN_LEGACY_M0_M15.md = 旧版实施计划留档
 如果实现过程中发现本文档与代码、README 或真实结果冲突，必须先修改 `plan.md`，再继续实现。
 不能一边偏离计划，一边继续写代码。
 
+### 0.1 `/goal` 模式执行契约
+
+后续进入 `/goal` 模式时，默认目标不是“自由发挥完成一个智能家居项目”，而是严格按本文档推进 EdgeHome Harness V2。
+
+每次 `/goal` 启动后必须先做 6 件事：
+
+```text
+1. 读取本文件的“当前执行状态”。
+2. 只从标记为“下一步”的 milestone 开始。
+3. 检查 README / docs 是否与当前 milestone 冲突。
+4. 检查 git status，区分已有改动和本轮改动。
+5. 如果计划、代码、README 三者冲突，先改 plan.md 再实现。
+6. 每完成一个可验证小阶段就提交留档。
+```
+
+禁止 `/goal` 模式做这些事：
+
+```text
+跳过当前 milestone 直接做可选扩展
+重新发明 M0-M25 已完成的模块
+为了展示效果绕过 schema、policy、device registry 或 executor boundary
+把未实现的米家 / MIoT / miIO / Matter 能力写成已完成
+把 Evidence-Gated Command Memory 放回在线执行主路径
+把开放聊天能力当成项目目标
+引入会破坏 2GB RAM 主线的默认重型依赖
+```
+
+如果用户后续提出新想法，处理规则是：
+
+```text
+先判断是否改变不变量。
+不改变不变量：追加到当前 milestone 或 M27 可选扩展。
+改变不变量：先更新本文档的架构结论，再改 README 和代码。
+无法验证的想法：只进入 docs/ 或 legacy，不进入已完成能力描述。
+```
+
 ## 1. 本次架构修正结论
 
 旧版计划把 `Evidence-Gated Command Memory` 放在了在线执行主路径里，并要求 `allow / dry_run / execute` 都具备完整证据链。
@@ -404,7 +440,7 @@ M27 可选扩展
 
 ### 6.1 当前执行状态
 
-截至 2026-06-10，V2 已经进入 M21 收尾阶段。
+截至 2026-06-10，V2 已经完成 M16-M24，并已形成 M25 面试 Demo Walkthrough 的脚本与说明。
 后续 `/goal` 模式必须从这个状态继续，不要回头重做已经验收并提交的里程碑。
 
 ```text
@@ -417,15 +453,18 @@ M21 Eval Case Matrix 与模型参数评测 = 已完成
 M22 Release Gate = 已完成
 M23 Executor Boundary 与设备后端边界 = 已完成
 M24 2GB Profile 验证与降级策略 = 已完成
-M25 面试 Demo Walkthrough = 下一步
-M26 README / docs 最终同步 = 待开始
+M25 面试 Demo Walkthrough = 已验证，待提交与 push
+M26 README / docs 最终同步 = 下一步
+M27 可选扩展 = 待开始，M26 未完成前不得启动
 ```
 
-M24 完成后，下一轮 `/goal` 的默认入口是：
+M25 完成提交后，下一轮 `/goal` 的默认入口是：
 
 ```text
-M25 面试 Demo Walkthrough
+M26 README / docs 最终同步
 ```
+
+M26 完成前，任何新增功能都只能作为“发现的问题”记录，不能扩大范围。
 
 ## 7. M16 架构叙事修正
 
@@ -958,12 +997,79 @@ config pressure 能展示 normal / elevated / critical 三档降级决策
 ```text
 1. 普通指令：把客厅灯关掉
 2. 槽位抽取：晚上十点后把走廊灯调到 30%
-3. 短时记忆：把卧室灯调到 70%，再暗一点
-4. 长期别名：以后把玄关灯叫小夜灯，打开小夜灯
-5. 小模型失败恢复：坏 JSON / 死循环 / retry / fallback
-6. 低内存降级：禁用长期偏好注入
-7. trace replay：复盘一次失败
-8. eval gate：展示版本是否通过
+3. trace replay：复盘并导出一次 dry-run trace
+4. 短时记忆：先设置走廊灯，再用“把刚才那个灯再调暗一点”验证 last_target
+5. 长期别名：以后把玄关灯叫小夜灯，打开小夜灯
+6. 危险动作拒绝：关闭燃气报警器
+7. 低内存降级：normal / elevated / critical 三档决策
+8. 小模型失败恢复：坏 JSON / 死循环 / retry / fallback
+9. eval gate：展示版本是否通过
+```
+
+注意：
+
+```text
+当前 configs/devices.yaml 没有卧室灯。
+M25 demo 不应该使用“把卧室灯调到 70%”作为默认脚本。
+短时记忆演示使用走廊灯，是为了避免 demo 依赖不存在设备。
+```
+
+### 当前 M25 产物
+
+```text
+scripts/demo.ps1
+docs/demo-walkthrough.md
+README.md 快速演示入口
+```
+
+脚本必须默认使用：
+
+```text
+MockExecutor
+mock model / dry-run path
+独立 DatabasePath
+```
+
+不能默认依赖：
+
+```text
+真实 Home Assistant
+真实米家设备
+局域网 token
+Ollama 长对话历史
+```
+
+### M25 收尾顺序
+
+```text
+1. 运行 scripts/demo.ps1，确认 9 个步骤全部通过。
+2. 确认 docs/demo-walkthrough.md 与脚本步骤一致。
+3. 确认 README 有 demo 入口。
+4. 更新 plan.md 当前状态。
+5. git add README.md scripts/demo.ps1 docs/demo-walkthrough.md plan.md
+6. git commit
+7. git push
+```
+
+### M25 验收命令
+
+```powershell
+$env:CARGO_TARGET_DIR="$env:TEMP\edgehome-target"
+powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome-m25-demo-final.sqlite
+cargo run -q -p edgehome-cli -- --profile low_memory --db-path edgehome-m25-gate.sqlite eval cases/zh-home.yaml --gate
+```
+
+### M25 验收标准
+
+```text
+scripts/demo.ps1 可运行
+docs/demo-walkthrough.md 解释每一步
+README 有快速复现命令
+release gate 通过
+短时记忆能解析 last_target
+长期别名能写入并解析
+低内存 pressure 能展示 normal / elevated / critical
+OutputGovernor dead-loop fallback 测试通过
 ```
 
 ### Demo 原则
@@ -975,19 +1081,20 @@ config pressure 能展示 normal / elevated / critical 三档降级决策
 每个 demo 都能说明一个 Harness 能力
 ```
 
-### 验收标准
-
-```text
-scripts/demo.ps1 可运行
-docs/demo-walkthrough.md 解释每一步
-README 有快速复现命令
-```
-
 ## 17. M26 README / docs 最终同步
 
 ### 目标
 
 把 README 写成面试项目说明书，而不是零散笔记。
+M26 是 V2 主线完成前的最终一致性关口，不引入新核心功能。
+
+M26 的判断标准不是“README 更长”，而是：
+
+```text
+面试官只看 README，就能理解这是 Agent Harness 工程。
+开发者只看 plan.md，就能知道后续怎么验收和维护。
+任何 README 中声称的能力，都能在代码、docs、demo 或 eval 中找到来源。
+```
 
 ### README 必须回答
 
@@ -1003,6 +1110,26 @@ Trace/Replay/Eval 怎么形成工程闭环
 真实设备执行边界在哪里
 ```
 
+### README 推荐结构
+
+```text
+1. 一句话定位
+2. 为什么这是 Harness 项目，不是智能家居玩具
+3. Ollama structured outputs 与 Harness 的职责边界
+4. 总体架构图
+5. 单次请求主链路
+6. Runtime Memory
+7. Output Governor
+8. Device Registry / Policy / ExecutionPlan
+9. Trace / Replay / Eval / Release Gate
+10. 2GB RAM Profile
+11. Demo Walkthrough
+12. 部署模式与真实设备边界
+13. 当前已实现能力
+14. 未实现 / 非目标
+15. 面试讲法
+```
+
 ### README 必须包含的图
 
 ```text
@@ -1011,6 +1138,78 @@ Trace/Replay/Eval 怎么形成工程闭环
 记忆系统图
 Trace/Eval 闭环图
 Executor 边界图
+```
+
+图形要求：
+
+```text
+总体分层图不能过长。
+复杂链路拆成多张图。
+一张图只表达一个问题。
+README 中的图负责建立直觉，细节放 docs。
+```
+
+### 必须同步检查的文档
+
+```text
+README.md
+plan.md
+docs/architecture-v2.md
+docs/model-parameters.md
+docs/2gb-profile.md
+docs/deployment-modes.md
+docs/home-assistant-demo.md
+docs/eval-report-example.md
+docs/demo-walkthrough.md
+cases/README.md
+configs/README.md
+```
+
+### 必须保留的架构口径
+
+```text
+Runtime Memory 是在线主路径。
+Trace / Replay / Eval 是工程观测闭环。
+Evidence 不 gate 用户动作，而是 gate Harness 迭代质量。
+Policy 只做确定性约束，不把风险判断交给 1B 小模型。
+LLM 只生成候选 JSON，不能直接执行。
+Executor 只接受 ExecutionPlan。
+真实设备执行默认关闭。
+```
+
+### 必须核对的已实现能力
+
+M26 只能把下面这些写成“已实现”：
+
+```text
+Rust workspace 与多 crate 分层
+中文 IoT 指令 parser / normalizer
+Ollama structured output 适配层
+OutputGovernor 的输出治理与 dead-loop fallback 测试
+Runtime Memory 的短时状态、长期别名、ContextCompiler 预算
+SQLite 持久化
+Device Registry / capability 校验
+PolicyGate 确定性拒绝 blocked action
+MockExecutor 默认执行路径
+HomeAssistantExecutor demo backend 边界测试
+TraceFrame / replay / trace export
+Eval report 与 --gate release gate
+low_memory profile 与 pressure decision CLI
+scripts/demo.ps1 面试演示脚本
+```
+
+下面只能写成“后续可选”，不能写成已实现：
+
+```text
+全量米家本地控制
+MIoT / miIO / Matter / MQTT 完整 adapter
+真实 2GB ARM 板长期压测数据
+Web dashboard
+HTTP daemon mode
+多模型自动路由
+向量数据库记忆
+开放聊天助手
+语音唤醒 / ASR / TTS
 ```
 
 ### 禁止
@@ -1022,6 +1221,37 @@ Executor 边界图
 不要声称已经完整适配所有米家设备
 ```
 
+### M26 执行顺序
+
+必须按顺序执行：
+
+```text
+1. 读 README.md、plan.md、docs/*.md，列出冲突点。
+2. 对照代码和 demo，删除或降级所有过度声明。
+3. 把 README 重排成面试项目说明书。
+4. 把长图拆短，避免总体分层图过长。
+5. 同步 docs 中的架构口径。
+6. 确认 demo 命令、eval gate 命令、pressure 命令仍然可运行。
+7. 更新 plan.md 状态，把 M26 标记为已完成。
+8. 运行完整验证命令。
+9. commit。
+10. push。
+```
+
+### M26 验收命令
+
+```powershell
+$env:CARGO_TARGET_DIR="$env:TEMP\edgehome-target"
+cargo fmt --all --check
+cargo check
+cargo test
+powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome-m26-demo.sqlite
+cargo run -q -p edgehome-cli -- --profile low_memory --db-path edgehome-m26-gate.sqlite eval cases/zh-home.yaml --gate
+cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 1024
+cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 400
+cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 128
+```
+
 ### 验收标准
 
 ```text
@@ -1029,6 +1259,9 @@ README 与 plan.md 一致
 docs 与 README 不互相冲突
 README 中的命令可运行
 README 中的指标有来源
+README 不含未实现能力的完成态描述
+docs/demo-walkthrough.md 与 scripts/demo.ps1 步骤一致
+git status 只包含本轮应提交文件
 ```
 
 ## 18. M27 可选扩展
@@ -1062,20 +1295,45 @@ SQLite FTS5 记忆检索
 1. 读 plan.md 当前里程碑
 2. 读相关 README/docs
 3. 读相关 crate 代码
-4. 更新 plan.md 状态或补充细节
-5. 小步实现
-6. cargo fmt --all --check
-7. cargo check
-8. cargo test
-9. eval cases/zh-home.yaml
-10. 更新 README/docs
-11. git status
-12. git add
-13. git commit
-14. 必要时 git push
+4. git status --short，确认工作区已有改动
+5. 明确本轮只处理哪个 milestone
+6. 更新 plan.md 状态或补充细节
+7. 小步实现
+8. 补测试或补可运行 demo
+9. cargo fmt --all --check
+10. cargo check
+11. cargo test
+12. eval cases/zh-home.yaml --gate
+13. 更新 README/docs
+14. git diff --stat
+15. git status --short
+16. git add 本轮相关文件
+17. git commit
+18. git push
 ```
 
 如果某一步无法执行，必须在最终回答里说明原因。
+
+提交前检查：
+
+```text
+是否不小心提交了临时 sqlite 数据库
+是否把未实现能力写成已实现
+是否把旧 Evidence-Gated Command Memory 放回在线主路径
+是否让 demo 依赖真实设备
+是否引入 2GB profile 不适合的默认依赖
+是否忘记更新 README 或 docs
+```
+
+允许跳过完整验证的唯一情况：
+
+```text
+用户明确要求只改文档草稿且不提交
+当前环境缺少必要外部服务
+网络或权限阻塞且已经说明
+```
+
+即使跳过，也必须运行与本轮改动最接近的轻量验证。
 
 ## 20. 常用验证命令
 
@@ -1092,12 +1350,21 @@ cargo fmt --all --check
 cargo check
 cargo test
 cargo run -q -p edgehome-cli -- --db-path edgehome-eval.sqlite eval cases/zh-home.yaml
+cargo run -q -p edgehome-cli -- --db-path edgehome-gate.sqlite eval cases/zh-home.yaml --gate
 ```
 
 Demo：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome-demo.sqlite
+```
+
+2GB profile：
+
+```powershell
+cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 1024
+cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 400
+cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 128
 ```
 
 Git 留档：

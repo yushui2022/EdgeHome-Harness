@@ -554,6 +554,12 @@ cargo run -q -p edgehome-cli -- --db-path edgehome-eval.sqlite eval cases/zh-hom
 powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome-demo.sqlite
 ```
 
+面试演示说明见：
+
+```text
+docs/demo-walkthrough.md
+```
+
 ## 当前 Eval 基线
 
 当前 `cases/zh-home.yaml` 覆盖：
