@@ -440,7 +440,7 @@ M27 可选扩展
 
 ### 6.1 当前执行状态
 
-截至 2026-06-10，V2 已经完成 M16-M24，并已形成 M25 面试 Demo Walkthrough 的脚本与说明。
+截至 2026-06-10，V2 已经完成 M16-M26，README、docs、demo、eval gate 和 low_memory 验收命令已经同步。
 后续 `/goal` 模式必须从这个状态继续，不要回头重做已经验收并提交的里程碑。
 
 ```text
@@ -453,18 +453,19 @@ M21 Eval Case Matrix 与模型参数评测 = 已完成
 M22 Release Gate = 已完成
 M23 Executor Boundary 与设备后端边界 = 已完成
 M24 2GB Profile 验证与降级策略 = 已完成
-M25 面试 Demo Walkthrough = 已验证，待提交与 push
-M26 README / docs 最终同步 = 下一步
-M27 可选扩展 = 待开始，M26 未完成前不得启动
+M25 面试 Demo Walkthrough = 已完成并已提交
+M26 README / docs 最终同步 = 已完成
+M27 可选扩展 = 待开始，需用户明确指定
 ```
 
-M25 完成提交后，下一轮 `/goal` 的默认入口是：
+M26 完成后，下一轮 `/goal` 的默认入口是：
 
 ```text
-M26 README / docs 最终同步
+M27 可选扩展，或围绕 README / demo / eval 的小范围修正
 ```
 
-M26 完成前，任何新增功能都只能作为“发现的问题”记录，不能扩大范围。
+M27 仍然是可选扩展。
+除非用户明确指定，否则不要自动开始 MIoT、MQTT、Web dashboard、daemon mode 或 trace 可视化。
 
 ## 7. M16 架构叙事修正
 

@@ -41,7 +41,7 @@ flowchart LR
 
 ## Mode A：2GB Edge Harness + HA on LAN
 
-推荐 V1 真实设备 demo 模式。
+推荐 V2 真实设备 demo 模式。
 
 ```text
 2GB 边缘设备：
@@ -118,7 +118,7 @@ HA 和 Ollama 同机可能占用较多内存
 
 ## Mode C：2GB Ultra-Local + MiioLocalExecutor Subset
 
-后续模式，不是 V1 主链路。
+后续模式，不是 V2 主链路。
 
 ```text
 2GB 边缘设备：
@@ -145,7 +145,7 @@ token / local key 管理复杂
 容易让项目焦点从 Harness 跑偏到厂商协议适配
 ```
 
-因此 V1 不主走 Mode C。
+因此 V2 主线不主走 Mode C。
 
 ## Home Assistant 接入边界
 
@@ -281,7 +281,7 @@ dry_run_planner_translates_home_assistant_payload
 
 ## 推荐路线
 
-V1 推荐顺序：
+V2 推荐顺序：
 
 ```text
 1. low_memory + MockExecutor 跑通 eval

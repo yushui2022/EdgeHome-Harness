@@ -10,9 +10,9 @@ MiniCPM5-1B 只负责生成候选 JSON。
 任何模型输出都不能绕过 parser、validator、deterministic policy、dry-run。
 ```
 
-## 第一版主模型
+## V2 主模型
 
-V1 主模型：
+V2 主模型：
 
 ```text
 openbmb/minicpm5:1b
@@ -32,7 +32,7 @@ non-streaming first
 Qwen3.5-0.8B
 ```
 
-Qwen3.5-0.8B 不进入 V1 主链路，只作为后续 eval 对比对象。
+Qwen3.5-0.8B 不进入 V2 主链路，只作为后续 eval 对比对象。
 
 ## 为什么参数要保守
 

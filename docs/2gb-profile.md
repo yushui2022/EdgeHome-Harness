@@ -25,7 +25,7 @@ OutputGovernor 会限制输出长度和死循环
 
 ## 目标硬件边界
 
-V1 目标设备是几百 MB 到 2GB RAM 的边缘网关或中控类设备。
+V2 目标设备是几百 MB 到 2GB RAM 的边缘网关或中控类设备。
 
 2GB RAM 的现实约束是：
 
@@ -127,7 +127,7 @@ reason
 内存压力下会减少 num_ctx / num_predict 或进入 rule-only
 ```
 
-注意：当前 V1 是策略模块和单元测试，不是常驻系统内存守护进程。
+注意：当前 V2 是策略模块、CLI 决策和单元测试，不是常驻系统内存守护进程。
 后续如果接 daemon，可以把系统可用内存采样接入 `ResourcePressurePolicy::adapt_profile`。
 
 ## 记忆系统的 2GB 约束

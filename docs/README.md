@@ -11,6 +11,7 @@ model-parameters.md  MiniCPM5-1B / Ollama 参数、输出治理、调参顺序
 deployment-modes.md  Mode A/B/C 部署方式、Home Assistant 接入边界
 home-assistant-demo.md  Home Assistant demo 后端、安全边界、token 管理
 eval-report-example.md  eval / replay 样例报告和面试表达
+demo-walkthrough.md  面试演示脚本顺序、展示点和非目标
 ```
 
 注意：
