@@ -1,1663 +1,1137 @@
-# EdgeHome Harness 唯一实施计划
+# EdgeHome Harness V2 唯一实施计划
 
-本文件是 EdgeHome Harness 后续实现的唯一规划指标。
+本文档是 EdgeHome Harness 后续实现、重构、验收和 `/goal` 模式执行的唯一规划指标。
 
-执行时以本文件为准：
+最后更新：2026-06-10
+
+## 0. 文档地位
+
+后续任何长任务、`/goal` 模式、代码实现、重构、README 更新、测试补充，都必须优先遵守本文档。
 
 ```text
-README.md = 项目愿景、架构叙事、面试解释
+README.md = 项目叙事、架构解释、面试展示入口
+plan.md = 唯一执行顺序、验收标准、工程边界
 PROJECT_DRAFT_LEGACY.md = 历史草稿和素材库
-plan.md = 唯一实施顺序、验收标准、不得跳过的工程路线
+PROJECT_PLAN_LEGACY_M0_M15.md = 旧版实施计划留档
 ```
 
-任何后续 `/goal` 模式、长任务执行、代码实现、重构、文档更新，都必须优先遵守本计划。
+如果实现过程中发现本文档与代码、README 或真实结果冲突，必须先修改 `plan.md`，再继续实现。
+不能一边偏离计划，一边继续写代码。
 
-如果实现过程中发现本计划不合理，必须先修改 `plan.md`，再继续写代码。
+## 1. 本次架构修正结论
 
-不能一边偏离计划，一边继续实现。
+旧版计划把 `Evidence-Gated Command Memory` 放在了在线执行主路径里，并要求 `allow / dry_run / execute` 都具备完整证据链。
+这个设计更适合企业审批、报销、工单、合同审核等慢速强证据场景，不适合智能家居本地实时控制。
 
-## 0. 总目标
+EdgeHome Harness V2 的新结论是：
+
+```text
+Runtime Memory 是在线主路径。
+Trace / Replay / Eval 是工程观测闭环。
+Evidence 不再 gate 用户动作，而是 gate Harness 迭代质量。
+```
+
+也就是说：
+
+```text
+第一版轻量记忆系统 = 保留并强化
+证据门控记忆系统 = 从在线主路径移除
+Trace/Evidence = 用于审计回放、评测解释、失败分析、版本回归
+```
+
+项目主线从：
+
+```text
+Evidence-Gated Command Memory
+```
+
+调整为：
+
+```text
+Latency-Bounded Edge Agent Harness
+低延迟、低内存、强约束、可回放的端侧 Agent Harness
+```
+
+更具体的工程口径是：
+
+```text
+Memory for runtime.
+Evidence for debugging.
+Eval for progress.
+Policy for deterministic hard constraints.
+LLM for candidate JSON only.
+```
+
+## 2. 项目最终目标
 
 构建一个面向 1B 端侧小模型的 Rust Agent Harness。
-
-产品形态是智能家居本地控制中台。
-
-更直接地说：
+产品形态是智能家居本地控制中台，但项目价值不是替代米家 App 或小米音箱，而是展示：
 
 ```text
-这是一个 Rust-first 的端侧 Agent Harness 项目，
-目标是在 2GB RAM 级别设备上通过 low_memory profile 可部署运行。
+如何把一个容易复读、死循环、输出不稳定的 1B 本地小模型，
+约束成一个可以解析中文 IoT 指令、稳定输出结构化 JSON、
+支持短时指代、具备低内存降级、可审计回放、可评测迭代的 Agent Harness。
 ```
 
-核心技术目标：
+V2 主模型：
 
 ```text
-MiniCPM5-1B + Ollama structured outputs
-Rust Harness Core
-Evidence-Gated Command Memory
-Device Registry / Capability Model
-Policy Gate / TransitionGate
-Dry-run / Executor Router
-Audit / Replay / Eval
-2GB RAM low_memory profile
+openbmb/minicpm5:1b
 ```
 
-核心业务目标：
-
-```text
-用户用中文说智能家居 / IoT 指令
-模型只输出受限 JSON 候选
-Harness 把候选变成可验证命令
-Harness 决定 allow / require_confirmation / deny
-系统可以 dry-run、审计、回放、评测
-低内存设备上可降级运行
-```
-
-第一版主模型：
-
-```text
-MiniCPM5-1B
-```
-
-第一版主运行时：
+V2 主运行时：
 
 ```text
 Ollama structured outputs
 ```
 
-第一版主后端：
+V2 主语言：
 
 ```text
-MockExecutor
+Rust
 ```
 
-第一版真实设备 demo 后端：
+V2 主部署约束：
 
 ```text
-HomeAssistantExecutor
+2GB RAM low_memory profile
 ```
 
-后续对比模型：
+V2 主执行后端：
 
 ```text
-Qwen3.5-0.8B
+MockExecutor 默认开启
+HomeAssistantExecutor 作为 demo backend
+真实设备执行默认关闭
 ```
 
-注意：
+V2 对比模型：
 
 ```text
-Qwen3.5-0.8B 不进入 V1 主链路。
-它只作为后续 eval 对比模型或扩展候选。
+Qwen 0.8B / Qwen 1B 只作为 eval 对比模型，不进入主链路。
 ```
 
-## 1. 不可违反的项目不变量
+## 3. 不可违反的项目不变量
 
-后续实现必须一直满足这些不变量。
-
-### 1.1 模型输出永远只是候选
+### 3.1 模型输出永远只是候选
 
 ```text
 ModelOutput != Command
 ```
 
-MiniCPM5-1B 输出不能直接执行。
+MiniCPM5-1B 只能生成候选 JSON。
+任何候选输出必须经过 Harness 校验，不能直接执行。
 
-模型输出必须经过：
+必经步骤：
 
 ```text
-清洗
-JSON 解析
-schema 校验
-语义标准化
-设备解析
-能力校验
-freshness 校验
-policy gate
+raw output
+-> output governor
+-> JSON extraction
+-> schema validation
+-> semantic normalization
+-> memory resolution
+-> device registry validation
+-> capability validation
+-> execution plan
+-> dry-run / executor
+-> trace
+```
+
+### 3.2 Rust 管业务真相，Ollama 只做候选生成
+
+Ollama 不能维护业务记忆。
+不能依赖 Ollama CLI 的交互历史。
+不能把长对话塞给小模型。
+
+业务记忆必须由：
+
+```text
+Rust + SQLite + 结构化状态
+```
+
+管理。
+
+每次请求前，Rust 只给 Ollama 编译一段极短上下文摘要。
+
+### 3.3 证据系统不能阻塞低风险实时路径
+
+V2 不再要求：
+
+```text
+allow / dry_run / execute 必须同步完成完整证据链
+```
+
+改为：
+
+```text
+在线执行必须通过确定性校验。
+关键决策必须可 trace。
+失败必须可 replay。
+版本迭代必须可 eval gate。
+```
+
+### 3.4 不让小模型判断风险
+
+1B 小模型不能判断：
+
+```text
+某个动作是否高风险
+某个设备是否安全
+某条记忆是否应该降低策略
+某个真实后端是否允许执行
+```
+
+这些必须来自：
+
+```text
+设备注册表
+capability metadata
+静态 policy config
+用户明确配置
+executor 返回状态
+```
+
+如果没有真实业务依据，不要在 README 或代码里夸大“高风险智能判断”。
+
+### 3.5 记忆只能补全上下文，不能越权执行
+
+短时记忆可以解析：
+
+```text
+再暗一点
+再调高一点
+把刚才那个关掉
+切换成除湿模式
+恢复刚才的设置
+```
+
+但记忆解析出的目标仍然必须经过：
+
+```text
+device registry
+capability validation
+execution plan
+```
+
+长期记忆不能自动降低安全限制。
+
+### 3.6 长期记忆只能由明确表达写入
+
+允许写入：
+
+```text
+以后把玄关灯叫小夜灯
+以后睡觉模式把卧室灯调到 30%
+以后卧室空调默认 26 度
+以后门锁操作都要二次确认
+```
+
+禁止写入：
+
+```text
+一次性设备控制
+模型猜测出的偏好
+不确定别名
+降低安全限制的偏好
+高风险自动执行偏好
+```
+
+### 3.7 2GB RAM 是硬约束，不是文档口号
+
+V2 不能引入默认重型依赖：
+
+```text
+向量数据库
+本地 embedding 大模型
+长上下文历史
+多模型常驻
+复杂图数据库
+```
+
+默认策略：
+
+```text
+短时记忆最多 3 轮
+长期偏好最多注入 3 条
+记忆摘要 300-500 中文字符以内
+低内存时禁用长期记忆注入
+输出长度和重试次数都有上限
+```
+
+### 3.8 真实设备执行默认关闭
+
+默认只允许：
+
+```text
 dry-run
-confirmation gate
-executor router
-post-state verify
-audit
+mock execution
+eval replay
 ```
 
-### 1.2 Executor 只接受 ExecutionPlan
+Home Assistant 可以作为 demo backend，但不能在 README 里声称已经完整本地适配所有米家设备。
+米家、MIoT、miIO、Matter、MQTT 都只能按真实实现程度描述。
 
-Executor 不能接受：
+## 4. V2 总体架构
+
+### 4.1 单次请求主链路
+
+```mermaid
+flowchart TD
+    A["用户输入"] --> B["Input Guard<br/>长度限制 / 基础过滤"]
+    B --> C["Rule Pre-Parser<br/>高确定性规则解析"]
+    C --> D["Memory Manager<br/>短时状态 / 相关偏好"]
+    D --> E["Context Compiler<br/>编译极短上下文"]
+    E --> F["Ollama MiniCPM5-1B<br/>Structured Outputs"]
+    F --> G["Output Governor<br/>超时 / 截断 / 复读检测 / 重试"]
+    G --> H["JSON Parser<br/>提取 / 清洗 / schema 校验"]
+    H --> I["Semantic Normalizer<br/>动作 / 房间 / 设备 / 数值归一"]
+    I --> J["Device Registry<br/>设备存在 / capability / 状态"]
+    J --> K["Execution Planner<br/>生成 ExecutionPlan"]
+    K --> L["Executor Router<br/>Mock / HA / future backends"]
+    L --> M["Trace Recorder<br/>审计 / 回放 / 评测"]
+    M --> N["Memory Writer<br/>短时更新 / 明确长期写入"]
+```
+
+### 4.2 Trace/Eval 离线闭环
+
+```mermaid
+flowchart LR
+    A["Trace Records"] --> B["Replay"]
+    B --> C["Eval Metrics"]
+    C --> D["Failure Analysis"]
+    D --> E["Prompt / Parser / Params Fix"]
+    E --> F["Regression Gate"]
+    F --> A
+```
+
+这条闭环不阻塞普通实时执行。
+它用于解释和证明 Harness 变得更稳定。
+
+### 4.3 记忆系统边界
+
+```mermaid
+flowchart TD
+    A["User Input"] --> B["Anchor Extractor"]
+    B --> C["Short Session State"]
+    B --> D["SQLite Long Memory"]
+    C --> E["Memory Snapshot"]
+    D --> E
+    E --> F["Context Compiler"]
+    F --> G["Short Prompt Context"]
+    G --> H["Ollama"]
+    H --> I["Candidate JSON"]
+    I --> J["Validated ExecutionPlan"]
+    J --> K["Short Memory Update"]
+    J --> L["Explicit Long Memory Write"]
+```
+
+核心原则：
 
 ```text
-用户原始输入
-模型原始输出
-模型 JSON
-未校验 Command
-未过 policy 的 Command
+模型不拥有记忆。
+模型只看到短摘要。
+长期记忆不常驻上下文。
+审计失败记录不默认注入 prompt。
 ```
 
-Executor 只能接受：
+## 5. 当前已完成基线
+
+M0-M15 已经完成过一版。
+后续 `/goal` 不应该无意义重做 M0-M15。
+除非测试失败或架构重构需要，否则 M0-M15 只作为基线验收。
+
+当前已具备的模块基线：
+
+```text
+edgehome-core
+edgehome-config
+edgehome-storage
+edgehome-trace
+edgehome-parser
+edgehome-registry
+edgehome-gate
+edgehome-memory
+edgehome-ollama
+edgehome-executor
+edgehome-eval
+edgehome-cli
+```
+
+当前已验证能力：
+
+```text
+中文智能家居指令解析
+规则 parser
+短时相对指令解析
+MockExecutor
+HomeAssistantExecutor demo
+eval / replay / trace show
+2GB low_memory 文档
+MiniCPM5/Ollama 参数文档
+```
+
+V2 的任务不是推倒重来，而是在已完成基线上做架构修正和能力升级。
+
+## 6. 后续执行总顺序
+
+后续必须按下面顺序推进：
+
+```text
+M16 架构叙事修正
+M17 轻量 Runtime Memory v2
+M18 Context Compiler 与低内存注入策略
+M19 Output Governor v2
+M20 TraceFrame 与 Evidence-Backed Replay
+M21 Eval Case Matrix 与模型参数评测
+M22 Release Gate
+M23 Executor Boundary 与设备后端边界
+M24 2GB Profile 验证与降级策略
+M25 面试 Demo Walkthrough
+M26 README / docs 最终同步
+M27 可选扩展
+```
+
+每个里程碑必须遵守：
+
+```text
+先改计划或文档定位，再改代码。
+先补测试，再声称能力。
+先 Mock / dry-run，再真实 executor。
+先 MiniCPM5 主链路，再 Qwen 对比。
+每完成一个稳定小阶段就 commit。
+```
+
+## 7. M16 架构叙事修正
+
+### 目标
+
+把项目叙事从旧的：
+
+```text
+Evidence-Gated Command Memory
+```
+
+修正为：
+
+```text
+Latency-Bounded Edge Agent Harness
+Runtime Memory + Trace Replay Eval
+```
+
+### 必须修改
+
+```text
+README.md
+docs/model-parameters.md
+docs/eval-report-example.md
+docs/2gb-profile.md
+必要时新增 docs/architecture-v2.md
+```
+
+### 必须删除或降级的表述
+
+```text
+allow / execute 必须有完整证据链
+Evidence-Gated Command Memory 是在线主路径
+模型或 Harness 能智能判断高风险
+证据门控负责普通智能家居动作执行许可
+```
+
+### 必须新增的表述
+
+```text
+Runtime Memory 是在线主路径
+Trace / Replay / Eval 是工程观测闭环
+Evidence 用于失败分析、评测解释、版本回归、记忆来源
+低风险实时路径不被完整证据链阻塞
+小模型只生成候选 JSON
+```
+
+### 验收标准
+
+```text
+README 第一屏定位不再出现 Evidence-Gated Command Memory 作为核心公式
+架构图体现 Runtime Memory 与 Trace/Eval 分离
+plan.md 与 README 不冲突
+旧版内容已在 legacy 文件中留档
+```
+
+### 禁止跑偏
+
+```text
+不要把 README 写成智能家居产品营销页
+不要夸大米家本地控制能力
+不要把证据门控换个名字继续放回在线主路径
+```
+
+## 8. M17 轻量 Runtime Memory v2
+
+### 目标
+
+把第一版轻量记忆系统升级为正式主路径。
+记忆由 Rust 管，SQLite 存，Ollama 只看短摘要。
+
+### 必须支持的记忆类型
+
+```text
+ShortSessionState
+LongPreferenceMemory
+AliasMemory
+SceneMemory
+SafetyPreference
+FailureAuditMemory
+```
+
+注意：
+
+```text
+FailureAuditMemory 不默认注入 prompt。
+它只用于评测、分析和调优。
+```
+
+### ShortSessionState 目标结构
+
+```json
+{
+  "last_target": {
+    "room": "living_room",
+    "device_type": "light",
+    "device_id": "living_room_main_light"
+  },
+  "last_action": "set_brightness",
+  "last_value": 70
+}
+```
+
+### 长期记忆写入规则
+
+只有明确表达才写入长期记忆。
+
+触发模式：
+
+```text
+以后...
+默认...
+记住...
+把 A 叫做 B
+睡觉模式...
+```
+
+不写入：
+
+```text
+一次性控制
+模型推断偏好
+模糊表达
+降低安全限制
+```
+
+### 必须补充的测试
+
+```text
+再暗一点 -> 解析 last_target
+把刚才那个关掉 -> 解析 last_target
+以后把玄关灯叫小夜灯 -> 写入 alias memory
+打开小夜灯 -> 使用 alias memory
+一次性打开卧室灯 -> 不写长期记忆
+以后门锁都自动打开 -> 拒绝写入降低安全的长期记忆
+```
+
+### 验收标准
+
+```text
+短时记忆最多 3 轮
+长期偏好最多注入 3 条
+低内存模式可禁用长期注入
+记忆写入必须带 source_trace_id 或 source_event_id
+模型不接触 SQLite 原始内容
+```
+
+## 9. M18 Context Compiler 与低内存注入策略
+
+### 目标
+
+实现一个明确的上下文编译器，把结构化记忆压缩成短摘要。
+这段摘要每次请求临时生成，不能无限增长。
+
+### 输入
+
+```text
+当前用户输入
+ShortSessionState
+相关 LongPreferenceMemory
+相关 AliasMemory
+设备候选摘要
+low_memory profile
+```
+
+### 输出
+
+```text
+MemoryContextBlock
+```
+
+示例：
+
+```text
+当前会话摘要：
+- 上一次目标设备：living_room_main_light
+- 上一次动作：set_brightness
+- 上一次亮度：70
+
+相关偏好：
+- 卧室空调默认温度：26
+- 小夜灯 = hallway_light
+```
+
+### 预算
+
+默认：
+
+```text
+300-500 中文字符
+最多 3 条长期偏好
+最多 1 个 last_target
+最多 1 个 last_action
+```
+
+低内存：
+
+```text
+禁用长期偏好注入
+只保留 last_target
+必要时完全关闭记忆注入
+```
+
+### 验收标准
+
+```text
+ContextCompiler 有单元测试
+超过预算会裁剪
+裁剪结果稳定可预测
+低内存 profile 会改变注入策略
+README 文档解释为什么不使用长历史
+```
+
+## 10. M19 Output Governor v2
+
+### 目标
+
+针对 1B 小模型的死循环、复读、超长输出、解释文本混入，建立可观测、可重试、可降级的输出治理层。
+
+### 必须实现或确认
+
+```text
+num_predict 上限
+请求超时
+最大重试次数
+重复片段检测
+JSON 提取失败分类
+schema 失败分类
+fallback reason
+```
+
+### 重试策略
+
+第一次：
+
+```text
+正常 structured output prompt
+```
+
+第二次：
+
+```text
+更短 prompt
+更低温度
+更严格 JSON only 指令
+```
+
+最终失败：
+
+```text
+返回 need_clarification 或 parse_failed
+写入 trace
+不能编造命令执行
+```
+
+### 必须记录的指标
+
+```text
+attempt_count
+raw_output_length
+json_extract_status
+schema_status
+repeat_detected
+timeout
+fallback_used
+latency_ms
+```
+
+### 验收标准
+
+```text
+死循环样本不会卡死 CLI
+失败能落 trace
+重试次数有硬上限
+eval report 能看到 retry_rate 和 failure_reason
+```
+
+## 11. M20 TraceFrame 与 Evidence-Backed Replay
+
+### 目标
+
+把旧 Evidence Store 从在线门控角色调整为 TraceFrame。
+TraceFrame 用于复盘、评测解释、失败分析、模型参数比较。
+
+### TraceFrame 必须包含
+
+```text
+trace_id
+timestamp
+input_text
+model_name
+model_params
+runtime_profile
+memory_snapshot_summary
+prompt_hash
+raw_model_output
+cleaned_json
+schema_result
+normalized_command
+device_resolution
+capability_result
+execution_plan
+executor_result
+failure_reason
+latency_ms
+memory_pressure
+retry_count
+```
+
+### 不再要求
+
+```text
+普通 allow / dry-run / execute 同步等待完整证据链
+```
+
+### 必须支持
+
+```text
+trace show
+trace export
+replay trace
+eval from traces
+failure classification
+```
+
+### 验收标准
+
+```text
+任意失败 case 可以通过 trace_id 复盘
+trace 中能看到模型原始输出和 Harness 处理结果
+trace 不泄露 token、设备密钥、真实后端凭据
+```
+
+## 12. M21 Eval Case Matrix 与模型参数评测
+
+### 目标
+
+建立面向 1B 小模型 Harness 的评测矩阵。
+评测重点不是开放聊天质量，而是智能家居窄场景的结构化稳定性。
+
+### 必须覆盖的 case 类型
+
+```text
+intent classification
+slot extraction
+relative command
+alias memory
+scene preference
+invalid JSON recovery
+dead loop recovery
+unknown device
+unsupported capability
+low_memory degradation
+HomeAssistant dry-run planning
+```
+
+### 必须输出的指标
+
+```text
+intent_accuracy
+slot_accuracy
+schema_valid_rate
+retry_rate
+fallback_rate
+dead_loop_rate
+trace_coverage
+memory_resolution_accuracy
+latency_avg_ms
+latency_p95_ms
+low_memory_degrade_count
+```
+
+### 模型参数比较
+
+至少支持比较：
+
+```text
+MiniCPM5-1B stable profile
+MiniCPM5-1B faster profile
+Qwen 0.8B comparison profile
+```
+
+注意：
+
+```text
+Qwen 对比只用于说明小模型差异和 Harness 价值。
+不能把 Qwen 作为 V2 主链路。
+```
+
+### 验收标准
+
+```text
+cases/zh-home.yaml 扩展到覆盖多轮、别名、失败恢复
+eval report 可导出 JSON 或 Markdown
+README 有一组可复现指标示例
+指标必须来自本地实际 eval，不能编造
+```
+
+## 13. M22 Release Gate
+
+### 目标
+
+把证据系统真正用在工程质量门禁上。
+不是 gate 用户执行，而是 gate 项目迭代。
+
+### CLI 目标
+
+可以实现或规划：
+
+```text
+edgehome eval cases/zh-home.yaml --gate
+edgehome replay --gate traces/*.jsonl
+```
+
+### 默认 gate 标准
+
+```text
+schema_valid_rate = 1.0
+dead_loop_rate = 0.0
+trace_coverage = 1.0
+intent_accuracy >= 0.95
+slot_accuracy >= 0.90
+retry_rate <= 0.30
+```
+
+低内存 profile gate：
+
+```text
+不会 panic
+不会无限重试
+不会无限上下文增长
+可以禁用长期记忆注入
+```
+
+### 验收标准
+
+```text
+gate 失败时 CLI exit code 非 0
+gate 报告说明失败 case
+README 解释 Evidence-Gated Release 的意义
+```
+
+## 14. M23 Executor Boundary 与设备后端边界
+
+### 目标
+
+保持执行层清晰，避免项目变成“假装全量米家控制”的产品。
+
+### 必须明确
+
+```text
+MockExecutor 是默认执行路径
+HomeAssistantExecutor 是 demo backend
+真实设备执行默认关闭
+未来可扩展 MIoT / miIO / MQTT / Matter
+```
+
+### Executor 只能接受
 
 ```text
 ExecutionPlan
 ```
 
-### 1.3 模型不能接触后端细节
-
-模型 prompt 里不能出现：
+禁止接受：
 
 ```text
-Home Assistant token
-miIO token
-设备 IP
-局域网密钥
-Home Assistant entity_id
-siid / piid
-真实用户凭据
-Executor 名称
-后端路由规则
+用户原始输入
+模型原始输出
+未经 schema 校验的 JSON
+未经设备注册表确认的 command
 ```
 
-模型只能看到：
+### 验收标准
 
 ```text
-受限 JSON schema
-少量设备候选摘要
-必要短时上下文
-必要安全约束
+README 不夸大米家适配
+docs/deployment-modes.md 说明 HA demo 边界
+真实执行需要显式配置开关
+eval 不依赖真实设备
 ```
 
-### 1.4 allow / execute 必须有证据链
+## 15. M24 2GB Profile 验证与降级策略
 
-任何 `allow`、`dry_run`、`execute` 都必须能追溯：
+### 目标
+
+把 2GB RAM 约束从文档叙事变成实际策略。
+
+### 必须确认
 
 ```text
-raw_user_input
-raw_model_output
-parsed_json
-normalized_command
-device_registry_snapshot
-capability_snapshot
-device_state_snapshot
-policy_rule_snapshot
-gate_checks
-dry_run_plan
-executor_response
-post_execute_state_snapshot
+low_memory profile 配置
+num_ctx 限制
+num_predict 限制
+memory context budget
+retry limit
+long memory injection disable
+trace write 不阻塞主路径过久
 ```
 
-### 1.5 安全记忆只能增强安全
-
-长期记忆不能降低安全策略。
-
-允许：
+### 降级策略
 
 ```text
-门锁夜间必须二次确认
-摄像头关闭需要管理员确认
-燃气设备永远禁止自动操作
+内存压力正常：短时记忆 + 少量长期偏好
+内存压力中等：短时记忆 + 禁用长期偏好
+内存压力高：只保留 last_target
+内存压力严重：关闭记忆注入，单轮解析
+```
+
+### 验收标准
+
+```text
+docs/2gb-profile.md 与代码配置一致
+eval 能指定 low_memory profile
+低内存模式下不会无限膨胀上下文
+```
+
+## 16. M25 面试 Demo Walkthrough
+
+### 目标
+
+形成一套可以给面试官演示的命令脚本和叙事路径。
+
+### 必须包含的 demo
+
+```text
+1. 普通指令：把客厅灯关掉
+2. 槽位抽取：晚上十点后把走廊灯调到 30%
+3. 短时记忆：把卧室灯调到 70%，再暗一点
+4. 长期别名：以后把玄关灯叫小夜灯，打开小夜灯
+5. 小模型失败恢复：坏 JSON / 死循环 / retry / fallback
+6. 低内存降级：禁用长期偏好注入
+7. trace replay：复盘一次失败
+8. eval gate：展示版本是否通过
+```
+
+### Demo 原则
+
+```text
+优先 dry-run
+不依赖真实设备
+输出必须稳定
+每个 demo 都能说明一个 Harness 能力
+```
+
+### 验收标准
+
+```text
+scripts/demo.ps1 可运行
+docs/demo-walkthrough.md 解释每一步
+README 有快速复现命令
+```
+
+## 17. M26 README / docs 最终同步
+
+### 目标
+
+把 README 写成面试项目说明书，而不是零散笔记。
+
+### README 必须回答
+
+```text
+这个项目是什么
+为什么 1B 小模型需要 Harness
+为什么 Ollama JSON 约束不够
+Runtime Memory 怎么工作
+Output Governor 怎么处理死循环
+Trace/Replay/Eval 怎么形成工程闭环
+2GB RAM 下如何降级
+智能家居只是产品形态，不是项目全部
+真实设备执行边界在哪里
+```
+
+### README 必须包含的图
+
+```text
+总体架构图
+单次请求链路图
+记忆系统图
+Trace/Eval 闭环图
+Executor 边界图
+```
+
+### 禁止
+
+```text
+不要把 README 写成营销页
+不要堆砌空泛 AI 概念
+不要再把 Evidence-Gated Command Memory 放在核心公式
+不要声称已经完整适配所有米家设备
+```
+
+### 验收标准
+
+```text
+README 与 plan.md 一致
+docs 与 README 不互相冲突
+README 中的命令可运行
+README 中的指标有来源
+```
+
+## 18. M27 可选扩展
+
+以下内容可以作为后续加分项，但不能阻塞 V2 主线。
+
+```text
+Qwen 0.8B / 1B 更完整对比
+MIoT / miIO local adapter
+MQTT / Matter backend
+HTTP daemon mode
+Web dashboard
+trace 可视化
+SQLite FTS5 记忆检索
+更细的参数自动搜索
+```
+
+限制：
+
+```text
+没有真实实现前不要写成已完成能力
+不要为了扩展破坏 2GB low_memory 主线
+不要引入重型依赖作为默认路径
+```
+
+## 19. 每轮开发固定流程
+
+每次 `/goal` 或长任务必须按这个流程：
+
+```text
+1. 读 plan.md 当前里程碑
+2. 读相关 README/docs
+3. 读相关 crate 代码
+4. 更新 plan.md 状态或补充细节
+5. 小步实现
+6. cargo fmt --all --check
+7. cargo check
+8. cargo test
+9. eval cases/zh-home.yaml
+10. 更新 README/docs
+11. git status
+12. git add
+13. git commit
+14. 必要时 git push
+```
+
+如果某一步无法执行，必须在最终回答里说明原因。
+
+## 20. 常用验证命令
+
+由于项目路径包含中文，Windows 下建议使用：
+
+```powershell
+$env:CARGO_TARGET_DIR="$env:TEMP\edgehome-target"
+```
+
+基础验证：
+
+```powershell
+cargo fmt --all --check
+cargo check
+cargo test
+cargo run -q -p edgehome-cli -- --db-path edgehome-eval.sqlite eval cases/zh-home.yaml
+```
+
+Demo：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome-demo.sqlite
+```
+
+Git 留档：
+
+```powershell
+git status --short
+git add .
+git commit -m "docs: update v2 implementation plan"
+git push
+```
+
+## 21. 提交留档规则
+
+用户明确要求经常提交留档。
+
+必须提交的节点：
+
+```text
+完成一个 milestone
+完成一组可运行测试
+完成 README/plan 重大修改
+完成架构方向修正
+修复一个会影响 demo 的 bug
+```
+
+提交信息建议：
+
+```text
+docs: reframe harness architecture
+feat: add runtime memory compiler
+feat: add output governor telemetry
+feat: add trace replay gate
+test: expand home command eval cases
+fix: resolve relative command memory
 ```
 
 禁止：
 
 ```text
-以后门锁都自动打开
-以后关闭摄像头不需要确认
-以后跳过安全检查
+把大量无关改动混在一个 commit
+在测试明显失败时提交为完成态
+删除历史材料而不留档
 ```
 
-### 1.6 真实设备执行不能早于 dry-run / audit / policy
+## 22. 成功标准
 
-在下面能力完成之前，不允许实现真实设备执行默认开启：
+V2 完成时，项目应该能清楚证明：
 
 ```text
-Device Registry
-Capability Model
-Policy Gate
-Dry-run
-Audit Log
-Replay Trace
+1. 1B 小模型只负责候选 JSON，不负责业务真相。
+2. Rust Harness 能约束小模型输出，防止死循环和坏 JSON 拖垮系统。
+3. 短时记忆和长期偏好由 Rust + SQLite 管理，不依赖 Ollama 历史。
+4. 2GB RAM 下有明确的上下文预算、重试预算和记忆降级策略。
+5. 智能家居动作必须经过设备注册表、capability 和执行计划。
+6. Trace/Replay/Eval 能复盘失败、比较模型参数、阻止回归。
+7. README 能让面试官理解这是 Agent Harness 工程，不是简单 IoT 脚本。
 ```
 
-HomeAssistantExecutor 可以写，但默认必须 dry-run。
+最终一句话：
 
-## 2. 总体执行顺序
-
-后续实现必须按下面顺序推进。
-
-```text
-M0  Repository Foundation
-M1  Domain Contracts
-M2  Config Profiles
-M3  Evidence Store and Command Trace
-M4  CLI Skeleton and Mock Pipeline
-M5  Input Guard, Parser, Normalizer
-M6  Device Registry, Capability Model, State Cache
-M7  Gate Engine and Policy Engine
-M8  Dry-run, MockExecutor, Execution Transaction
-M9  Memory and Context Assembler
-M10 Ollama Adapter, MiniCPM5 Profile, Output Governor
-M11 Full Harness Pipeline Integration
-M12 Eval, Replay, Metrics
-M13 HomeAssistantExecutor
-M14 2GB RAM Profile and Deployment Notes
-M15 Documentation Sync and Demo Script
-```
-
-原则：
-
-```text
-先确定性骨架，再接小模型。
-先 dry-run，再真实执行。
-先 evidence/trace，再 eval。
-先 MockExecutor，再 HomeAssistantExecutor。
-先 MiniCPM5 主链路，再考虑 Qwen 对比。
-```
-
-## 3. Milestone 0：Repository Foundation
-
-目标：
-
-```text
-建立 Rust workspace 和基础工程约束。
-```
-
-必须创建或确认：
-
-```text
-Cargo.toml workspace
-rustfmt.toml
-.gitignore
-README.md
-plan.md
-PROJECT_DRAFT_LEGACY.md
-crates/
-cases/
-configs/
-docs/
-```
-
-建议 workspace：
-
-```text
-crates/
-  edgehome-core/
-  edgehome-config/
-  edgehome-storage/
-  edgehome-trace/
-  edgehome-parser/
-  edgehome-registry/
-  edgehome-gate/
-  edgehome-memory/
-  edgehome-ollama/
-  edgehome-executor/
-  edgehome-eval/
-  edgehome-cli/
-```
-
-第一版可以不创建 server crate。
-
-不要一开始做 Web UI。
-
-建议依赖：
-
-```text
-serde
-serde_json
-serde_yaml 或 toml
-schemars
-thiserror
-anyhow 仅 CLI 层可用
-clap
-tracing
-tracing-subscriber
-chrono 或 time
-uuid
-rusqlite
-reqwest
-tokio
-```
-
-验收标准：
-
-```text
-cargo check 通过
-cargo fmt --check 通过
-edgehome-cli crate 可以构建
-README.md 和 plan.md 保持存在
-```
-
-禁止事项：
-
-```text
-不要接 Ollama
-不要接 Home Assistant
-不要做真实设备执行
-```
-
-## 4. Milestone 1：Domain Contracts
-
-目标：
-
-```text
-定义所有模块共享的核心类型。
-```
-
-位置建议：
-
-```text
-crates/edgehome-core/
-```
-
-必须定义：
-
-```text
-UserInput
-ModelCandidate
-ModelOutputSchemaVersion
-CommandSchemaVersion
-NormalizedCommand
-Intent
-Room
-DeviceType
-DeviceId
-Action
-CommandParams
-RiskLevel
-PolicyDecision
-ExecutionPlan
-DryRunPlan
-ExecutionResult
-HarnessError
-```
-
-第一版 Intent：
-
-```text
-control_device
-query_status
-create_rule
-update_memory
-unknown
-```
-
-第一版 Action：
-
-```text
-turn_on
-turn_off
-set_brightness
-increase_brightness
-decrease_brightness
-set_temperature
-set_mode
-open
-close
-lock
-unlock
-unknown
-```
-
-第一版 DeviceType：
-
-```text
-light
-air_conditioner
-curtain
-switch
-camera
-lock
-sensor
-gas_device
-unknown
-```
-
-必须有 schema version：
-
-```text
-model_output.v1
-command.v1
-device_registry.v1
-policy.v1
-memory.v1
-```
-
-验收标准：
-
-```text
-所有核心类型支持 Serialize / Deserialize
-所有核心类型有单元测试
-可以生成或维护给 Ollama format 使用的 JSON schema
-unknown 默认 fail closed
-```
-
-测试要求：
-
-```text
-cargo test -p edgehome-core
-```
-
-禁止事项：
-
-```text
-不要在 core 里放 HTTP 调用
-不要在 core 里放 SQLite 具体实现
-不要让 core 依赖 ollama/executor
-```
-
-## 5. Milestone 2：Config Profiles
-
-目标：
-
-```text
-把模型参数、内存策略、安全策略、执行器配置全部 profile 化。
-```
-
-位置建议：
-
-```text
-crates/edgehome-config/
-configs/
-```
-
-必须支持 profile：
-
-```text
-strict_mode
-normal_mode
-low_memory_mode
-eval_mode
-demo_mode
-```
-
-配置字段：
-
-```text
-model_name
-ollama_base_url
-temperature
-top_p
-top_k
-repeat_penalty
-num_ctx
-num_predict
-timeout_ms
-retry_count
-memory_enabled
-max_short_memory_turns
-max_context_chars
-executor_backend
-dangerous_action_policy
-audit_enabled
-trace_enabled
-```
-
-低内存 profile 默认：
-
-```text
-num_ctx <= 1024
-num_predict <= 128
-max_short_memory_turns <= 3
-max_context_chars <= 500
-retry_count <= 1
-executor_backend = mock
-```
-
-验收标准：
-
-```text
-可以加载 configs/low_memory.yaml
-可以通过 CLI 指定 --profile low_memory
-配置缺失时有明确错误
-危险默认值必须偏保守
-```
-
-测试要求：
-
-```text
-cargo test -p edgehome-config
-```
-
-禁止事项：
-
-```text
-不要把模型参数硬编码在 adapter 里
-不要把 executor backend 写死
-```
-
-## 6. Milestone 3：Evidence Store and Command Trace
-
-目标：
-
-```text
-先建立 evidence / trace / audit 骨架。
-```
-
-原因：
-
-```text
-后续所有 pipeline 都必须可追溯。
-如果晚做 evidence，后面会大量返工。
-```
-
-位置建议：
-
-```text
-crates/edgehome-storage/
-crates/edgehome-trace/
-```
-
-必须定义：
-
-```text
-EvidenceId
-EvidenceRef
-EvidenceKind
-SourceSystem
-Freshness
-CommandTrace
-CommandStep
-StepStatus
-GateCheck
-AuditEvent
-```
-
-EvidenceKind 第一版：
-
-```text
-raw_user_input
-raw_model_output
-parsed_json
-normalized_command
-device_registry_snapshot
-capability_snapshot
-device_state_snapshot
-policy_rule_snapshot
-user_confirmation
-dry_run_plan
-executor_request
-executor_response
-post_execute_state_snapshot
-eval_case
-eval_result
-memory_write_request
-memory_item
-```
-
-SQLite 表第一版：
-
-```text
-evidence_refs
-command_traces
-command_steps
-step_evidence_refs
-gate_checks
-audit_log
-```
-
-必须实现：
-
-```text
-EvidenceStore::record
-EvidenceStore::read
-EvidenceStore::freshness
-TraceStore::start_trace
-TraceStore::append_step
-TraceStore::append_gate_check
-AuditSink::append
-```
-
-验收标准：
-
-```text
-一次 mock dry-run 可以生成 trace_id
-trace_id 能查到 raw_user_input_ref
-每个 step 能关联 evidence_refs
-gate check 能记录 accepted / rejected / reason
-```
-
-测试要求：
-
-```text
-cargo test -p edgehome-storage
-cargo test -p edgehome-trace
-```
-
-禁止事项：
-
-```text
-不要把 Mermaid 当运行时状态源
-不要让 LLM 写 evidence
-不要把 raw secrets 写入 evidence
-```
-
-## 7. Milestone 4：CLI Skeleton and Mock Pipeline
-
-目标：
-
-```text
-在没有 Ollama 的情况下跑通确定性 pipeline。
-```
-
-位置建议：
-
-```text
-crates/edgehome-cli/
-crates/edgehome-core/
-```
-
-必须实现命令：
-
-```bash
-edgehome parse --mock "把客厅灯关掉"
-edgehome dry-run --mock "晚上十点后把走廊灯调到30%"
-edgehome trace show <trace_id>
-```
-
-MockModel 行为：
-
-```text
-输入固定 case
-返回固定 ModelCandidate JSON
-用于测试 pipeline，不依赖模型
-```
-
-必须打通：
-
-```text
-raw_user_input evidence
-mock raw_model_output evidence
-parsed_json evidence
-normalized_command evidence
-command_trace
-audit_log
-```
-
-验收标准：
-
-```text
-edgehome dry-run --mock 能输出 trace_id
-edgehome trace show <trace_id> 能看到步骤链
-mock pipeline 不需要 Ollama
-```
-
-测试要求：
-
-```text
-cargo test
-cargo run -p edgehome-cli -- dry-run --mock "把客厅灯关掉"
-```
-
-禁止事项：
-
-```text
-不要为了 demo 跳过 trace
-不要在 mock pipeline 中直接执行设备
-```
-
-## 8. Milestone 5：Input Guard, Parser, Normalizer
-
-目标：
-
-```text
-完成模型输出清洗、JSON 解析、schema 校验、语义标准化。
-```
-
-位置建议：
-
-```text
-crates/edgehome-parser/
-```
-
-必须实现：
-
-```text
-InputGuard
-RulePreParser
-OutputCleaner
-JsonExtractor
-SchemaValidator
-SemanticNormalizer
-TimeNormalizer
-NumberNormalizer
-```
-
-InputGuard 处理：
-
-```text
-输入长度限制
-非法控制字符
-prompt injection 标记
-危险直连语句标记
-```
-
-OutputCleaner 处理：
-
-```text
-<think>...</think>
-markdown code fence
-JSON 前后多余文本
-找不到 JSON fail closed
-JSON 闭合后多余内容截断
-```
-
-SemanticNormalizer 处理：
-
-```text
-客厅 -> living_room
-卧室 -> bedroom
-走廊 -> hallway
-关掉 -> turn_off
-打开 -> turn_on
-调到 30% -> set_brightness brightness=30
-26 度 -> temperature=26
-晚上十点 -> 22:00
-再暗一点 -> 依赖短时记忆，先标记为 relative_command
-```
-
-验收标准：
-
-```text
-非法模型输出不会 panic
-非法模型输出不会进入 executor
-中文常见指令可以标准化
-所有 parser 失败都能写入 trace
-```
-
-测试用例必须包括：
-
-```text
-纯 JSON
-带 think block
-带 markdown fence
-JSON 后有多余文本
-无 JSON
-重复 key
-亮度越界
-时间表达
-相对指代
-```
-
-测试要求：
-
-```text
-cargo test -p edgehome-parser
-```
-
-## 9. Milestone 6：Device Registry, Capability Model, State Cache
-
-目标：
-
-```text
-建立智能家居设备抽象，不让模型知道真实后端。
-```
-
-位置建议：
-
-```text
-crates/edgehome-registry/
-configs/devices.yaml
-```
-
-必须实现：
-
-```text
-DeviceRegistry
-DeviceAliasResolver
-CapabilityResolver
-DeviceStateProvider
-StateCache
-```
-
-Device Registry 示例：
-
-```yaml
-devices:
-  - device_id: living_room_main_light
-    aliases: ["客厅灯", "客厅主灯", "屋里大灯"]
-    room: living_room
-    device_type: light
-    backend: mock
-    backend_entity_id: mock.light.living_room_main
-    risk_level: low
-```
-
-Capability Model 示例：
-
-```yaml
-capabilities:
-  light:
-    - action: turn_on
-    - action: turn_off
-    - action: set_brightness
-      min: 0
-      max: 100
-      unit: percent
-```
-
-State Cache 第一版：
-
-```text
-MockStateProvider
-state_json
-observed_at
-stale_after_sec
-expired_after_sec
-```
-
-验收标准：
-
-```text
-客厅灯 -> living_room_main_light
-不存在设备 -> rejected
-light + set_temperature -> rejected
-brightness=150 -> rejected
-state freshness 可以判断 fresh/stale/expired/unknown
-```
-
-测试要求：
-
-```text
-cargo test -p edgehome-registry
-```
-
-禁止事项：
-
-```text
-不要把 Home Assistant token 放进 registry
-不要把 entity_id 注入模型 prompt
-不要让模型选择 backend
-```
-
-## 10. Milestone 7：Gate Engine and Policy Engine
-
-目标：
-
-```text
-建立真正的 Harness 安全边界。
-```
-
-位置建议：
-
-```text
-crates/edgehome-gate/
-crates/edgehome-policy/
-```
-
-必须实现 gate：
-
-```text
-SchemaGate
-DeviceResolvedGate
-CapabilityGate
-FreshnessGate
-PolicyGate
-ConfirmationGate
-DryRunGate
-ExecutionGate
-MemoryWriteGate
-```
-
-PolicyDecision：
-
-```text
-allow
-require_confirmation
-deny
-```
-
-风险模型：
-
-```text
-read -> allow
-low -> allow / dry-run
-medium -> audit / require_confirmation
-high -> require_confirmation
-blocked -> deny
-unknown -> deny
-```
-
-TransitionGate 必须阻止：
-
-```text
-execute 越过 policy_decision
-execute 越过 dry_run
-high-risk execute 越过 confirmation
-verify_state 在 execute 前发生
-memory_write 直接相信 LLM 输出
-policy_allowed 使用 expired policy snapshot
-state_based_action 使用 expired device state
-```
-
-验收标准：
-
-```text
-打开门锁 -> require_confirmation
-关闭所有摄像头 -> require_confirmation 或 deny，按策略配置
-关闭燃气报警器 -> deny
-unknown device -> deny
-unsupported capability -> deny
-每次 gate 都写 gate_checks
-```
-
-测试要求：
-
-```text
-cargo test -p edgehome-gate
-cargo test -p edgehome-policy
-```
-
-禁止事项：
-
-```text
-不要让模型决定 policy
-不要让 executor 绕过 gate
-不要让 unknown 默认 allow
-```
-
-## 11. Milestone 8：Dry-run, MockExecutor, Execution Transaction
-
-目标：
-
-```text
-实现不碰真实设备的安全执行计划。
-```
-
-位置建议：
-
-```text
-crates/edgehome-executor/
-```
-
-必须实现：
-
-```text
-Executor trait
-MockExecutor
-DryRunPlanner
-ExecutionTransaction
-IdempotencyChecker
-RateLimiter
-PostStateVerifier mock
-```
-
-ExecutionTransaction：
-
-```text
-validate
-  -> policy
-  -> dry-run
-  -> optional confirmation
-  -> idempotency check
-  -> execute
-  -> post-state verify
-  -> audit
-```
-
-第一版默认：
-
-```text
-execute disabled
-dry-run enabled
-```
-
-验收标准：
-
-```text
-edgehome dry-run --mock "晚上十点后把走廊灯调到30%" 输出 ExecutionPlan
-ExecutionPlan 包含 trace_id
-高风险动作没有 confirmation 不能 execute
-重复命令可以被 idempotency checker 识别
-```
-
-测试要求：
-
-```text
-cargo test -p edgehome-executor
-```
-
-禁止事项：
-
-```text
-不要默认真实执行
-不要隐藏 executor failure
-不要执行失败还返回 success
-```
-
-## 12. Milestone 9：Memory and Context Assembler
-
-目标：
-
-```text
-实现轻量化本地记忆，并把记忆编译成短 prompt 上下文。
-```
-
-位置建议：
-
-```text
-crates/edgehome-memory/
-crates/edgehome-core/
-```
-
-必须实现：
-
-```text
-ShortSessionMemory
-LongTermPreferenceStore
-SafetyMemory
-MemoryWriteGate
-ContextAssembler
-```
-
-短时记忆：
-
-```text
-last_device_id
-last_room
-last_device_type
-last_action
-last_value
-last_trace_id
-expires_at
-```
-
-长期记忆：
-
-```text
-device_alias
-room_alias
-user_preference
-scene_default
-safety_rule
-```
-
-ContextAssembler 输出限制：
-
-```text
-max_short_memory_turns <= profile
-max_context_chars <= profile
-最多注入少量候选设备
-最多注入少量长期偏好
-不注入 raw refs 原文
-不注入 secrets
-```
-
-必须支持场景：
-
-```text
-用户：把客厅灯调到70%
-用户：再暗一点
-系统：解析到 living_room_main_light + decrease_brightness
-```
-
-验收标准：
-
-```text
-短时记忆能解析“刚才那个灯”
-长期记忆只能由明确用户表达或确认写入
-安全记忆只能增强安全
-低内存 profile 可以禁用长期记忆注入
-```
-
-测试要求：
-
-```text
-cargo test -p edgehome-memory
-```
-
-禁止事项：
-
-```text
-不要让 LLM 自动写长期记忆
-不要把完整聊天历史塞进 prompt
-不要把 KV cache 当业务记忆
-```
-
-## 13. Milestone 10：Ollama Adapter, MiniCPM5 Profile, Output Governor
-
-目标：
-
-```text
-接入 MiniCPM5-1B，但仍然保持 Harness 可控。
-```
-
-位置建议：
-
-```text
-crates/edgehome-ollama/
-```
-
-必须实现：
-
-```text
-OllamaClient
-MiniCPM5 model profile
-StructuredOutputRequest
-StructuredOutputResponse
-OutputGovernor
-RetryPolicy
-FallbackPolicy
-ModelHealth
-```
-
-第一版只支持：
-
-```text
-Ollama /api/chat
-MiniCPM5-1B
-non-streaming
-structured outputs
-```
-
-streaming 可以后续实现。
-
-OutputGovernor 必须处理：
-
-```text
-timeout
-max output bytes
-max output chars
-num_predict profile
-invalid JSON retry
-schema failed retry
-fallback to enum-only
-fallback to rule-only
-model health circuit breaker
-```
-
-默认参数：
-
-```text
-temperature 0.0-0.2
-top_p 0.8-0.95
-top_k 20
-repeat_penalty 1.2-1.3
-num_ctx 1024
-num_predict 80-160
-timeout_ms profile controlled
-retry_count <= 1 in low_memory
-```
-
-验收标准：
-
-```text
-edgehome parse "把客厅灯关掉" 可以调用 MiniCPM5
-原始模型输出写入 evidence
-模型 timeout 写入 trace
-模型失败不会进入 executor
-低内存 profile 生效
-```
-
-测试要求：
-
-```text
-cargo test -p edgehome-ollama
-```
-
-集成测试可以允许在 Ollama 不存在时自动 skip，但必须有清楚提示。
-
-禁止事项：
-
-```text
-不要接多个模型平台
-不要把 Qwen 加进主链路
-不要绕过 OutputGovernor
-```
-
-## 14. Milestone 11：Full Harness Pipeline Integration
-
-目标：
-
-```text
-把 mock pipeline、parser、registry、gate、memory、Ollama、dry-run 串成主链路。
-```
-
-主命令：
-
-```bash
-edgehome dry-run "晚上十点后把走廊灯调到30%"
-```
-
-必须输出：
-
-```text
-trace_id
-normalized_command
-policy_decision
-dry_run_plan
-evidence_refs
-gate_checks
-```
-
-必须串联：
-
-```text
-InputGuard
-RulePreParser
-ContextAssembler
-OllamaClient or MockModel
-OutputGovernor
-OutputCleaner
-SchemaValidator
-SemanticNormalizer
-EvidenceStore
-DeviceRegistry
-CapabilityResolver
-FreshnessGate
-PolicyEngine
-DryRunPlanner
-AuditSink
-MemoryUpdateGate
-```
-
-验收标准：
-
-```text
-成功 case 可以 dry-run
-危险 case 可以 require_confirmation / deny
-失败 case 可以 trace show
-所有主路径都有 trace_id
-所有 allow / deny 都有 gate_checks
-```
-
-必须通过 case：
-
-```text
-把客厅灯关掉
-把卧室空调调到26度
-晚上十点后把走廊灯调到30%
-打开前门门锁
-关闭所有摄像头
-关闭燃气报警器
-把刚才那个灯再调暗一点
-```
-
-测试要求：
-
-```text
-cargo test
-cargo run -p edgehome-cli -- dry-run --mock "晚上十点后把走廊灯调到30%"
-```
-
-有 Ollama 时再运行：
-
-```text
-cargo run -p edgehome-cli -- dry-run "晚上十点后把走廊灯调到30%"
-```
-
-## 15. Milestone 12：Eval, Replay, Metrics
-
-目标：
-
-```text
-证明 Harness 有用，而不是凭感觉说模型可用。
-```
-
-位置建议：
-
-```text
-crates/edgehome-eval/
-cases/
-reports/
-```
-
-必须实现：
-
-```text
-YAML case loader
-EvalRunner
-ReplayLoader
-MetricsCalculator
-MarkdownReport
-JsonReport
-```
-
-初始 cases：
-
-```text
-intent / slot cases
-policy cases
-dangerous action cases
-memory cases
-invalid JSON cases
-timeout / fallback cases
-stale state cases
-```
-
-指标：
-
-```text
-valid JSON rate
-schema pass rate
-intent accuracy
-slot accuracy
-normalization success rate
-policy correctness
-dangerous action block rate
-confirmation correctness
-memory fallback success rate
-timeout rate
-dead-loop interruption rate
-Evidence Source Coverage
-False Execution Block Rate
-Stale State Leakage Rate
-Actionable Rejection Rate
-Context Budget Efficiency
-Audit Coverage
-Replay Success Rate
-latency p50 / p95
-RSS peak 手动或脚本记录
-```
-
-命令：
-
-```bash
-edgehome eval cases/zh-home.yaml --profile eval_mode
-edgehome replay <trace_id>
-```
-
-验收标准：
-
-```text
-eval 能跑完整 cases
-报告输出 Markdown 和 JSON
-每个 failed case 有 trace_id
-replay 能复现至少 normalized_command / policy_decision / dry_run_plan
-```
-
-禁止事项：
-
-```text
-不要把 eval 放到最后才补
-不要只看模型准确率，不看 gate 和 evidence coverage
-```
-
-## 16. Milestone 13：HomeAssistantExecutor
-
-目标：
-
-```text
-在核心 Harness 稳定后，接入 Home Assistant 作为真实设备 demo 后端。
-```
-
-位置建议：
-
-```text
-crates/edgehome-executor/
-configs/home_assistant.yaml.example
-```
-
-必须实现：
-
-```text
-HomeAssistantClient
-HomeAssistantExecutor
-HA state fetch
-HA dry-run translation
-HA service call translation
-Secrets loader
-```
-
-第一版支持：
-
-```text
-light.turn_on
-light.turn_off
-switch.turn_on
-switch.turn_off
-climate.set_temperature
-cover.open_cover
-cover.close_cover
-```
-
-默认行为：
-
-```text
-dry-run only
-execute 需要显式 --confirm
-high risk 永远 confirmation
-blocked 永远 deny
-```
-
-验收标准：
-
-```text
-不配置 HA token 时不会 panic
-HA token 不进入 prompt
-HA token 不进入普通 audit
-Device Registry 可以映射 device_id -> entity_id
-dry-run 能显示 HA service 和 payload
-execute 只有 confirm 后才可调用
-```
-
-禁止事项：
-
-```text
-不要宣传所有米家设备都离线
-不要把 Home Assistant 变成项目本体
-不要让模型输出 entity_id
-```
-
-## 17. Milestone 14：2GB RAM Profile and Deployment Notes
-
-目标：
-
-```text
-证明系统设计考虑端侧低内存约束。
-```
-
-必须完成：
-
-```text
-configs/low_memory.yaml
-docs/2gb-profile.md
-docs/model-parameters.md
-docs/deployment-modes.md
-```
-
-需要记录：
-
-```text
-测试机器
-OS
-RAM
-模型名
-量化版本
-num_ctx
-num_predict
-temperature
-timeout
-平均延迟
-p95 延迟
-RSS peak
-失败模式
-降级行为
-```
-
-部署模式：
-
-```text
-Mode A：2GB Edge Harness + HA on LAN
-Mode B：4GB/8GB all-in-one
-Mode C：2GB ultra-local + MiioLocalExecutor subset
-```
-
-验收标准：
-
-```text
-low_memory profile 文档完整
-README 与 docs 不冲突
-内存压力下会减少记忆注入
-内存压力下会减少 num_ctx / num_predict 或进入 rule-only
-```
-
-## 18. Milestone 15：Documentation Sync and Demo Script
-
-目标：
-
-```text
-让项目可以被面试官快速理解和复现。
-```
-
-必须维护：
-
-```text
-README.md
-plan.md
-PROJECT_DRAFT_LEGACY.md
-docs/model-parameters.md
-docs/2gb-profile.md
-docs/home-assistant-demo.md
-docs/eval-report-example.md
-```
-
-Demo 脚本：
-
-```text
-1. edgehome eval cases/zh-home.yaml
-2. edgehome dry-run "晚上十点后把走廊灯调到30%"
-3. edgehome replay <trace_id>
-4. 展示 dangerous action 被 gate 拦截
-5. 展示“刚才那个灯”被短时记忆解析
-6. 展示 low_memory profile 限制上下文
-```
-
-README 必须持续表达：
-
-```text
-这是 1B 端侧小模型 Harness 项目
-智能家居是产品形态和验证场景
-Ollama 只保证 JSON 语法
-Harness 保证业务安全、证据门控、运行时稳定
-模型输出只是 candidate
-Executor 只接受 ExecutionPlan
-```
-
-验收标准：
-
-```text
-README、plan、docs 没有核心冲突
-plan.md 仍然是唯一实施路线
-demo 命令能跑
-eval report 能生成
-```
-
-## 19. 第一版完成定义
-
-V1 完成必须同时满足：
-
-```text
-cargo fmt --check 通过
-cargo test 通过
-edgehome dry-run --mock "晚上十点后把走廊灯调到30%" 通过
-edgehome eval cases/zh-home.yaml --profile eval_mode 通过
-edgehome replay <trace_id> 通过
-危险动作被正确拦截
-每次 allow / deny 都有 gate_checks
-每次 dry-run 都有 trace_id
-README 和 plan 同步
-```
-
-第一版不要求：
-
-```text
-真实米家设备全离线控制
-完整 Web UI
-多模型平台
-Qwen 主链路
-向量数据库
-开放式 RAG
-自主 Agent loop
-```
-
-## 20. 后续扩展顺序
-
-V1 之后再考虑：
-
-```text
-Qwen3.5-0.8B eval 对比
-streaming output governor
-llama.cpp runtime adapter
-GBNF grammar support
-Home Assistant capability sync
-MiioLocalExecutor
-MQTT Executor
-Matter Executor
-local web dashboard
-systemd deployment
-ARM cross compile
-真实 2GB board benchmark
-```
-
-扩展原则：
-
-```text
-任何扩展都不能破坏 evidence / gate / trace 主线。
-任何真实执行都不能绕过 ExecutionPlan。
-任何模型扩展都不能绕过 OutputGovernor。
-任何记忆扩展都不能绕过 MemoryWriteGate。
-```
-
-## 21. 后续 goal 模式执行规则
-
-进入 `/goal` 或长任务实现时，必须遵守：
-
-```text
-1. 先读取 README.md 和 plan.md
-2. 以 plan.md 当前 milestone 为准
-3. 不跨 milestone 做功能
-4. 每个 milestone 完成后运行对应测试
-5. 测试失败不进入下一 milestone
-6. 如果需要改变顺序，先修改 plan.md
-7. 不为 demo 跳过 gate / trace / audit
-8. 不在核心 Harness 稳定前做真实设备执行
-9. 不因为模型输出正确就省略 validator
-10. 不因为 JSON 合法就省略 policy
-11. 经常提交留档，完成一个可验证 checkpoint 就提交一次
-```
-
-每个 milestone 的结束报告必须包含：
-
-```text
-完成了什么
-修改了哪些文件
-新增了哪些命令
-跑了哪些测试
-哪些验收标准通过
-哪些风险仍然存在
-下一步 milestone 是什么
-本次提交 hash 是什么
-```
-
-## 22. 当前完成状态
-
-V1 已按本计划从 Milestone 0 推进到 Milestone 15。
-
-当前已完成：
-
-```text
-M0  Repository Foundation
-M1  Domain Contracts
-M2  Config Profiles
-M3  Evidence Store and Command Trace
-M4  CLI Skeleton and Mock Pipeline
-M5  Input Guard, Parser, Normalizer
-M6  Device Registry, Capability Model, State Cache
-M7  Gate Engine and Policy Engine
-M8  Dry-run, MockExecutor, Execution Transaction
-M9  Memory and Context Assembler
-M10 Ollama Adapter, MiniCPM5 Profile, Output Governor
-M11 Full Harness Pipeline Integration
-M12 Eval, Replay, Metrics
-M13 HomeAssistantExecutor
-M14 2GB RAM Profile and Deployment Notes
-M15 Documentation Sync and Demo Script
-```
-
-V1 完成后的继续扩展必须遵守：
-
 ```text
-plan.md 仍然是唯一实施路线
-任何新 milestone 先写入 plan.md，再实现
-不为 demo 跳过 evidence / gate / trace / audit
-不让模型绕过 OutputGovernor
-不让真实执行绕过 ExecutionPlan
-不把 Home Assistant 变成项目本体
-不宣传所有米家设备都纯离线
+EdgeHome Harness V2 是一个面向 1B 端侧小模型的 Rust Agent Harness。
+它用智能家居本地控制作为产品场景，用 Runtime Memory 解决实时上下文，
+用 Output Governor 解决小模型死循环和坏输出，
+用 Trace/Replay/Eval 解决失败复盘和版本回归，
+并在 2GB RAM 约束下保持可部署、可演示、可解释。
 ```
