@@ -47,6 +47,77 @@ SQLite page cache
 
 这个算法是错的。
 
+## 当前基准模型：openbmb/minicpm5:latest
+
+当前项目默认按下面这个本地模型作为 2GB profile 的基准：
+
+```text
+MODEL ID: openbmb/minicpm5:latest
+OLLAMA ID: 08239e8f70e0
+MODEL PACKAGE SIZE: 688MB
+```
+
+这里的 688MB 是 Ollama 模型包 / 权重文件量级，主要消耗存储空间。真正推理时，它会通过 Ollama 进程进入运行时内存预算。
+
+因此对 2GB RAM 机器，应该用下面这组运行时预算，而不是只看 688MB：
+
+| 项目 | 估算占用 | 波动原因 | 工程要求 |
+|---|---:|---|---|
+| 模型文件存储 | 688MB | 存在 microSD / eMMC / NVMe 中 | 不计入常驻 RAM，但会影响磁盘空间和加载速度 |
+| Ollama daemon + MiniCPM5 loaded runtime | 1000-1250MB | mmap、page cache、上下文、推理 buffer、Ollama 版本 | 2GB 下应控制在 1250MB 以内 |
+| 首次加载 / 首次请求峰值 | 最高可能接近 1300-1350MB | 模型加载、buffer 初始化、缓存波动 | 超过 1350MB 时不应继续把 2GB 作为 Ollama 长稳路径 |
+| KV cache / context | 几十 MB 到一百多 MB | `num_ctx`、KV dtype、backend 实现 | `num_ctx` 建议 512 / 768 / 1024 |
+| EdgeHome Harness RSS | 25-64MB | registry、memory、trace、HTTP、executor | 目标低于 64MB，硬上限 96MB |
+| SQLite / trace / audit | 5-32MB | page cache、trace buffer、批量写入 | trace 流式落盘，不长期堆内存 |
+| 瞬时请求对象 | 20-80MB | JSON 清洗、retry、日志、HTTP body | 请求结束后释放 |
+
+换句话说：
+
+```text
+openbmb/minicpm5:latest 的 688MB 不是 2GB RAM 中唯一的大头。
+在 Ollama 路线下，真正应该预算的是 1.0-1.25GB 的模型运行时占用，
+并预留 100-150MB 的加载和请求波动空间。
+```
+
+2GB 上更现实的目标是：
+
+```text
+Ollama + MiniCPM5 runtime: <= 1250MB
+EdgeHome Harness: <= 64MB
+SQLite / trace / executor: <= 64MB
+OS Lite + system services: <= 350-450MB
+MemAvailable reserve: >= 250-350MB
+```
+
+如果实测加载 `openbmb/minicpm5:latest` 后：
+
+```text
+MemAvailable >= 350MB：可以继续跑 low_memory LLM path
+MemAvailable 250-350MB：必须进入 compact_json，禁止重试膨胀
+MemAvailable 180-250MB：不建议继续发起 LLM 调用，优先 rule parser / fallback
+MemAvailable < 180MB：进入 emergency，停止新推理
+```
+
+Harness 在 2GB profile 中应该是“小占比控制层”，不能成为第二个大内存服务：
+
+```text
+64MB Harness / 2048MB RAM ≈ 3.1%
+96MB Harness / 2048MB RAM ≈ 4.7%
+64MB Harness / 1250MB model runtime ≈ 5.1%
+```
+
+因此 2GB profile 的工程目标不是让 Harness 功能无限扩展，而是让它保持小而硬：
+
+```text
+强 schema
+强 policy
+短 memory
+短 trace buffer
+轻 executor
+离线 eval
+在线只保留必要状态
+```
+
 ## 2GB 机器上真正可用的预算
 
 2GB 物理内存并不等于应用可随意使用 2048MB。
