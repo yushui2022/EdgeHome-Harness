@@ -188,6 +188,30 @@ impl RulePreParser {
                 action: Action::TurnOff,
                 ..ModelCandidate::default()
             }),
+            "打开空调" => Some(ModelCandidate {
+                intent: Intent::ControlDevice,
+                room: Some(Room::Unknown),
+                device_alias: Some("relative:last_air_conditioner".to_owned()),
+                device_type: DeviceType::AirConditioner,
+                action: Action::TurnOn,
+                params: CommandParams {
+                    raw_value: Some("relative_command".to_owned()),
+                    ..CommandParams::default()
+                },
+                ..ModelCandidate::default()
+            }),
+            "关闭空调" | "把空调关掉" => Some(ModelCandidate {
+                intent: Intent::ControlDevice,
+                room: Some(Room::Unknown),
+                device_alias: Some("relative:last_air_conditioner".to_owned()),
+                device_type: DeviceType::AirConditioner,
+                action: Action::TurnOff,
+                params: CommandParams {
+                    raw_value: Some("relative_command".to_owned()),
+                    ..CommandParams::default()
+                },
+                ..ModelCandidate::default()
+            }),
             "打开前门门锁" | "打开入户门锁" => Some(ModelCandidate {
                 intent: Intent::ControlDevice,
                 room: Some(Room::Entrance),
@@ -647,6 +671,24 @@ mod tests {
         assert_eq!(command.device_type, DeviceType::AirConditioner);
         assert_eq!(command.action, Action::TurnOn);
         assert!(command.can_enter_policy_gate());
+    }
+
+    #[test]
+    fn air_conditioner_relative_power_command_waits_for_memory() {
+        let input = UserInput::new("关闭空调").expect("input");
+        let candidate = RulePreParser.pre_parse(&input).expect("candidate");
+        let command = SemanticNormalizer.normalize(&candidate).expect("command");
+
+        assert_eq!(command.intent, Intent::ControlDevice);
+        assert_eq!(command.room, Room::Unknown);
+        assert_eq!(command.device_id, None);
+        assert_eq!(command.device_type, DeviceType::AirConditioner);
+        assert_eq!(command.action, Action::TurnOff);
+        assert_eq!(
+            command.params.raw_value,
+            Some("relative_command".to_owned())
+        );
+        assert!(!command.can_enter_policy_gate());
     }
 
     #[test]

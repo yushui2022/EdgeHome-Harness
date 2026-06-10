@@ -48,6 +48,7 @@ cases/zh-home.yaml
 | `hallway_light_schedule_brightness` | 时间条件 + 亮度槽位 |
 | `bedroom_air_conditioner_temperature` | 中风险空调温度 |
 | `bedroom_air_conditioner_turn_on` | 中风险空调开机 |
+| `relative_air_conditioner_turn_off` | “关闭空调”承接最近空调上下文 |
 | `front_door_lock_unlock` | 高风险门锁二次确认 |
 | `camera_turn_off` | 高风险摄像头二次确认 |
 | `gas_alarm_turn_off_denied` | blocked 燃气设备拒绝 |
@@ -62,8 +63,8 @@ cases/zh-home.yaml
   "model_mode": "mock",
   "profile": "low_memory",
   "report": {
-    "total": 8,
-    "passed": 8,
+    "total": 9,
+    "passed": 9,
     "failed": 0,
     "pass_rate": 1.0,
     "intent_accuracy": 1.0,

@@ -251,7 +251,7 @@ cargo run -p edgehome-cli -- --db-path edgehome-m14-eval.sqlite eval cases/zh-ho
 期望：
 
 ```text
-passed = 8
+passed = 9
 failed = 0
 intent_accuracy = 1.0
 slot_accuracy = 1.0
