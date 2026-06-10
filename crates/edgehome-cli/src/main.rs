@@ -20,7 +20,7 @@ use edgehome_memory::{
 };
 use edgehome_ollama::{
     ChatMessage, MiniCpm5Profile, OllamaClient, OutputGovernor, OutputGovernorReport,
-    StructuredOutputRequest,
+    ResourcePressurePolicy, StructuredOutputRequest,
 };
 use edgehome_parser::{InputGuard, RulePreParser, SemanticNormalizer};
 use edgehome_registry::{DeviceRegistry, StateFreshness};
@@ -85,6 +85,10 @@ enum Commands {
 #[derive(Debug, Subcommand)]
 enum ConfigCommand {
     Show,
+    Pressure {
+        #[arg(long)]
+        free_memory_mb: u32,
+    },
 }
 
 #[derive(Debug, Subcommand)]
@@ -111,6 +115,20 @@ fn main() -> anyhow::Result<()> {
             let profile = load_profile(&cli.config_dir, &cli.profile)
                 .with_context(|| format!("failed to load profile `{}`", cli.profile))?;
             print_json(&profile)?;
+        }
+        Commands::Config {
+            command: ConfigCommand::Pressure { free_memory_mb },
+        } => {
+            let profile = load_profile(&cli.config_dir, &cli.profile)
+                .with_context(|| format!("failed to load profile `{}`", cli.profile))?;
+            let model_profile = MiniCpm5Profile::from_runtime_profile(&profile);
+            let decision =
+                ResourcePressurePolicy::default().adapt_profile(&model_profile, free_memory_mb);
+            print_json(&json!({
+                "profile": profile.name,
+                "free_memory_mb": free_memory_mb,
+                "decision": decision,
+            }))?;
         }
         Commands::Parse { mock, input } => {
             let profile = load_profile(&cli.config_dir, &cli.profile)

@@ -527,6 +527,12 @@ cargo test
 cargo run -q -p edgehome-cli -- config show
 ```
 
+查看 2GB profile 的内存压力降级决策：
+
+```powershell
+cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 128
+```
+
 运行评测：
 
 ```powershell

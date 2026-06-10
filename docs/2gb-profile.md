@@ -248,10 +248,26 @@ low_memory profile：
 cargo run -p edgehome-cli -- config show
 ```
 
+内存压力降级决策：
+
+```powershell
+cargo run -p edgehome-cli -- config pressure --free-memory-mb 1024
+cargo run -p edgehome-cli -- config pressure --free-memory-mb 400
+cargo run -p edgehome-cli -- config pressure --free-memory-mb 128
+```
+
+预期：
+
+```text
+1024MB -> normal，保持 num_ctx=1024 / num_predict=128，memory_enabled=true
+400MB -> elevated，压到 num_ctx<=768 / num_predict<=96，memory_enabled=true
+128MB -> critical，压到 num_ctx<=512 / num_predict<=64，memory_enabled=false，fallback=rule_only
+```
+
 中文智能家居评测：
 
 ```powershell
-cargo run -p edgehome-cli -- --db-path edgehome-m14-eval.sqlite eval cases/zh-home.yaml
+cargo run -p edgehome-cli -- --profile low_memory --db-path edgehome-m24-eval.sqlite eval cases/zh-home.yaml --gate
 ```
 
 期望：
@@ -264,6 +280,7 @@ slot_accuracy = 1.0
 policy_accuracy = 1.0
 dry_run_accuracy = 1.0
 trace_coverage = 1.0
+gate.passed = true
 ```
 
 ## 真实 2GB 板卡记录模板
