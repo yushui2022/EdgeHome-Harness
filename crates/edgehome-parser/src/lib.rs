@@ -172,6 +172,22 @@ impl RulePreParser {
                 },
                 ..ModelCandidate::default()
             }),
+            "把卧室空调打开" | "打开卧室空调" => Some(ModelCandidate {
+                intent: Intent::ControlDevice,
+                room: Some(Room::Bedroom),
+                device_alias: Some("卧室空调".to_owned()),
+                device_type: DeviceType::AirConditioner,
+                action: Action::TurnOn,
+                ..ModelCandidate::default()
+            }),
+            "把卧室空调关掉" | "关闭卧室空调" => Some(ModelCandidate {
+                intent: Intent::ControlDevice,
+                room: Some(Room::Bedroom),
+                device_alias: Some("卧室空调".to_owned()),
+                device_type: DeviceType::AirConditioner,
+                action: Action::TurnOff,
+                ..ModelCandidate::default()
+            }),
             "打开前门门锁" | "打开入户门锁" => Some(ModelCandidate {
                 intent: Intent::ControlDevice,
                 room: Some(Room::Entrance),
@@ -333,9 +349,11 @@ impl SemanticNormalizer {
             (Room::Hallway, DeviceType::Light, Action::SetBrightness) => {
                 DeviceId::new("hallway_light").ok()
             }
-            (Room::Bedroom, DeviceType::AirConditioner, Action::SetTemperature) => {
-                DeviceId::new("bedroom_air_conditioner").ok()
-            }
+            (
+                Room::Bedroom,
+                DeviceType::AirConditioner,
+                Action::SetTemperature | Action::TurnOn | Action::TurnOff,
+            ) => DeviceId::new("bedroom_air_conditioner").ok(),
             (Room::Entrance, DeviceType::Lock, Action::Unlock | Action::Open) => {
                 DeviceId::new("front_door_lock").ok()
             }
@@ -612,6 +630,22 @@ mod tests {
         assert_eq!(command.action, Action::SetBrightness);
         assert_eq!(command.params.brightness, Some(30));
         assert_eq!(command.params.time_after, Some("22:00".to_owned()));
+        assert!(command.can_enter_policy_gate());
+    }
+
+    #[test]
+    fn air_conditioner_power_command_can_be_standardized() {
+        let input = UserInput::new("把卧室空调打开").expect("input");
+        let candidate = RulePreParser.pre_parse(&input).expect("candidate");
+        let command = SemanticNormalizer.normalize(&candidate).expect("command");
+
+        assert_eq!(
+            command.device_id,
+            Some(DeviceId::new("bedroom_air_conditioner").expect("device id"))
+        );
+        assert_eq!(command.room, Room::Bedroom);
+        assert_eq!(command.device_type, DeviceType::AirConditioner);
+        assert_eq!(command.action, Action::TurnOn);
         assert!(command.can_enter_policy_gate());
     }
 

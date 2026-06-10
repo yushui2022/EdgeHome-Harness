@@ -45,6 +45,17 @@
     policy_decision: require_confirmation
     dry_run_ready: true
 
+- id: bedroom_air_conditioner_turn_on
+  input: "把卧室空调打开"
+  expected:
+    intent: control_device
+    room: bedroom
+    device_id: bedroom_air_conditioner
+    device_type: air_conditioner
+    action: turn_on
+    policy_decision: require_confirmation
+    dry_run_ready: true
+
 - id: front_door_lock_unlock
   input: "打开前门门锁"
   expected:
