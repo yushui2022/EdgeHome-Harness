@@ -19,7 +19,7 @@ bash scripts/qemu/run-virt-2gb.sh
 QEMU 启动后，另开一个 WSL2 终端执行：
 
 ```bash
-ssh edge@localhost -p 2222
+ssh -i /mnt/e/edgehome-qemu/ssh/edgehome_qemu edge@localhost -p 2222
 ```
 
 确认 VM 可登录后，在 WSL2 宿主环境交叉编译并复制产物：
@@ -50,6 +50,15 @@ bash scripts/run-low-memory-eval.sh
 ```text
 E:\edgehome-qemu
 ```
+
+`prepare-image.sh` 会自动生成：
+
+```text
+/mnt/e/edgehome-qemu/ssh/edgehome_qemu
+/mnt/e/edgehome-qemu/ssh/edgehome_qemu.pub
+```
+
+公钥会写入 cloud-init，后续 `copy-edgehome.sh` 可以免密码复制二进制和配置。
 
 目录用途：
 
@@ -99,4 +108,3 @@ cargo-target/
 *.sqlite
 模型权重
 ```
-

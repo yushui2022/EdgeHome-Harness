@@ -46,7 +46,7 @@ echo "== Tool versions =="
 qemu-system-aarch64 --version
 qemu-img --version
 if command -v cloud-localds >/dev/null 2>&1; then
-  cloud-localds --version || true
+  echo "cloud-localds found: $(command -v cloud-localds)"
 else
   echo "cloud-localds not found; check cloud-image-utils installation." >&2
   exit 1

@@ -3,11 +3,14 @@ set -euo pipefail
 
 QEMU_ROOT="${QEMU_ROOT:-/mnt/e/edgehome-qemu}"
 IMAGE_DIR="${QEMU_ROOT}/images"
+SSH_DIR="${QEMU_ROOT}/ssh"
+SSH_KEY="${SSH_KEY:-${SSH_DIR}/edgehome_qemu}"
 IMAGE_URL="${IMAGE_URL:-https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-arm64.img}"
 IMAGE_FILE="${IMAGE_FILE:-ubuntu-24.04-arm64.qcow2}"
 IMAGE_SIZE="${IMAGE_SIZE:-20G}"
 
 mkdir -p "${IMAGE_DIR}"
+mkdir -p "${SSH_DIR}"
 cd "${IMAGE_DIR}"
 
 echo "== Preparing Ubuntu ARM64 cloud image =="
@@ -24,8 +27,15 @@ echo "== Resizing image to ${IMAGE_SIZE} =="
 qemu-img resize "${IMAGE_FILE}" "${IMAGE_SIZE}"
 qemu-img info "${IMAGE_FILE}"
 
+if [ ! -f "${SSH_KEY}" ]; then
+  echo "== Generating SSH key for QEMU guest automation =="
+  ssh-keygen -t ed25519 -N "" -f "${SSH_KEY}" -C "edgehome-qemu" >/dev/null
+fi
+
+PUB_KEY="$(cat "${SSH_KEY}.pub")"
+
 echo "== Writing cloud-init user-data =="
-cat > user-data <<'EOF'
+cat > user-data <<EOF
 #cloud-config
 hostname: edgehome-qemu
 manage_etc_hosts: true
@@ -37,6 +47,8 @@ users:
     sudo: ALL=(ALL) NOPASSWD:ALL
     lock_passwd: false
     plain_text_passwd: edgehome
+    ssh_authorized_keys:
+      - ${PUB_KEY}
 
 ssh_pwauth: true
 disable_root: false
@@ -88,4 +100,3 @@ echo "== Prepared files =="
 ls -lh "${IMAGE_FILE}" seed.img AAVMF_CODE.fd AAVMF_VARS.fd
 
 echo "Image preparation complete."
-
