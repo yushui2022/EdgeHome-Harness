@@ -1,0 +1,2 @@
+*.sh text eol=lf
+scripts/qemu/*.sh text eol=lf
