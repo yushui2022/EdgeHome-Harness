@@ -40,7 +40,11 @@ run_as_root apt install -y \
   openssh-client \
   ca-certificates \
   git \
-  jq
+  jq \
+  build-essential \
+  pkg-config \
+  gcc-aarch64-linux-gnu \
+  g++-aarch64-linux-gnu
 
 echo "== Tool versions =="
 qemu-system-aarch64 --version
@@ -51,5 +55,35 @@ else
   echo "cloud-localds not found; check cloud-image-utils installation." >&2
   exit 1
 fi
+
+if ! command -v rustup >/dev/null 2>&1; then
+  echo "== Installing Rust toolchain with rustup =="
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+fi
+
+if [ -f "${HOME}/.cargo/env" ]; then
+  # shellcheck disable=SC1091
+  . "${HOME}/.cargo/env"
+fi
+
+if ! timeout 20 rustup toolchain list >/dev/null 2>&1; then
+  echo "rustup is present but not healthy; remove the broken toolchain/cache and rerun this script." >&2
+  echo "Suggested manual cleanup inside WSL:" >&2
+  echo "  rm -rf ~/.rustup/toolchains/stable-* ~/.rustup/downloads/* ~/.rustup/tmp/*" >&2
+  exit 1
+fi
+
+if ! rustc --version >/dev/null 2>&1 || ! cargo --version >/dev/null 2>&1; then
+  export RUSTUP_CONCURRENT_DOWNLOADS="${RUSTUP_CONCURRENT_DOWNLOADS:-1}"
+  export RUSTUP_DOWNLOAD_TIMEOUT="${RUSTUP_DOWNLOAD_TIMEOUT:-300}"
+  rustup toolchain install stable --profile minimal --target aarch64-unknown-linux-gnu --no-self-update
+  rustup default stable
+else
+  rustup target add aarch64-unknown-linux-gnu
+fi
+
+aarch64-linux-gnu-gcc --version | head -n 1
+cargo --version
+rustc --version
 
 echo "Host setup complete."

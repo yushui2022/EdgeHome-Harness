@@ -4,7 +4,8 @@ set -euo pipefail
 QEMU_ROOT="${QEMU_ROOT:-/mnt/e/edgehome-qemu}"
 CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-${QEMU_ROOT}/cargo-target}"
 TARGET="${TARGET:-aarch64-unknown-linux-gnu}"
-SSH_KEY="${SSH_KEY:-${QEMU_ROOT}/ssh/edgehome_qemu}"
+SSH_KEY_SOURCE="${SSH_KEY_SOURCE:-${QEMU_ROOT}/ssh/edgehome_qemu}"
+SSH_KEY="${SSH_KEY:-${HOME}/.ssh/edgehome_qemu}"
 SSH_PORT="${SSH_PORT:-2222}"
 SSH_HOST="${SSH_HOST:-localhost}"
 SSH_USER="${SSH_USER:-edge}"
@@ -18,10 +19,14 @@ if [ ! -f "${BINARY}" ]; then
   exit 1
 fi
 
-if [ ! -f "${SSH_KEY}" ]; then
-  echo "missing SSH key: ${SSH_KEY}; run scripts/qemu/prepare-image.sh first." >&2
+if [ ! -f "${SSH_KEY_SOURCE}" ]; then
+  echo "missing SSH key source: ${SSH_KEY_SOURCE}; run scripts/qemu/prepare-image.sh first." >&2
   exit 1
 fi
+
+mkdir -p "$(dirname "${SSH_KEY}")"
+cp "${SSH_KEY_SOURCE}" "${SSH_KEY}"
+chmod 600 "${SSH_KEY}"
 
 SSH_OPTS=(-p "${SSH_PORT}" -i "${SSH_KEY}" -o StrictHostKeyChecking=accept-new)
 SCP_OPTS=(-P "${SSH_PORT}" -i "${SSH_KEY}" -o StrictHostKeyChecking=accept-new)

@@ -19,7 +19,10 @@ bash scripts/qemu/run-virt-2gb.sh
 QEMU 启动后，另开一个 WSL2 终端执行：
 
 ```bash
-ssh -i /mnt/e/edgehome-qemu/ssh/edgehome_qemu edge@localhost -p 2222
+mkdir -p ~/.ssh
+cp /mnt/e/edgehome-qemu/ssh/edgehome_qemu ~/.ssh/edgehome_qemu
+chmod 600 ~/.ssh/edgehome_qemu
+ssh -i ~/.ssh/edgehome_qemu edge@localhost -p 2222
 ```
 
 确认 VM 可登录后，在 WSL2 宿主环境交叉编译并复制产物：
@@ -59,6 +62,8 @@ E:\edgehome-qemu
 ```
 
 公钥会写入 cloud-init，后续 `copy-edgehome.sh` 可以免密码复制二进制和配置。
+
+注意：私钥放在 `/mnt/e` 时，WSL 会看到 0777 权限，OpenSSH 客户端会拒绝使用。`copy-edgehome.sh` 会自动把私钥复制到 `~/.ssh/edgehome_qemu` 并设置 `chmod 600`。
 
 目录用途：
 
