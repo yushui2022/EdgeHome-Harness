@@ -145,6 +145,18 @@ impl RulePreParser {
                 action: Action::TurnOn,
                 ..ModelCandidate::default()
             }),
+            "把客厅灯调到26度" | "把客厅灯调到 26 度" => Some(ModelCandidate {
+                intent: Intent::ControlDevice,
+                room: Some(Room::LivingRoom),
+                device_alias: Some("客厅灯".to_owned()),
+                device_type: DeviceType::Light,
+                action: Action::SetTemperature,
+                params: CommandParams {
+                    temperature: Some(26),
+                    ..CommandParams::default()
+                },
+                ..ModelCandidate::default()
+            }),
             "晚上十点后把走廊灯调到30%" | "晚上十点后把走廊灯调到 30%" => {
                 Some(ModelCandidate {
                     intent: Intent::ControlDevice,
@@ -367,12 +379,28 @@ impl SemanticNormalizer {
         action: &Action,
     ) -> Option<DeviceId> {
         match (room, device_type, action) {
-            (Room::LivingRoom, DeviceType::Light, Action::TurnOff | Action::TurnOn) => {
-                DeviceId::new("living_room_main_light").ok()
-            }
-            (Room::Hallway, DeviceType::Light, Action::SetBrightness) => {
-                DeviceId::new("hallway_light").ok()
-            }
+            (
+                Room::LivingRoom,
+                DeviceType::Light,
+                Action::TurnOff
+                | Action::TurnOn
+                | Action::SetBrightness
+                | Action::IncreaseBrightness
+                | Action::DecreaseBrightness
+                | Action::SetTemperature
+                | Action::SetMode,
+            ) => DeviceId::new("living_room_main_light").ok(),
+            (
+                Room::Hallway,
+                DeviceType::Light,
+                Action::TurnOff
+                | Action::TurnOn
+                | Action::SetBrightness
+                | Action::IncreaseBrightness
+                | Action::DecreaseBrightness
+                | Action::SetTemperature
+                | Action::SetMode,
+            ) => DeviceId::new("hallway_light").ok(),
             (
                 Room::Bedroom,
                 DeviceType::AirConditioner,

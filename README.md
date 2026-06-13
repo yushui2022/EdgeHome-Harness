@@ -47,6 +47,41 @@ EdgeHome Harness 关注的是另一类需求：隐私、合规、低延迟和本
 
 Rust 的选择也来自这个背景：端侧部署更重视可控内存、低运行时开销、静态二进制、强类型边界和系统 SDK / 本地 runtime 的集成能力。这个项目展示的是一种不同于传统大模型 Harness 的方向：面向端侧小模型、垂直场景和资源约束的 Harness 工程。
 
+## 不只是内存优化
+
+2GB RAM 是项目约束，不是项目全部。
+
+如果只证明“小模型能在低内存设备上跑起来”，这个项目会停留在部署实验层面。EdgeHome Harness 更关注的是小模型进入执行链路前的可靠性治理：
+
+```text
+小模型输出是否会被误当成命令
+未知设备是否会 fail closed
+设备 capability 越界是否会被拒绝
+prompt injection / backend access 输入是否能被标记
+危险动作是否会被拒绝或要求确认
+短时记忆是否只解析明确相对指令
+版本变更是否会造成 false allow 回归
+```
+
+因此当前 release gate 不只看是否省内存，还会检查：
+
+```text
+15 个中文智能家居评测 case
+10 个风险 / 行为类别覆盖
+false_allow_rate = 0.0
+fail_closed_rate = 1.0
+input_guard_flag_accuracy = 1.0
+trace_coverage = 1.0
+category_count >= 8
+```
+
+这意味着项目的核心展示点是：
+
+```text
+让 1B 小模型只负责候选 JSON，
+把业务真相、设备边界、记忆补全、策略、执行计划和回放评测都收回到 Rust Harness。
+```
+
 ## 当前状态
 
 EdgeHome Harness 当前定位为可复现的工程原型和面试展示项目。
@@ -60,6 +95,7 @@ Runtime Memory
 Output Governor
 Device Registry / PolicyGate
 Trace / Replay / Eval / Release Gate
+Small Model Reliability Eval Metrics
 low_memory profile
 Home Assistant demo backend 边界
 ```
@@ -405,6 +441,7 @@ TraceFrame 记录：
 
 ```text
 原始用户输入
+Input Guard 标记
 模型名称和参数
 运行 profile
 记忆摘要
@@ -503,10 +540,12 @@ Runtime Memory 的短时状态、长期别名、ContextCompiler 预算
 SQLite 持久化
 Device Registry / capability 校验
 PolicyGate 确定性拒绝 blocked action
+短时记忆只解析明确 relative_command，未知别名默认 fail closed
 MockExecutor 默认执行路径
 HomeAssistantExecutor demo backend 边界测试
 TraceFrame / replay / trace export
 Eval report 与 --gate release gate
+false_allow / fail_closed / input_guard / category coverage 指标
 low_memory profile 与 pressure decision CLI
 scripts/demo.ps1 面试演示脚本
 ```
@@ -594,27 +633,36 @@ docs/demo-walkthrough.md
 门锁策略样例
 摄像头策略样例
 燃气报警器拒绝样例
+设备 capability 越界拒绝
+未知设备 fail closed
+prompt injection / backend access 输入标记
 ```
 
 当前 mock + low_memory gate 应满足：
 
 ```text
-total = 11
-passed = 11
+total = 15
+passed = 15
 failed = 0
+category_count = 10
 pass_rate = 1.0
 intent_accuracy = 1.0
 slot_accuracy = 1.0
 policy_accuracy = 1.0
 dry_run_accuracy = 1.0
+input_guard_flag_accuracy = 1.0
 trace_coverage = 1.0
 schema_valid_rate = 1.0
 memory_resolution_accuracy = 1.0
+false_allow_rate = 0.0
+fail_closed_rate = 1.0
 fallback_rate = 0.0
 dead_loop_rate = 0.0
 retry_rate = 0.0
 gate.passed = true
 ```
+
+这组指标的意义是：不是只验证“模型答对了几个例子”，而是验证小模型候选输出在设备边界、策略边界、记忆边界和输入安全边界上没有被错误放行。
 
 说明：
 

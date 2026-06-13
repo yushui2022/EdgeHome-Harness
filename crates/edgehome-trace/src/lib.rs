@@ -306,6 +306,7 @@ pub struct TraceFrame {
     #[serde(with = "time::serde::rfc3339")]
     pub timestamp: OffsetDateTime,
     pub input_text: Option<String>,
+    pub input_flags: Vec<String>,
     pub model_name: Option<String>,
     pub model_params: Option<Value>,
     pub runtime_profile: String,

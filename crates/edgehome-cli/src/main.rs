@@ -22,7 +22,7 @@ use edgehome_ollama::{
     ChatMessage, MiniCpm5Profile, OllamaClient, OutputGovernor, OutputGovernorReport,
     ResourcePressurePolicy, StructuredOutputRequest,
 };
-use edgehome_parser::{InputGuard, RulePreParser, SemanticNormalizer};
+use edgehome_parser::{InputFlag, InputGuard, RulePreParser, SemanticNormalizer};
 use edgehome_registry::{DeviceRegistry, StateFreshness};
 use edgehome_storage::sqlite::integer;
 use edgehome_storage::{EvidenceKind, EvidenceRef, EvidenceStore, NewEvidence, SourceSystem};
@@ -214,7 +214,7 @@ fn run_mock_pipeline(
     let input_flags = guarded
         .flags
         .iter()
-        .map(|flag| format!("{flag:?}"))
+        .map(|flag| input_flag_label(flag).to_owned())
         .collect::<Vec<_>>();
 
     let raw_user_input = trace_store.record_evidence(NewEvidence::new(
@@ -663,6 +663,17 @@ fn build_trace_frame(bundle: &TraceBundle) -> TraceFrame {
             .and_then(|item| item.content.get("text"))
             .and_then(Value::as_str)
             .map(str::to_owned),
+        input_flags: raw_user_input
+            .and_then(|item| item.content.get("input_flags"))
+            .and_then(Value::as_array)
+            .map(|flags| {
+                flags
+                    .iter()
+                    .filter_map(Value::as_str)
+                    .map(str::to_owned)
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default(),
         model_name: raw_model_output
             .and_then(|item| item.content.get("model"))
             .and_then(Value::as_str)
@@ -1048,6 +1059,13 @@ fn mock_model_candidate(input: &UserInput) -> ModelCandidate {
 
 fn normalize_mock_candidate(candidate: &ModelCandidate) -> anyhow::Result<NormalizedCommand> {
     Ok(SemanticNormalizer.normalize(candidate)?)
+}
+
+fn input_flag_label(flag: &InputFlag) -> &'static str {
+    match flag {
+        InputFlag::PromptInjectionLike => "prompt_injection_like",
+        InputFlag::DangerousDirectBackendAccess => "dangerous_direct_backend_access",
+    }
 }
 
 impl MockMode {

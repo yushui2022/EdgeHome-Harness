@@ -146,12 +146,11 @@ impl ShortSessionMemory {
         &self,
         command: &NormalizedCommand,
     ) -> Option<NormalizedCommand> {
-        let is_relative = command.device_id.is_none()
-            || command
-                .params
-                .raw_value
-                .as_deref()
-                .is_some_and(|value| value == "relative_command");
+        let is_relative = command
+            .params
+            .raw_value
+            .as_deref()
+            .is_some_and(|value| value == "relative_command");
         if !is_relative {
             return Some(command.clone());
         }
@@ -899,6 +898,26 @@ mod tests {
         assert_eq!(resolved.room, Room::LivingRoom);
         assert_eq!(resolved.device_type, DeviceType::Light);
         assert_eq!(resolved.risk, RiskLevel::Low);
+    }
+
+    #[test]
+    fn short_memory_does_not_resolve_unknown_alias_without_relative_marker() {
+        let mut memory = ShortSessionMemory::new(3);
+        memory.append(
+            "把客厅灯调到70%",
+            command(Some("living_room_main_light"), Action::SetBrightness),
+            Some(TraceId("tr_prev".to_owned())),
+        );
+
+        let unknown_alias = command(None, Action::TurnOn);
+
+        let resolved = memory
+            .resolve_relative_command(&unknown_alias)
+            .expect("non-relative command is returned unchanged");
+
+        assert_eq!(resolved.device_id, None);
+        assert_eq!(resolved.room, Room::Unknown);
+        assert!(!resolved.can_enter_policy_gate());
     }
 
     #[test]
