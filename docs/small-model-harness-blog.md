@@ -41,8 +41,6 @@ openbmb/minicpm5:latest
 模型包大小：688MB
 ```
 
-这里要特别说明：688MB 是模型包 / 权重文件大小，不等于完整运行时 RAM 占用。
-
 在 Ollama 路线下，MiniCPM5-1B q4 模型加载后的运行时预算大约在 1.0GB 到 1.25GB 之间。首次加载、首次请求、KV cache、推理 buffer、page cache 都会带来波动，峰值可能更高。
 
 所以在 2GB RAM 设备上，预算并不宽裕：
@@ -71,7 +69,7 @@ SQLite / trace / executor: 32MB - 64MB
 必要时降级到 rule-only
 ```
 
-实际部署和演示，我更推荐 4GB RAM。2GB 更适合作为 low_memory profile 的极限验证目标。
+当然,实际部署和演示，我更推荐 4GB RAM。2GB 更适合作为 low_memory profile 的极限验证目标。
 
 ## 为什么用 Rust
 
