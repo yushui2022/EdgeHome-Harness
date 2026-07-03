@@ -1,765 +1,434 @@
 # EdgeHome Harness
 
-EdgeHome Harness 是一个面向 **1B 端侧小模型** 的 **Rust Agent Harness** 项目，聚焦低资源边缘设备上的中文智能家居指令解析、结构化输出约束、执行安全和工程观测。
+![EdgeHome Harness overview](docs/assets/edgehome-harness-overview.jpg)
 
-项目以“智能家居本地控制中台”作为垂直应用场景，但核心价值不是替代米家 App、小米音箱或 Home Assistant，而是展示端侧小模型进入真实执行链路前所需要的 Harness 工程能力。
+**EdgeHome Harness** is a Rust agent harness built specifically for **MiniCPM-class
+1B edge models**, with the current default profile tuned for
+`openbmb/minicpm5:1b`.
 
-项目目标：
+The project focuses on a constrained smart-home control scenario: Chinese IoT
+commands, local inference, structured JSON candidates, deterministic validation,
+safe execution boundaries, trace replay, and release-gated evaluation.
 
-```text
-如何把一个容易复读、死循环、输出不稳定的 1B 本地小模型，
-约束成一个可以解析中文 IoT 指令、稳定输出结构化 JSON、
-支持短时指代、具备低内存降级、可审计回放、可评测迭代的 Agent Harness。
-```
-
-项目公式：
-
-```text
-EdgeHome Harness =
-1B 端侧小模型
-+ Rust Harness
-+ Runtime Memory
-+ Output Governor
-+ Device Registry / Policy / ExecutionPlan
-+ Trace / Replay / Eval / Release Gate
-+ 智能家居本地控制场景
-```
-
-核心设计原则：
+It is not a generic chatbot framework. It is also not a replacement for Home
+Assistant, Mi Home, Matter, or a commercial smart speaker. The goal is narrower
+and more engineering-oriented:
 
 ```text
-MiniCPM5-1B 只负责生成候选 JSON。
-Rust Harness 负责把候选 JSON 转换为可验证的 ExecutionPlan。
-Runtime Memory 负责短时上下文、别名和指代解析。
-Output Governor 负责治理 1B 小模型的复读、死循环、坏 JSON 和过长输出。
-Device Registry / Policy / Executor Boundary 负责设备可控性和执行边界。
-Trace / Replay / Eval 负责失败复盘、参数比较和版本回归。
-智能家居控制是验证 Harness 能力的垂直场景，而不是项目的全部边界。
+Turn a small local MiniCPM model that may repeat, drift, or produce unstable JSON
+into a bounded command-candidate generator.
+
+Then let Rust decide what is valid, safe, executable, traceable, and releasable.
 ```
 
-## 为什么做这个项目
-
-当前主流 Agent Harness 工程更多围绕 code agent、云端强模型、大上下文和复杂工具调用展开，重点通常是让强模型完成复杂推理、工具调用和长任务编排。
-
-EdgeHome Harness 关注的是另一类需求：隐私、合规、低延迟和本地可控要求更高的垂直场景。智能家居、工业设备、企业内网流程等场景不一定需要开放式强推理，但需要把一个小模型稳定约束在结构化指令、设备边界、策略校验和失败可回放的执行链路里。
-
-因此，本项目默认以 **2GB RAM 级别边缘设备** 为设计约束。目标不是追求大上下文和复杂对话，而是在低资源条件下同时运行小模型与 Harness，让 1B 模型只负责候选 JSON，业务真相、记忆、策略、执行和观测全部由 Rust 侧管理。
-
-Rust 的选择也来自这个背景：端侧部署更重视可控内存、低运行时开销、静态二进制、强类型边界，以及系统 SDK / 本地 runtime 的集成能力。这个项目展示的是一种不同于传统大模型 Harness 的方向：面向端侧小模型、垂直场景和资源约束的 Harness 工程。
-
-## 不只是内存优化
-
-2GB RAM 是项目约束，不是项目全部。
-
-如果只证明“小模型能在低内存设备上跑起来”，项目会停留在部署实验层面。EdgeHome Harness 更关注的是小模型进入执行链路前的可靠性治理：
-
-```text
-小模型输出是否会被误当成命令
-未知设备是否会 fail closed
-设备 capability 越界是否会被拒绝
-prompt injection / backend access 输入是否能被标记
-危险动作是否会被拒绝或要求确认
-短时记忆是否只解析明确相对指令
-版本变更是否会造成 false allow 回归
-```
-
-因此，当前 release gate 不只检查内存约束是否成立，还会检查：
-
-```text
-15 个中文智能家居评测 case
-10 个风险 / 行为类别覆盖
-false_allow_rate = 0.0
-fail_closed_rate = 1.0
-input_guard_flag_accuracy = 1.0
-trace_coverage = 1.0
-category_count >= 8
-```
-
-项目的核心展示点是：
-
-```text
-让 1B 小模型只负责候选 JSON，
-把业务真相、设备边界、记忆补全、策略、执行计划和回放评测都收回到 Rust Harness。
-```
-
-## 当前状态
-
-EdgeHome Harness 当前定位为可复现的工程原型和面试展示项目，重点展示“小模型候选生成 + Rust 确定性约束 + 可回放评测”的工程链路。
-
-已经完成：
-
-```text
-Rust Harness 主链路
-mock model / mock executor 演示路径
-Runtime Memory
-Output Governor
-Device Registry / PolicyGate
-Trace / Replay / Eval / Release Gate
-Small Model Reliability Eval Metrics
-low_memory profile
-Home Assistant demo backend 边界
-```
-
-当前未声明：
-
-```text
-真实 2GB ARM 板卡长期 benchmark
-全量米家 / MIoT / miIO / Matter / MQTT 适配
-可直接商用的智能家居网关产品
-替代米家 App、小米音箱或 Home Assistant
-```
-
-## 项目价值
-
-如果只是做一个“用户说开灯，模型输出 JSON，然后调用设备”的 demo，Ollama structured outputs 已经能解决一部分格式问题。
-
-但这个项目要解决的不是 JSON 语法本身，而是端侧小模型进入真实执行链路前的工程约束。
-
-Ollama structured outputs 能做：
-
-```text
-让输出更像 JSON
-减少畸形字段
-降低解释文本混入概率
-```
-
-EdgeHome Harness 关注的是 structured outputs 之外的工程问题：
-
-```text
-模型是否死循环
-JSON 是否符合业务 schema
-房间和设备是否存在
-设备是否支持这个 action
-亮度、温度、时间等参数是否合法
-短时记忆是否能解析“刚才那个”
-长期别名是否由用户明确写入
-2GB RAM 下是否需要禁用记忆注入
-执行是否只走 dry-run 或安全 executor
-失败是否可追踪、可回放、可评测
-```
-
-核心原则：
+## Core Idea
 
 ```text
 ModelOutput != Command
 ```
 
-模型输出永远只是候选。
-真正能进入执行层的只能是 Rust Harness 生成并校验过的 `ExecutionPlan`。
+MiniCPM proposes a candidate JSON object. The harness decides whether that
+candidate can become an `ExecutionPlan`.
 
-## 架构原则
-
-普通智能家居动作需要低延迟响应，不适合把每一次开关灯都设计成慢速审批流。
-
-因此本项目没有把证据系统放在普通动作的同步执行门禁里。
-
-当前架构原则：
+The model never gets direct authority over devices, backend entity IDs, tokens,
+policy, memory writes, or execution. Those responsibilities stay in deterministic
+Rust components:
 
 ```text
-Runtime Memory 是在线主路径。
-Trace / Replay / Eval 是工程观测闭环。
-Evidence 不再 gate 用户动作，而是 gate Harness 迭代质量。
+MiniCPM / MiniCPM5-1B
++ Rust Harness
++ Runtime Memory
++ Output Governor
++ Device Registry
++ Policy Gate
++ Dry-run / ExecutionPlan boundary
++ Trace / Replay / Eval / Release Gate
 ```
 
-因此当前项目口径是：
+## Why MiniCPM
 
-```text
-Memory for runtime.
-Evidence for debugging.
-Eval for progress.
-Policy for deterministic hard constraints.
-LLM for candidate JSON only.
-```
+EdgeHome Harness is designed around the practical constraints of **small local
+models**, especially MiniCPM-style 1B deployment:
 
-## 总体分层
+- Short context windows are preferred over long conversational history.
+- JSON output must be short, bounded, and schema checked.
+- Repetition and dead-loop behavior must be detected outside the model.
+- Runtime memory should be compact, structured, and optional under pressure.
+- Safety policy must not depend on model judgment.
+- Unknown devices, unsupported actions, and dangerous operations must fail
+  closed.
 
-```mermaid
-flowchart TD
-    A["用户中文指令"] --> B["候选生成层<br/>MiniCPM5-1B / Ollama"]
-    B --> C["Harness 校验层<br/>JSON / Schema / Normalizer"]
-    C --> D["业务约束层<br/>Memory / Registry / Policy"]
-    D --> E["执行边界层<br/>ExecutionPlan / Mock / HA"]
-    E --> F["观测闭环层<br/>Trace / Replay / Eval Gate"]
-```
-
-该分层强调：小模型只位于候选生成层，业务真相、执行许可和失败治理都由 Rust Harness 负责。
-
-## 在线主路径
-
-```mermaid
-flowchart LR
-    A["Input Guard"] --> B["Rule Parser"]
-    B --> C["Runtime Memory"]
-    C --> D["Context Compiler"]
-    D --> E["LLM Candidate JSON"]
-    E --> F["Output Governor"]
-    F --> G["Schema + Normalizer"]
-    G --> H["Registry + Policy"]
-    H --> I["ExecutionPlan"]
-    I --> J["Executor + Trace"]
-```
-
-单次请求的关键阶段：
-
-```text
-1. 用户输入进入 Input Guard。
-2. Rule Parser 先处理高确定性指令。
-3. Runtime Memory 读取短时状态和相关长期偏好。
-4. Context Compiler 生成极短上下文摘要。
-5. Ollama / MiniCPM5-1B 生成候选 JSON。
-6. Output Governor 检查超时、复读、过长输出和重试次数。
-7. JSON Parser 与 schema validator 确认结构合法。
-8. Semantic Normalizer 把中文槽位归一成内部命令。
-9. Device Registry 校验设备存在和 capability。
-10. PolicyGate 做确定性策略判断。
-11. Execution Planner 生成 dry-run 或执行计划。
-12. Executor Router 调用 MockExecutor 或 HomeAssistantExecutor。
-13. Trace Recorder 记录可回放链路。
-14. Memory Writer 更新短时状态或明确长期偏好。
-```
-
-模型不会直接接触：
-
-```text
-Home Assistant token
-miIO token
-设备 IP
-局域网密钥
-Home Assistant entity_id
-真实 executor route
-SQLite 原始记忆表
-```
-
-模型最多看到：
-
-```text
-受限 JSON schema
-少量设备候选摘要
-极短上下文摘要
-必要的业务约束
-```
-
-## Runtime Memory
-
-记忆系统是当前版本的在线主路径。
-
-它不依赖 Ollama CLI 历史，也不让模型自己维护长对话状态。
-
-```mermaid
-flowchart TD
-    A["用户输入"] --> B["Anchor / Alias Resolver"]
-    B --> C["ShortSessionState<br/>last_target / last_action"]
-    B --> D["SQLite Long Memory<br/>alias / preference / scene"]
-    C --> E["Context Compiler"]
-    D --> E
-    E --> F["短上下文摘要"]
-    F --> G["MiniCPM5-1B"]
-    G --> H["候选 JSON"]
-    H --> I["Validated ExecutionPlan"]
-    I --> J["更新短时记忆"]
-    I --> K["明确表达才写长期记忆"]
-```
-
-短时记忆只保留最近少量轮次，核心是结构化状态，而不是完整自然语言历史。
-
-示例：
-
-```json
-{
-  "last_target": {
-    "room": "living_room",
-    "device_type": "light",
-    "device_id": "living_room_main_light"
-  },
-  "last_action": "set_brightness",
-  "last_value": 70
-}
-```
-
-用于处理：
-
-```text
-再暗一点
-再亮一点
-把刚才那个关掉
-切换成除湿模式
-恢复刚才的设置
-```
-
-长期记忆存储在 SQLite，不常驻 prompt。
-
-适合存储：
-
-```text
-设备别名
-房间别名
-用户偏好
-常用场景
-安全偏好
-设备默认参数
-```
-
-长期记忆写入规则：
-
-```text
-只有用户明确说“以后 / 默认 / 记住 / 叫做”才写入。
-一次性控制不写长期记忆。
-模型猜测不写长期记忆。
-降低安全限制的偏好不写长期记忆。
-```
-
-默认预算：
-
-```text
-短时记忆最多 3 轮
-长期偏好最多 3 条
-记忆摘要 300-500 中文字符以内
-低内存时禁用长期偏好注入
-```
-
-## Output Governor
-
-在智能家居指令场景中，1B 小模型的主要风险不是开放对话质量，而是：
-
-```text
-输出解释文本
-输出坏 JSON
-输出重复片段
-陷入 think / 复读 / 死循环
-输出过长导致低内存设备压力上升
-```
-
-Output Governor 负责把模型输出限制在可治理范围内：
-
-```mermaid
-flowchart LR
-    A["Raw Output"] --> B["长度预算"]
-    B --> C["复读检测"]
-    C --> D["JSON 提取"]
-    D --> E["Schema 校验"]
-    E --> F["成功进入 Normalizer"]
-    C --> G["Dead Loop"]
-    D --> H["Invalid JSON"]
-    E --> I["Schema Failed"]
-    G --> J["Retry / Fallback"]
-    H --> J
-    I --> J
-```
-
-治理点：
-
-```text
-限制 num_predict
-限制输出字符数和字节数
-检测重复片段
-限制重试次数
-记录失败原因
-触发 fallback
-保证 CLI 不被模型卡死
-```
-
-推荐 low_memory 起点：
+The default runtime profile is intentionally MiniCPM-oriented:
 
 ```yaml
+model_name: openbmb/minicpm5:1b
 temperature: 0.1
 top_p: 0.8
 top_k: 20
 repeat_penalty: 1.25
 num_ctx: 1024
 num_predict: 128
+timeout_ms: 8000
 retry_count: 1
+memory_enabled: true
+max_short_memory_turns: 3
+max_context_chars: 500
+executor_backend: mock
 ```
 
-参数文档见：
+The architecture can be adapted to other small structured-output models, but the
+current project claim is deliberately scoped to MiniCPM/MiniCPM5-style local
+edge inference.
 
-```text
-docs/model-parameters.md
-```
+## What This Project Demonstrates
 
-## 设备和执行边界
+EdgeHome Harness demonstrates the engineering layer required before a small
+model is allowed to participate in a real execution chain:
 
-执行层只接受经过 Harness 校验后的 `ExecutionPlan`。
+- Guard user input before it reaches the model.
+- Compile compact runtime memory instead of injecting full chat history.
+- Ask MiniCPM to generate candidate JSON only.
+- Govern model output length, malformed JSON, retries, and repetition.
+- Parse and validate candidate JSON against Rust-owned schemas.
+- Normalize semantic slots into internal command types.
+- Resolve device aliases through a registry, not through the model.
+- Enforce capability boundaries such as `light.set_brightness` vs.
+  unsupported `light.set_temperature`.
+- Apply deterministic policy for low, medium, high, blocked, and unknown risk.
+- Produce dry-run plans before any real execution.
+- Record evidence, traces, audit events, and replayable failure frames.
+- Evaluate releases against regression gates such as false-allow rate and
+  fail-closed coverage.
+
+## Current Status
+
+This repository is a reproducible engineering prototype and interview-ready
+demonstration project.
+
+Implemented:
+
+- Rust workspace with separated crates for core types, parser, registry, gate,
+  memory, Ollama adapter, executor, storage, trace, eval, and CLI.
+- MiniCPM5-1B low-memory profile.
+- Mock model and mock executor path for deterministic demos.
+- Ollama structured-output request adapter.
+- Output governor for overlong output, invalid JSON, dead-loop detection, retry
+  policy, and fallback classification.
+- Runtime memory for short-session references and confirmed long-term aliases.
+- Device registry and capability validation.
+- Policy gate with fail-closed behavior.
+- Dry-run execution planner.
+- Home Assistant demo backend boundary.
+- SQLite-backed evidence, audit, trace, replay, and long-term memory.
+- Evaluation cases and release gate metrics.
+- Low-memory pressure policy for context/output reduction and rule-only fallback.
+
+Not claimed:
+
+- Production-ready smart-home gateway.
+- Replacement for Mi Home, Home Assistant, Matter, MQTT, or a smart speaker.
+- Full Mi Home / MIoT / miIO / Matter integration.
+- Long-running benchmark on a real 2GB ARM board.
+- Proof that all smart-home natural-language inputs are understood.
+- Real-device execution enabled by default.
+
+## Architecture
 
 ```mermaid
 flowchart TD
-    A["NormalizedCommand"] --> B["Device Registry"]
-    B --> C["Capability Check"]
-    C --> D["PolicyGate"]
-    D --> E["ExecutionPlan"]
-    E --> F["MockExecutor<br/>default"]
-    E --> G["HomeAssistantExecutor<br/>demo backend"]
-    E --> H["Future Backends<br/>MIoT / MQTT / Matter"]
+    A["Chinese smart-home command"] --> B["Input Guard"]
+    B --> C["Rule Pre-Parser"]
+    C --> D["Runtime Memory"]
+    D --> E["Context Compiler"]
+    E --> F["MiniCPM5-1B Candidate JSON"]
+    F --> G["Output Governor"]
+    G --> H["JSON / Schema Validator"]
+    H --> I["Semantic Normalizer"]
+    I --> J["Device Registry"]
+    J --> K["Policy Gate"]
+    K --> L["Dry-run ExecutionPlan"]
+    L --> M["Executor Boundary"]
+    M --> N["Trace / Replay / Eval"]
 ```
 
-默认执行后端：
+The model is deliberately kept near the top of the pipeline. Everything after
+candidate generation is owned by the harness.
+
+## Online Request Path
+
+A single request goes through this shape:
 
 ```text
-MockExecutor
+1. User input is checked by Input Guard.
+2. High-confidence commands may be handled by the Rule Pre-Parser.
+3. Runtime Memory provides compact recent context and confirmed aliases.
+4. Context Compiler builds a short MiniCPM prompt.
+5. MiniCPM / Ollama generates candidate JSON.
+6. Output Governor rejects overlong, repetitive, malformed, or unstable output.
+7. JSON Parser and Schema Validator validate structure.
+8. Semantic Normalizer converts candidate fields into internal command types.
+9. Device Registry resolves aliases and checks known devices.
+10. Capability Gate verifies that the device supports the requested action.
+11. Policy Gate decides allow, require confirmation, or deny.
+12. DryRunPlanner creates an ExecutionPlan if policy permits.
+13. Executor boundary remains disabled by default for real devices.
+14. Trace Recorder writes replayable evidence and audit data.
+15. Eval Gate uses traces and command results to prevent release regressions.
 ```
 
-真实设备 demo 后端：
+## Safety Model
+
+The harness treats every model output as untrusted.
+
+Examples of deterministic safety rules:
+
+- Unknown intent fails closed.
+- Unknown room fails closed.
+- Unknown device fails closed.
+- Missing `device_id` fails closed.
+- Unsupported capability fails closed.
+- Out-of-range brightness fails closed.
+- Blocked-risk device actions are denied.
+- Medium/high-risk actions require confirmation before real execution.
+- Prompt-injection-like input is flagged.
+- Backend access requests such as `entity_id`, local URLs, SSH, and tokens are
+  flagged.
+- Real execution is disabled by default.
+
+Example denied request:
 
 ```text
-HomeAssistantExecutor
+关闭燃气报警器
 ```
 
-边界：
+The mock pipeline normalizes it as a gas-device command, resolves the registry
+entry, then rejects it because the authoritative device risk is `blocked`.
+
+## Runtime Memory
+
+Memory is intentionally small and structured. It is not an unbounded chat log.
+
+Short-session memory handles references such as:
 
 ```text
-Home Assistant 是 demo backend，不是项目本体。
-项目不声称完整替代 Home Assistant。
-项目不声称所有米家设备都能纯离线控制。
-真实 execute 默认关闭。
-eval 不依赖真实设备。
+把刚才那个灯再调暗一点
+关闭空调
 ```
 
-Executor 不接受：
+Long-term memory only accepts explicit and confirmed writes, for example:
 
 ```text
-用户原始输入
-模型原始输出
-未经 schema 校验的 JSON
-未经设备注册表确认的 command
+以后把玄关灯叫小夜灯
 ```
 
-## Trace / Replay / Eval
+Memory cannot weaken safety policy. The context compiler also enforces character
+budgets so low-resource devices do not keep growing prompts.
 
-Trace 不是普通动作的同步执行门禁，而是 Harness 的工程观测系统。
+## Low-Memory Profile
 
-```mermaid
-flowchart LR
-    A["TraceFrame"] --> B["Replay"]
-    B --> C["Failure Analysis"]
-    C --> D["Prompt / Parser / Params Fix"]
-    D --> E["Eval"]
-    E --> F["Release Gate"]
-    F --> A
-```
-
-TraceFrame 记录：
+The default profile targets constrained edge environments:
 
 ```text
-原始用户输入
-Input Guard 标记
-模型名称和参数
-运行 profile
-记忆摘要
-模型原始输出
-JSON 清洗结果
-schema 校验结果
-语义归一结果
-设备解析结果
-capability 校验结果
-ExecutionPlan
-executor 结果
-失败原因
-重试次数
-latency
-memory pressure
+2GB-4GB RAM
+local inference
+short context
+short JSON output
+bounded memory injection
+deterministic policy
+traceable failure
 ```
 
-当前证据使用方式：
+The resource pressure policy can reduce `num_ctx` and `num_predict`, and in
+critical pressure it can disable memory injection and switch to rule-only
+fallback.
 
-```text
-Evidence 不 gate 用户动作。
-Evidence gate Harness release quality。
-```
+See:
 
-## 2GB RAM Profile
+- [2GB RAM Profile](docs/2gb-profile.md)
+- [2GB Memory Budget](docs/2gb-memory-budget.md)
+- [Model Parameters](docs/model-parameters.md)
 
-EdgeHome Harness 的低内存策略不是“硬跑大上下文”，而是：
+## Quick Start
 
-```text
-短 prompt
-短输出
-短记忆
-强 schema
-强 fallback
-默认 dry-run
-必要时 rule-only
-```
+Requirements:
 
-默认限制：
+- Rust `1.95` or newer.
+- Optional: Ollama with `openbmb/minicpm5:1b` for real MiniCPM runs.
 
-```text
-num_ctx <= 1024
-num_predict <= 128
-短时记忆 <= 3 轮
-记忆摘要 <= 500 字符
-retry_count <= 1
-低内存时禁用长期偏好注入
-```
-
-内存压力三档：
-
-| 空闲内存 | 档位 | 行为 |
-| ---: | --- | --- |
-| `>512MB` | normal | 保持 low_memory profile，`memory_enabled=true` |
-| `257-512MB` | elevated | `num_ctx<=768`，`num_predict<=96`，fallback 到 `compact_json` |
-| `<=256MB` | critical | `num_ctx<=512`，`num_predict<=64`，`memory_enabled=false`，fallback 到 `rule_only` |
-
-详情见：
-
-```text
-docs/2gb-profile.md
-```
-
-当前仓库没有声称已经完成真实 2GB ARM 板卡长期 benchmark。
-当前已经验证的是 low_memory profile、ContextCompiler 预算、OutputGovernor、pressure decision CLI 和 eval gate。
-
-## Rust Workspace
-
-当前 workspace 模块：
-
-```text
-edgehome-core       domain contracts, schema, ExecutionPlan
-edgehome-config     runtime profiles, low_memory config
-edgehome-storage    SQLite persistence
-edgehome-trace      trace, audit, replay data
-edgehome-parser     input guard, rule parser, JSON cleaner, normalizer
-edgehome-registry   device registry, capability model, state freshness
-edgehome-gate       deterministic policy checks
-edgehome-memory     short memory, long preference memory, context assembly
-edgehome-ollama     Ollama adapter, MiniCPM5 profile, OutputGovernor
-edgehome-executor   dry-run, MockExecutor, HomeAssistantExecutor
-edgehome-eval       eval case loading and metrics
-edgehome-cli        config, parse, dry-run, eval, replay, trace commands
-```
-
-## 已实现范围
-
-当前仓库已经实现并验证的能力：
-
-```text
-Rust workspace 与多 crate 分层
-中文 IoT 指令 parser / normalizer
-Ollama structured output 适配层
-OutputGovernor 的输出治理与 dead-loop fallback 测试
-Runtime Memory 的短时状态、长期别名、ContextCompiler 预算
-SQLite 持久化
-Device Registry / capability 校验
-PolicyGate 确定性拒绝 blocked action
-短时记忆只解析明确 relative_command，未知别名默认 fail closed
-MockExecutor 默认执行路径
-HomeAssistantExecutor demo backend 边界测试
-TraceFrame / replay / trace export
-Eval report 与 --gate release gate
-false_allow / fail_closed / input_guard / category coverage 指标
-low_memory profile 与 pressure decision CLI
-scripts/demo.ps1 面试演示脚本
-```
-
-规划中或非默认能力：
-
-```text
-全量米家本地控制
-MIoT / miIO / Matter / MQTT 完整 adapter
-真实 2GB ARM 板长期压测数据
-Web dashboard
-HTTP daemon mode
-多模型自动路由
-向量数据库记忆
-开放聊天助手
-语音唤醒 / ASR / TTS
-```
-
-## 快速验证
-
-Windows 路径包含中文时建议指定 target：
-
-```powershell
-$env:CARGO_TARGET_DIR="$env:TEMP\edgehome-target"
-```
-
-基础验证：
-
-```powershell
-cargo fmt --all --check
-cargo check
-cargo test
-```
-
-查看配置：
+Show the default low-memory configuration:
 
 ```powershell
 cargo run -q -p edgehome-cli -- config show
 ```
 
-查看 2GB profile 的内存压力降级决策：
+Run a deterministic mock dry-run:
 
 ```powershell
-cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 1024
-cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 400
-cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 128
+cargo run -q -p edgehome-cli -- --db-path edgehome-demo.sqlite dry-run --mock "把客厅灯打开"
 ```
 
-运行评测：
+Run a denied safety case:
 
 ```powershell
-cargo run -q -p edgehome-cli -- --db-path edgehome-eval.sqlite eval cases/zh-home.yaml
+cargo run -q -p edgehome-cli -- --db-path edgehome-demo.sqlite dry-run --mock "关闭燃气报警器"
 ```
 
-运行 release gate：
+Run the mock evaluation suite:
 
 ```powershell
-cargo run -q -p edgehome-cli -- --db-path edgehome-gate.sqlite eval cases/zh-home.yaml --gate
+cargo run -q -p edgehome-cli -- --db-path edgehome-eval.sqlite eval cases/zh-home.yaml --gate
 ```
 
-运行 demo：
+Run the demo script:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome-demo.sqlite
 ```
 
-面试演示说明见：
+## Running With MiniCPM Through Ollama
 
-```text
-docs/demo-walkthrough.md
+The mock path is for deterministic demos and regression tests. To exercise the
+model path, start Ollama and make sure the configured model is available:
+
+```powershell
+ollama pull openbmb/minicpm5:1b
+ollama serve
 ```
 
-## 当前 Eval 基线
+Then run without `--mock`:
 
-当前 `cases/zh-home.yaml` 覆盖：
-
-```text
-普通关灯
-短时相对指令
-时间 + 亮度槽位
-明确长期别名写入
-长期别名解析
-空调温度
-空调开关
-门锁策略样例
-摄像头策略样例
-燃气报警器拒绝样例
-设备 capability 越界拒绝
-未知设备 fail closed
-prompt injection / backend access 输入标记
+```powershell
+cargo run -q -p edgehome-cli -- --db-path edgehome-ollama.sqlite dry-run "把客厅灯打开"
 ```
 
-当前 mock + low_memory gate 应满足：
+The Ollama response still goes through Output Governor, parser/schema
+validation, registry checks, policy gates, dry-run planning, and trace recording.
+
+## Evaluation Baseline
+
+The included eval suite is intentionally small but covers the main harness
+properties:
 
 ```text
-total = 15
-passed = 15
-failed = 0
-category_count = 10
-pass_rate = 1.0
-intent_accuracy = 1.0
-slot_accuracy = 1.0
-policy_accuracy = 1.0
-dry_run_accuracy = 1.0
-input_guard_flag_accuracy = 1.0
-trace_coverage = 1.0
-schema_valid_rate = 1.0
-memory_resolution_accuracy = 1.0
-false_allow_rate = 0.0
-fail_closed_rate = 1.0
-fallback_rate = 0.0
-dead_loop_rate = 0.0
-retry_rate = 0.0
-gate.passed = true
+normal_control
+runtime_memory
+slot_extraction
+long_memory
+confirmation_policy
+high_risk_policy
+fail_closed
+capability_boundary
+unknown_device
+input_guard
 ```
 
-这组指标的意义是：不是只验证“模型答对了几个例子”，而是验证小模型候选输出在设备边界、策略边界、记忆边界和输入安全边界上没有被错误放行。
-
-说明：
+The current release gate checks:
 
 ```text
-latency_avg_ms 和 latency_p95_ms 必须来自本地 eval 输出。
-README 不固定宣传未复现的 benchmark 数值。
+total_cases >= 10
+category_count >= 8
+pass_rate >= 1.0
+schema_valid_rate >= 1.0
+dead_loop_rate <= 0.0
+trace_coverage >= 1.0
+intent_accuracy >= 0.95
+slot_accuracy >= 0.90
+input_guard_flag_accuracy >= 1.0
+false_allow_rate <= 0.0
+fail_closed_rate >= 1.0
+retry_rate <= 0.30
 ```
 
-## Demo Walkthrough
+Important: the mock eval proves harness behavior and regression coverage. It is
+not a broad natural-language understanding benchmark. Real MiniCPM evaluation
+should be run separately and reported with model output, latency, retry, and
+fallback metrics.
 
-`scripts/demo.ps1` 默认使用 mock model 和 `MockExecutor`，不依赖真实设备。
+## Home Assistant Boundary
 
-演示顺序：
+Home Assistant is supported as a demo backend boundary, not as the project
+itself.
+
+The model never sees:
 
 ```text
-1. Release gate：cases/zh-home.yaml --gate
-2. 普通指令：把客厅灯关掉
-3. 槽位抽取：晚上十点后把走廊灯调到 30%
-4. Trace replay / trace export
-5. 短时记忆：把刚才那个灯再调暗一点
-6. 长期别名：以后把玄关灯叫小夜灯，打开小夜灯
-7. 危险动作拒绝：关闭燃气报警器
-8. 2GB 降级策略：normal / elevated / critical
-9. OutputGovernor dead-loop fallback 测试
+Home Assistant token
+entity_id
+service path
+backend route
+private network URL
 ```
 
-详细讲法见：
+Device routing is owned by the registry and executor. Real execution remains
+disabled by default and should only be enabled for explicit local testing after
+dry-run, gate, and confirmation checks.
+
+See:
+
+- [Home Assistant Demo](docs/home-assistant-demo.md)
+- [Deployment Modes](docs/deployment-modes.md)
+
+## Repository Layout
 
 ```text
-docs/demo-walkthrough.md
+crates/edgehome-core       core schemas and command types
+crates/edgehome-config     runtime profiles and low-memory config loading
+crates/edgehome-parser     input guard, JSON extraction, schema validation, normalizer
+crates/edgehome-registry   device registry, alias resolution, capability checks
+crates/edgehome-gate       deterministic policy and execution gates
+crates/edgehome-memory     short-session memory and confirmed long-term memory
+crates/edgehome-ollama     MiniCPM/Ollama adapter and output governor
+crates/edgehome-executor   dry-run planner, mock executor, Home Assistant boundary
+crates/edgehome-storage    SQLite-backed evidence storage
+crates/edgehome-trace      trace, audit, replay frame types
+crates/edgehome-eval       case loading, metrics, release gate
+crates/edgehome-cli        command-line demo and eval runner
+
+cases/                     regression cases
+configs/                   runtime and device configuration
+docs/                      architecture, demo, deployment, and memory notes
+scripts/                   demo and embedded validation scripts
 ```
 
-## 部署模式
+## Development Checks
 
-推荐路线：
+Run tests:
+
+```powershell
+cargo test --workspace
+```
+
+Run formatting:
+
+```powershell
+cargo fmt --all --check
+```
+
+Run Clippy:
+
+```powershell
+cargo clippy --workspace --all-targets -- -D warnings
+```
+
+Run the release gate:
+
+```powershell
+cargo run -q -p edgehome-cli -- --db-path edgehome-gate.sqlite eval cases/zh-home.yaml --gate
+```
+
+## Design Positioning
+
+EdgeHome Harness is not trying to make MiniCPM act like a large cloud agent. It
+uses MiniCPM where a small local model is useful: converting natural language
+into a compact candidate. Everything that must be reliable is moved back into
+Rust.
+
+The intended message is:
 
 ```text
-Mode A：2GB Edge Harness + Home Assistant on LAN
-Mode B：4GB/8GB All-in-One
-Mode C：2GB Ultra-Local + MIoT / miIO subset，后续可选
+Small model.
+Strong harness.
+Safe execution.
 ```
 
-当前主线：
-
-```text
-优先 MockExecutor / dry-run / eval。
-HomeAssistantExecutor 作为 demo backend。
-真实 execute 默认关闭。
-MIoT / miIO / MQTT / Matter 只作为未来 backend 扩展描述。
-```
-
-详情见：
-
-```text
-docs/deployment-modes.md
-docs/home-assistant-demo.md
-```
-
-## 推荐介绍语
-
-可以这样介绍这个项目：
-
-```text
-EdgeHome Harness 不是一个“模型输出 JSON 后直接调用设备”的 demo。
-它围绕 1B 端侧小模型构建了一套 Rust Harness：
-
-1. 小模型只输出候选 JSON，不直接执行。
-2. Rust 管理结构化记忆，处理“再暗一点”“刚才那个”等多轮指代。
-3. Output Governor 处理死循环、复读、坏 JSON、超时和重试。
-4. Device Registry 和 capability model 保证设备、动作和参数可控。
-5. Trace / Replay / Eval 支持失败复盘、参数比较和版本回归。
-6. 2GB low_memory profile 约束上下文、输出、重试和记忆注入。
-
-智能家居是垂直落地场景，项目核心是端侧小模型 Agent Harness 工程能力。
-```
-
-## 非目标
-
-当前版本不做这些承诺：
-
-```text
-不承诺替代米家 App
-不承诺替代小米音箱
-不承诺替代 Home Assistant
-不承诺所有米家设备都纯离线可控
-不承诺 1B 小模型可以开放聊天
-不把证据系统作为普通动作的同步门禁
-不让模型直接控制真实设备
-不声明已经完成真实 2GB ARM 板长期 benchmark
-```
-
-## 项目计划
-
-实施计划与后续扩展边界见：
-
-```text
-plan.md
-```
-
-当前主线已经完成 README、demo、eval 与 low_memory profile 的同步。
-后续 MIoT / MQTT / Web dashboard / trace 可视化都属于可选扩展，不能阻塞当前 Harness 主线。
+That is the core value of this repository.
