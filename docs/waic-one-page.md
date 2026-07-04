@@ -84,6 +84,7 @@ model-path evaluation, dry-run planning, traceability, and adapter boundaries:
 - Missing Home Assistant routes and invalid entity IDs fail closed.
 - MQTT guarded publish, MIoT bridge execution, and Matter bridge execution are
   implemented as opt-in paths and disabled by default.
+- Real backend executor responses are redacted and bounded before trace storage.
 - Latest reviewed real MiniCPM/Ollama run: 108 cases, 104 passed end-to-end,
   `false_allow_rate = 0.0`, `fail_closed_rate = 1.0`; 84 cases used
   deterministic repair/fallback, so this is model+harness evidence rather than

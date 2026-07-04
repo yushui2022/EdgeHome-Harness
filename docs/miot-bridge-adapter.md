@@ -65,6 +65,11 @@ execute_enabled: false
 Real execution remains disabled unless `execute_enabled` is explicitly changed
 in private config and the bridge token is available.
 
+Successful bridge responses are recorded only after recursive sanitization.
+Token-like fields, private Xiaomi identifiers such as `did / siid / piid /
+aiid`, private network fields, and oversized values are redacted or bounded
+before executor evidence is written to trace storage.
+
 Read-only readiness check:
 
 ```powershell

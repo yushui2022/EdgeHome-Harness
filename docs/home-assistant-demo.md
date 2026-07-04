@@ -156,6 +156,10 @@ execute_enabled: false
 real execution is disabled by default
 ```
 
+显式开启真实执行后，HA service response 和 post-state 也会在写入 trace 前脱敏：
+post-state 只保留 `entity_id/state/last_changed/last_updated` 摘要，不保存完整
+`attributes`。
+
 ## 不要夸大 Xiaomi 离线能力
 
 可以说：
@@ -205,6 +209,7 @@ rejects_entity_id_with_path_injection
 executor_execute_is_disabled_by_default
 executor_uses_route_to_translate_plan
 executor_rejects_non_home_assistant_dry_run_plan
+execution_evidence_redacts_backend_response_and_post_state_attributes
 dry_run_planner_translates_home_assistant_payload
 ```
 

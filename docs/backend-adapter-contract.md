@@ -82,6 +82,7 @@ Read backend routes from registry or adapter profile config.
 Generate backend-specific dry-run payloads deterministically.
 Fail closed when a route or backend is missing.
 Avoid leaking tokens into traces or model prompts.
+Sanitize and bound real backend responses before storing executor evidence.
 Keep real execution disabled by default.
 ```
 
@@ -122,6 +123,8 @@ MIoT bridge payload -> exact golden payload
 Matter bridge payload -> exact golden payload
 MIoT bridge HTTP post -> opt-in and token-redacted test path
 Matter bridge HTTP post -> opt-in and token-redacted test path
+Home Assistant executor evidence -> redacted service response and summarized post-state
+Bridge executor evidence -> redacted bridge response
 Invalid bridge route -> fail closed
 ```
 

@@ -11,7 +11,10 @@ use reqwest::header::ACCEPT;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
-use crate::{Executor, ExecutorError, ExecutorResult};
+use crate::{
+    Executor, ExecutorError, ExecutorResult,
+    evidence::{sanitize_backend_evidence, sanitize_backend_text},
+};
 
 const DEFAULT_HA_TOKEN_ENV: &str = "EDGEHOME_HA_TOKEN";
 
@@ -326,19 +329,15 @@ impl Executor for HomeAssistantExecutor {
         } else {
             None
         };
+        let raw_backend_response =
+            home_assistant_execution_evidence(&service_call, response, post_state.as_ref());
         Ok(ExecutionResult {
             success: true,
             message: format!(
                 "home assistant service {} accepted",
                 service_call.service_name()
             ),
-            raw_backend_response: Some(json!({
-                "backend": "home_assistant",
-                "service": service_call.service_name(),
-                "entity_id": service_call.entity_id,
-                "response": response,
-                "post_state": post_state,
-            })),
+            raw_backend_response: Some(raw_backend_response),
         })
     }
 }
@@ -462,7 +461,11 @@ fn request_json(
     let client = reqwest::blocking::Client::builder()
         .timeout(timeout)
         .build()
-        .map_err(|error| ExecutorError::HomeAssistantInvalidHttpResponse(error.to_string()))?;
+        .map_err(|error| {
+            ExecutorError::HomeAssistantInvalidHttpResponse(sanitize_backend_text(
+                &error.to_string(),
+            ))
+        })?;
     let request = match method {
         "GET" => client.get(url),
         "POST" => client.post(url),
@@ -479,13 +482,13 @@ fn request_json(
     } else {
         request
     };
-    let response = request
-        .send()
-        .map_err(|error| ExecutorError::HomeAssistantInvalidHttpResponse(error.to_string()))?;
+    let response = request.send().map_err(|error| {
+        ExecutorError::HomeAssistantInvalidHttpResponse(sanitize_backend_text(&error.to_string()))
+    })?;
     let status = response.status().as_u16();
-    let body = response
-        .text()
-        .map_err(|error| ExecutorError::HomeAssistantInvalidHttpResponse(error.to_string()))?;
+    let body = response.text().map_err(|error| {
+        ExecutorError::HomeAssistantInvalidHttpResponse(sanitize_backend_text(&error.to_string()))
+    })?;
 
     Ok(HttpResponse { status, body })
 }
@@ -514,8 +517,36 @@ fn ensure_success(status: u16, body: String) -> ExecutorResult<String> {
     if (200..300).contains(&status) {
         Ok(body)
     } else {
-        Err(ExecutorError::HomeAssistantHttpStatus { status, body })
+        Err(ExecutorError::HomeAssistantHttpStatus {
+            status,
+            body: sanitize_backend_text(&body),
+        })
     }
+}
+
+fn home_assistant_execution_evidence(
+    service_call: &HomeAssistantServiceCall,
+    response: Value,
+    post_state: Option<&HomeAssistantState>,
+) -> Value {
+    json!({
+        "backend": "home_assistant",
+        "service": service_call.service_name(),
+        "entity_id": service_call.entity_id,
+        "response": sanitize_backend_evidence(response),
+        "response_redacted": true,
+        "post_state": post_state.map(home_assistant_state_summary),
+    })
+}
+
+fn home_assistant_state_summary(state: &HomeAssistantState) -> Value {
+    json!({
+        "entity_id": state.entity_id,
+        "state": state.state,
+        "last_changed": state.last_changed,
+        "last_updated": state.last_updated,
+        "attributes_redacted": !state.attributes.is_null(),
+    })
 }
 
 #[cfg(test)]
@@ -795,6 +826,60 @@ mod tests {
 
         assert_eq!(returned, dry_run);
         assert!(!serialized.contains("EDGEHOME_HA_TOKEN_SHOULD_NOT_EXIST_FOR_DRY_RUN_TEST"));
+    }
+
+    #[test]
+    fn execution_evidence_redacts_backend_response_and_post_state_attributes() {
+        let service_call = HomeAssistantServiceCall {
+            domain: "light".to_owned(),
+            service: "turn_on".to_owned(),
+            entity_id: "light.hallway".to_owned(),
+            payload: json!({ "entity_id": "light.hallway" }),
+        };
+        let post_state = HomeAssistantState {
+            entity_id: "light.hallway".to_owned(),
+            state: "on".to_owned(),
+            attributes: json!({
+                "access_token": "super-secret-token",
+                "friendly_name": "Hallway"
+            }),
+            last_changed: Some("2026-07-04T12:00:00Z".to_owned()),
+            last_updated: Some("2026-07-04T12:00:01Z".to_owned()),
+        };
+
+        let evidence = home_assistant_execution_evidence(
+            &service_call,
+            json!({
+                "ok": true,
+                "authorization": "Bearer super-secret-token",
+                "context": {
+                    "id": "safe-context-id"
+                }
+            }),
+            Some(&post_state),
+        );
+        let serialized = serde_json::to_string(&evidence).expect("serialize evidence");
+
+        assert!(!serialized.contains("super-secret-token"));
+        assert!(!serialized.contains("friendly_name"));
+        assert_eq!(
+            evidence
+                .pointer("/response/authorization")
+                .and_then(Value::as_str),
+            Some("<redacted>")
+        );
+        assert_eq!(
+            evidence
+                .pointer("/post_state/attributes_redacted")
+                .and_then(Value::as_bool),
+            Some(true)
+        );
+        assert_eq!(
+            evidence
+                .pointer("/post_state/state")
+                .and_then(Value::as_str),
+            Some("on")
+        );
     }
 
     #[test]

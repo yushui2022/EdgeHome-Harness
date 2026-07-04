@@ -13,6 +13,7 @@ use crate::{
     bridge::{
         BridgePostConfig, BridgePoster, BridgeSecrets, ReqwestBridgePoster, validate_bridge_route,
     },
+    evidence::sanitize_backend_evidence,
 };
 
 pub const MIOT_BACKEND_NAME: &str = "miio_local";
@@ -213,7 +214,8 @@ where
                 "protocol": "miot",
                 "route_id": request.route_id,
                 "request": request,
-                "bridge_response": response,
+                "bridge_response": sanitize_backend_evidence(response),
+                "bridge_response_redacted": true,
             })),
         })
     }
@@ -368,7 +370,13 @@ mod tests {
             payload: &Value,
         ) -> ExecutorResult<Value> {
             self.payloads.lock().expect("lock").push(payload.clone());
-            Ok(json!({ "ok": true }))
+            Ok(json!({
+                "ok": true,
+                "access_token": "bridge-response-secret",
+                "node": {
+                    "did": "private-xiaomi-did"
+                }
+            }))
         }
     }
 
@@ -395,5 +403,8 @@ mod tests {
         assert_eq!(payloads.lock().expect("lock").len(), 1);
         let serialized = serde_json::to_string(&result).expect("serialize");
         assert!(!serialized.contains("bridge-token"));
+        assert!(!serialized.contains("bridge-response-secret"));
+        assert!(!serialized.contains("private-xiaomi-did"));
+        assert!(serialized.contains("<redacted>"));
     }
 }

@@ -43,6 +43,7 @@ Current backend status:
 | MIoT / Xiaomi | Bridge request adapter implemented | Verified commands can become MIoT bridge requests; real Xiaomi support requires private bridge/device validation |
 | Matter | Bridge request adapter implemented | Verified commands can become Matter controller bridge requests; real control requires private Matter bridge/controller |
 | Backend check CLI | Implemented | Read-only route/config readiness validation for Home Assistant, MQTT, MIoT bridge, and Matter bridge |
+| Execution evidence privacy | Implemented | Real backend responses are redacted/bounded before trace storage |
 
 Important implemented files:
 
@@ -84,6 +85,7 @@ risk-aware confirmation
 rate limit
 idempotency
 audit trail
+redacted executor evidence
 post-state verification where available
 clear failure modes
 ```
@@ -205,6 +207,7 @@ No clippy warnings
 No failing tests
 No stale "future target" language for implemented bridge adapters
 No claim that real execution is default-on
+ExecutorResponse evidence is redacted/summarized before trace storage
 No committed secrets
 ```
 

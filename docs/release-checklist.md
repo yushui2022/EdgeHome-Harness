@@ -13,6 +13,7 @@ Before every release, confirm these statements are still true:
 - Real device execution is disabled by default.
 - Unsupported backends fail closed.
 - MQTT guarded publish remains opt-in and disabled by default.
+- Real executor responses are sanitized before trace storage.
 - MIoT/Xiaomi and Matter are bridge request adapters. Do not claim universal
   device support without private bridge/controller validation evidence.
 
@@ -79,6 +80,11 @@ Confirm no committed file contains:
 - Private LAN URLs.
 - Real device IDs that should not be public.
 - Local SQLite demo databases.
+
+Also confirm executor response evidence keeps only redacted or summarized backend
+responses. Home Assistant post-state must not persist full `attributes`; MIoT
+and Matter bridge responses must not persist private IDs, tokens, fabric data,
+or private network URLs.
 
 ## 5. Release Notes
 

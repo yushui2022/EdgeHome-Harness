@@ -58,6 +58,7 @@ enter a constrained command pipeline without being trusted as the executor.
 | MQTT | Dry-run payload adapter and guarded publish executor implemented |
 | Backend readiness check | Read-only CLI validation for HA / MQTT / MIoT bridge / Matter bridge routes |
 | Real device execution | Explicit opt-in only; disabled by default |
+| Execution evidence privacy | Backend responses are redacted and bounded before trace storage |
 | Release eval gate | 108 mock cases across 12 categories |
 
 ## Why This Exists
@@ -351,6 +352,8 @@ execution.
   disabled by default.
 - Home Assistant gateway boundary with route validation, token isolation, and
   optional post-state fetch after explicit execution.
+- Redacted executor response evidence so backend tokens, private IDs, oversized
+  payloads, and full Home Assistant attributes are not persisted in traces.
 - Read-only backend readiness CLI for HA, MQTT, MIoT bridge, and Matter bridge
   route/config validation.
 - SQLite-backed evidence, audit, trace, replay, and long-term memory.
@@ -480,7 +483,9 @@ The command does not parse fresh natural language. It loads the existing
 `DryRunPlan` from trace evidence, applies confirmation/risk checks, then calls
 the selected backend executor. Public example configs keep `execute_enabled:
 false`, so real execution still fails closed unless private backend config
-explicitly enables it.
+explicitly enables it. Executor responses are recorded as redacted evidence:
+Home Assistant post-state stores a state summary instead of full attributes, and
+bridge backend responses are recursively sanitized before trace storage.
 
 ## Documentation
 

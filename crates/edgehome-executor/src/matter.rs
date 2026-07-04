@@ -13,6 +13,7 @@ use crate::{
     bridge::{
         BridgePostConfig, BridgePoster, BridgeSecrets, ReqwestBridgePoster, validate_bridge_route,
     },
+    evidence::sanitize_backend_evidence,
 };
 
 pub const MATTER_BACKEND_NAME: &str = "matter_bridge";
@@ -212,7 +213,8 @@ where
                 "protocol": "matter",
                 "route_id": request.route_id,
                 "request": request,
-                "bridge_response": response,
+                "bridge_response": sanitize_backend_evidence(response),
+                "bridge_response_redacted": true,
             })),
         })
     }
@@ -373,7 +375,13 @@ mod tests {
             payload: &Value,
         ) -> ExecutorResult<Value> {
             self.payloads.lock().expect("lock").push(payload.clone());
-            Ok(json!({ "ok": true }))
+            Ok(json!({
+                "ok": true,
+                "fabric_id": "private-fabric",
+                "controller": {
+                    "node_id": "private-node"
+                }
+            }))
         }
     }
 
@@ -400,5 +408,8 @@ mod tests {
         assert_eq!(payloads.lock().expect("lock").len(), 1);
         let serialized = serde_json::to_string(&result).expect("serialize");
         assert!(!serialized.contains("bridge-token"));
+        assert!(!serialized.contains("private-fabric"));
+        assert!(!serialized.contains("private-node"));
+        assert!(serialized.contains("<redacted>"));
     }
 }

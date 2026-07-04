@@ -112,9 +112,15 @@ rate limit and idempotency checks passed
 ```
 
 When `verify_state_after_execute = true`, the executor fetches entity state
-after the service call and includes the parsed post-state in the executor
-response. If the state fetch fails, execution returns an error instead of
-pretending verification succeeded.
+after the service call and includes a redacted post-state summary in the
+executor response. The summary keeps `entity_id`, `state`, `last_changed`, and
+`last_updated`, but it does not persist the full Home Assistant `attributes`
+object in trace evidence. If the state fetch fails, execution returns an error
+instead of pretending verification succeeded.
+
+Home Assistant service responses and non-2xx error bodies are sanitized before
+they are stored or surfaced by the harness. Token-like fields, private URLs,
+oversized strings, and oversized arrays are redacted or bounded.
 
 ## Failure Behavior
 
@@ -158,7 +164,7 @@ Allowed public claim:
 ```text
 Home Assistant gateway boundary implemented with dry-run payloads, explicit
 opt-in HTTP/HTTPS REST execution, route validation, token isolation, and
-optional post-state fetch.
+optional redacted post-state fetch.
 ```
 
 Do not claim:

@@ -2,7 +2,7 @@ use std::{fmt, time::Duration};
 
 use serde_json::Value;
 
-use crate::{ExecutorError, ExecutorResult};
+use crate::{ExecutorError, ExecutorResult, evidence::sanitize_backend_text};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BridgePostConfig {
@@ -103,7 +103,7 @@ impl BridgePoster for ReqwestBridgePoster {
             .build()
             .map_err(|error| ExecutorError::BridgeHttp {
                 backend: config.backend.to_owned(),
-                message: error.to_string(),
+                message: sanitize_backend_text(&error.to_string()),
             })?;
         let response = client
             .post(url)
@@ -112,18 +112,18 @@ impl BridgePoster for ReqwestBridgePoster {
             .send()
             .map_err(|error| ExecutorError::BridgeHttp {
                 backend: config.backend.to_owned(),
-                message: error.to_string(),
+                message: sanitize_backend_text(&error.to_string()),
             })?;
         let status = response.status();
         let body = response.text().map_err(|error| ExecutorError::BridgeHttp {
             backend: config.backend.to_owned(),
-            message: error.to_string(),
+            message: sanitize_backend_text(&error.to_string()),
         })?;
         if !status.is_success() {
             return Err(ExecutorError::BridgeHttpStatus {
                 backend: config.backend.to_owned(),
                 status: status.as_u16(),
-                body,
+                body: sanitize_backend_text(&body),
             });
         }
         if body.trim().is_empty() {

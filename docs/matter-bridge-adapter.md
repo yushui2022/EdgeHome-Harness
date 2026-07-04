@@ -45,6 +45,11 @@ execute_enabled: false
 
 Real execution remains disabled unless explicitly enabled in private config.
 
+Successful controller bridge responses are recorded only after recursive
+sanitization. Fabric IDs, node IDs, endpoint IDs, private URLs, token-like
+fields, and oversized values are redacted or bounded before executor evidence is
+written to trace storage.
+
 Read-only readiness check:
 
 ```powershell

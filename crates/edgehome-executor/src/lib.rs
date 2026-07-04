@@ -5,6 +5,7 @@
 //! policy checks have already happened.
 
 mod bridge;
+mod evidence;
 mod home_assistant;
 mod matter;
 mod miot;

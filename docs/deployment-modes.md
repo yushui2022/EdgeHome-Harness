@@ -171,6 +171,7 @@ HomeAssistantExecutor 会拒绝非 home_assistant backend 的 dry-run plan。
 eval / release gate 不依赖真实设备。
 MQTT guarded publish、MIoT bridge、Matter bridge 是当前 adapter boundary。
 真实设备执行默认关闭，需要私有 broker/bridge/controller、secret、确认和验证证据。
+真实执行返回会在写入 trace 前脱敏和限界，不保存完整 HA attributes、桥接 token、私有设备 ID 或私有网络 URL。
 ```
 
 配置样例：
