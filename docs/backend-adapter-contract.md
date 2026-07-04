@@ -81,6 +81,13 @@ It also rejects trace IDs that already have completed real execution, so a
 recorded dry-run trace is one-shot for real backend execution. Stale and
 duplicate rejections are recorded as trace/audit evidence.
 
+Backend/config/transport failures after the freshness and duplicate guards are
+also recorded before the CLI returns the error. The trace receives redacted
+`ExecutorResponse` failure evidence, a `real_execute_failed` step, and a
+`real_execution_failed` audit event. Failed attempts do not count as completed
+real execution; only a succeeded `real_execute` step or `real_execution_completed`
+audit event makes the trace one-shot complete.
+
 ## Adapter Rules
 
 Adapters must:

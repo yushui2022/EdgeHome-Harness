@@ -500,6 +500,11 @@ Assistant post-state stores a state summary instead of full attributes, MQTT
 evidence omits broker credentials, and bridge backend responses are recursively
 sanitized before trace storage.
 
+Failed explicit execution attempts are also recorded as redacted executor
+failure evidence plus a `real_execution_failed` audit event. A failed attempt
+does not mark the trace as completed, so a fresh trace can be retried after the
+private backend configuration is fixed.
+
 ## Documentation
 
 - [WAIC One-Page](docs/waic-one-page.md)

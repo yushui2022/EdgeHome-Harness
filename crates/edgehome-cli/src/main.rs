@@ -1360,62 +1360,87 @@ fn execute_trace(
         .map(|command| command.risk)
         .unwrap_or(RiskLevel::High);
 
-    let registry_path = config_dir.join("devices.yaml");
-    let registry = DeviceRegistry::load_from_path(&registry_path).with_context(|| {
-        format!(
-            "failed to load device registry `{}`",
-            registry_path.display()
-        )
-    })?;
-    let device = registry.get_device(&dry_run.plan.target)?;
-    let mut transaction = ExecutionTransaction::default();
+    let execute_result: anyhow::Result<_> = (|| -> anyhow::Result<_> {
+        let registry_path = config_dir.join("devices.yaml");
+        let registry = DeviceRegistry::load_from_path(&registry_path).with_context(|| {
+            format!(
+                "failed to load device registry `{}`",
+                registry_path.display()
+            )
+        })?;
+        let device = registry.get_device(&dry_run.plan.target)?;
+        let mut transaction = ExecutionTransaction::default();
 
-    let result = match dry_run.backend.as_str() {
-        "mock" => {
-            let executor = MockExecutor::new(true);
-            transaction.execute(&executor, &dry_run, risk, user_confirmed, now)?
+        Ok(match dry_run.backend.as_str() {
+            "mock" => {
+                let executor = MockExecutor::new(true);
+                transaction.execute(&executor, &dry_run, risk, user_confirmed, now)?
+            }
+            "home_assistant" => {
+                let config_path =
+                    backend_config_path(config_dir, backend_config, "home_assistant.yaml.example");
+                let config = HomeAssistantConfig::load_from_path(&config_path)
+                    .with_context(|| format!("failed to load `{}`", config_path.display()))?;
+                let secrets = SecretsLoader::load(&config)?;
+                let client = HomeAssistantClient::new(&config, secrets);
+                let executor = HomeAssistantExecutor::new(client, config.execute_enabled)
+                    .with_post_state_verification(config.verify_state_after_execute)
+                    .with_route(device.device_id.clone(), &device.backend_entity_id)?;
+                transaction.execute(&executor, &dry_run, risk, user_confirmed, now)?
+            }
+            "mqtt" => {
+                let config_path =
+                    backend_config_path(config_dir, backend_config, "adapters/mqtt.example.yaml");
+                let config = MqttConfig::load_from_path(&config_path)
+                    .with_context(|| format!("failed to load `{}`", config_path.display()))?;
+                let secrets = MqttSecrets::load(&config)?;
+                let executor = MqttExecutor::from_config(&config, secrets)
+                    .with_route(device.device_id.clone(), &device.backend_entity_id)?;
+                transaction.execute(&executor, &dry_run, risk, user_confirmed, now)?
+            }
+            "miio_local" => {
+                let config_path =
+                    backend_config_path(config_dir, backend_config, "adapters/miot.example.yaml");
+                let config = MiotBridgeConfig::load_from_path(&config_path)
+                    .with_context(|| format!("failed to load `{}`", config_path.display()))?;
+                let executor = MiotBridgeExecutor::from_config(&config)?
+                    .with_route(device.device_id.clone(), &device.backend_entity_id)?;
+                transaction.execute(&executor, &dry_run, risk, user_confirmed, now)?
+            }
+            "matter_bridge" => {
+                let config_path =
+                    backend_config_path(config_dir, backend_config, "adapters/matter.example.yaml");
+                let config = MatterBridgeConfig::load_from_path(&config_path)
+                    .with_context(|| format!("failed to load `{}`", config_path.display()))?;
+                let executor = MatterBridgeExecutor::from_config(&config)?
+                    .with_route(device.device_id.clone(), &device.backend_entity_id)?;
+                transaction.execute(&executor, &dry_run, risk, user_confirmed, now)?
+            }
+            backend => anyhow::bail!("execute is not wired for backend `{backend}`"),
+        })
+    })();
+
+    let result = match execute_result {
+        Ok(result) => result,
+        Err(error) => {
+            if let Err(record_error) = record_execute_failure(
+                ExecuteFailureRecord {
+                    trace_store: &trace_store,
+                    audit_sink: &audit_sink,
+                    trace_id: &trace_id,
+                    dry_run_ref,
+                    dry_run: &dry_run,
+                    user_confirmed,
+                    trace_age_seconds,
+                },
+                &error,
+            ) {
+                return Err(error).with_context(|| {
+                    format!("failed to record real execution failure evidence: {record_error}")
+                });
+            }
+            return Err(error);
         }
-        "home_assistant" => {
-            let config_path =
-                backend_config_path(config_dir, backend_config, "home_assistant.yaml.example");
-            let config = HomeAssistantConfig::load_from_path(&config_path)
-                .with_context(|| format!("failed to load `{}`", config_path.display()))?;
-            let secrets = SecretsLoader::load(&config)?;
-            let client = HomeAssistantClient::new(&config, secrets);
-            let executor = HomeAssistantExecutor::new(client, config.execute_enabled)
-                .with_post_state_verification(config.verify_state_after_execute)
-                .with_route(device.device_id.clone(), &device.backend_entity_id)?;
-            transaction.execute(&executor, &dry_run, risk, user_confirmed, now)?
-        }
-        "mqtt" => {
-            let config_path =
-                backend_config_path(config_dir, backend_config, "adapters/mqtt.example.yaml");
-            let config = MqttConfig::load_from_path(&config_path)
-                .with_context(|| format!("failed to load `{}`", config_path.display()))?;
-            let secrets = MqttSecrets::load(&config)?;
-            let executor = MqttExecutor::from_config(&config, secrets)
-                .with_route(device.device_id.clone(), &device.backend_entity_id)?;
-            transaction.execute(&executor, &dry_run, risk, user_confirmed, now)?
-        }
-        "miio_local" => {
-            let config_path =
-                backend_config_path(config_dir, backend_config, "adapters/miot.example.yaml");
-            let config = MiotBridgeConfig::load_from_path(&config_path)
-                .with_context(|| format!("failed to load `{}`", config_path.display()))?;
-            let executor = MiotBridgeExecutor::from_config(&config)?
-                .with_route(device.device_id.clone(), &device.backend_entity_id)?;
-            transaction.execute(&executor, &dry_run, risk, user_confirmed, now)?
-        }
-        "matter_bridge" => {
-            let config_path =
-                backend_config_path(config_dir, backend_config, "adapters/matter.example.yaml");
-            let config = MatterBridgeConfig::load_from_path(&config_path)
-                .with_context(|| format!("failed to load `{}`", config_path.display()))?;
-            let executor = MatterBridgeExecutor::from_config(&config)?
-                .with_route(device.device_id.clone(), &device.backend_entity_id)?;
-            transaction.execute(&executor, &dry_run, risk, user_confirmed, now)?
-        }
-        backend => anyhow::bail!("execute is not wired for backend `{backend}`"),
     };
 
     let result_ref = trace_store.record_evidence(NewEvidence::new(
@@ -1489,6 +1514,125 @@ fn trace_has_completed_execution(bundle: &TraceBundle) -> bool {
             .audit_events
             .iter()
             .any(|event| event.event_type == "real_execution_completed")
+}
+
+struct ExecuteFailureRecord<'a> {
+    trace_store: &'a TraceStore,
+    audit_sink: &'a AuditSink,
+    trace_id: &'a TraceId,
+    dry_run_ref: &'a EvidenceRef,
+    dry_run: &'a DryRunPlan,
+    user_confirmed: bool,
+    trace_age_seconds: i64,
+}
+
+fn record_execute_failure(
+    record: ExecuteFailureRecord<'_>,
+    error: &anyhow::Error,
+) -> anyhow::Result<()> {
+    let failure_reason = sanitize_execute_failure_text(error);
+    let failure_ref = record.trace_store.record_evidence(NewEvidence::new(
+        EvidenceKind::ExecutorResponse,
+        SourceSystem::Executor,
+        "real executor failure",
+        json!({
+            "success": false,
+            "message": "real execution failed before completion",
+            "failure_reason": failure_reason.as_str(),
+            "backend": record.dry_run.backend.as_str(),
+            "target": record.dry_run.plan.target.0.as_str(),
+            "user_confirmed": record.user_confirmed,
+            "trace_age_seconds": record.trace_age_seconds,
+            "max_trace_age_seconds": EXECUTE_TRACE_MAX_AGE_SECONDS,
+            "redacted": true,
+        }),
+    ))?;
+    record.trace_store.append_step(
+        record.trace_id,
+        NewCommandStep::new("real_execute_failed", StepStatus::Failed)
+            .with_message(failure_reason.clone())
+            .with_evidence_refs(vec![record.dry_run_ref.id.clone(), failure_ref.id.clone()]),
+    )?;
+    record.audit_sink.append(
+        NewAuditEvent::new(
+            "real_execution_failed",
+            "explicit execute command failed before backend completion",
+            json!({
+                "trace_id": record.trace_id.0.as_str(),
+                "backend": record.dry_run.backend.as_str(),
+                "target": record.dry_run.plan.target.0.as_str(),
+                "user_confirmed": record.user_confirmed,
+                "trace_age_seconds": record.trace_age_seconds,
+                "max_trace_age_seconds": EXECUTE_TRACE_MAX_AGE_SECONDS,
+                "success": false,
+                "failure_reason": failure_reason.as_str(),
+            }),
+        )
+        .with_trace_id(record.trace_id.clone()),
+    )?;
+    Ok(())
+}
+
+fn sanitize_execute_failure_text(error: &anyhow::Error) -> String {
+    let message = error
+        .chain()
+        .map(ToString::to_string)
+        .collect::<Vec<_>>()
+        .join(": ");
+    let redacted = redact_url_like_text(message.trim());
+    if redacted.is_empty() {
+        return "unknown real execution failure".to_owned();
+    }
+
+    let lowered = redacted.to_ascii_lowercase();
+    if lowered.contains("authorization:")
+        || lowered.contains("bearer ")
+        || lowered.contains("access_token")
+        || lowered.contains("api_key")
+        || lowered.contains("token=")
+        || lowered.contains("password=")
+    {
+        return "<redacted-sensitive-text>".to_owned();
+    }
+
+    const MAX_FAILURE_CHARS: usize = 256;
+    let char_count = redacted.chars().count();
+    if char_count > MAX_FAILURE_CHARS {
+        format!("<redacted-long-text chars={char_count}>")
+    } else {
+        redacted
+    }
+}
+
+fn redact_url_like_text(text: &str) -> String {
+    let mut output = String::with_capacity(text.len());
+    let mut index = 0;
+
+    while index < text.len() {
+        let remaining = &text[index..];
+        let next_http = remaining.find("http://");
+        let next_https = remaining.find("https://");
+        let Some(next_url) = [next_http, next_https].into_iter().flatten().min() else {
+            output.push_str(remaining);
+            break;
+        };
+
+        output.push_str(&remaining[..next_url]);
+        output.push_str("<redacted-url>");
+        index += next_url;
+        while index < text.len() {
+            let ch = text[index..]
+                .chars()
+                .next()
+                .expect("index remains on a char boundary");
+            if ch.is_whitespace() || matches!(ch, '`' | '"' | '\'' | ')' | ']' | '}') {
+                break;
+            }
+            index += ch.len_utf8();
+        }
+    }
+
+    output
 }
 
 fn load_trace_bundle(db_path: &Path, trace_id: TraceId) -> anyhow::Result<TraceBundle> {
@@ -2475,6 +2619,160 @@ capabilities:
         );
 
         let _ = std::fs::remove_file(db_path);
+        Ok(())
+    }
+
+    #[test]
+    fn execute_trace_records_failed_backend_execution_without_completing_trace()
+    -> anyhow::Result<()> {
+        let db_path = temp_db_path("edgehome-cli-failed-execute-trace");
+        let config_dir = temp_dir_path("edgehome-cli-failed-execute-config");
+        write_single_light_registry(&config_dir, "home_assistant", "light.living_room")?;
+        let token_file = config_dir.join("ha.token");
+        std::fs::write(&token_file, "ha-private-token")?;
+        let disabled_config = config_dir.join("home_assistant.disabled.yaml");
+        std::fs::write(
+            &disabled_config,
+            format!(
+                "base_url: 'http://127.0.0.1:1'\ntoken_env:\ntoken_file: {}\nrequest_timeout_ms: 2000\nexecute_enabled: false\nverify_state_after_execute: false\n",
+                yaml_single_quoted(&token_file)
+            ),
+        )?;
+        let trace_id = dry_run_trace_id(&db_path, &config_dir, "打开客厅灯")?;
+
+        let error = execute_trace(
+            &db_path,
+            &config_dir,
+            TraceId(trace_id.clone()),
+            true,
+            Some(&disabled_config),
+        )
+        .expect_err("disabled backend execution should fail");
+        let failed_bundle = load_trace_bundle(&db_path, TraceId(trace_id.clone()))?;
+        let failure_evidence =
+            latest_evidence(&failed_bundle.evidence, EvidenceKind::ExecutorResponse)
+                .expect("failure evidence");
+        let failed_trace_frame = build_trace_frame(&failed_bundle);
+        let serialized_failure = serde_json::to_string(&(
+            &failed_bundle.evidence,
+            &failed_bundle.steps,
+            &failed_bundle.audit_events,
+        ))?;
+
+        assert!(
+            error
+                .to_string()
+                .contains("real execution is disabled by default")
+        );
+        assert_eq!(
+            failure_evidence
+                .content
+                .get("success")
+                .and_then(Value::as_bool),
+            Some(false)
+        );
+        assert_eq!(
+            failure_evidence
+                .content
+                .get("failure_reason")
+                .and_then(Value::as_str),
+            Some("real execution is disabled by default")
+        );
+        assert!(failed_bundle.steps.iter().any(|step| {
+            step.name == "real_execute_failed" && step.status == StepStatus::Failed
+        }));
+        assert!(
+            failed_bundle
+                .audit_events
+                .iter()
+                .any(|event| event.event_type == "real_execution_failed"
+                    && event.payload.get("success").and_then(Value::as_bool) == Some(false))
+        );
+        assert!(!trace_has_completed_execution(&failed_bundle));
+        assert!(
+            !failed_bundle
+                .steps
+                .iter()
+                .any(|step| step.name == "real_execute" && step.status == StepStatus::Succeeded)
+        );
+        assert_eq!(
+            failed_trace_frame
+                .executor_result
+                .as_ref()
+                .and_then(|result| result.get("success"))
+                .and_then(Value::as_bool),
+            Some(false)
+        );
+        assert!(!serialized_failure.contains("ha-private-token"));
+
+        let (base_url, handle) = spawn_http_fixture(vec![HttpFixtureResponse {
+            status: 200,
+            body: json!({
+                "ok": true,
+                "access_token": "leaked-service-token"
+            })
+            .to_string(),
+        }]);
+        let enabled_config = config_dir.join("home_assistant.enabled.yaml");
+        std::fs::write(
+            &enabled_config,
+            format!(
+                "base_url: '{base_url}'\ntoken_env:\ntoken_file: {}\nrequest_timeout_ms: 2000\nexecute_enabled: true\nverify_state_after_execute: false\n",
+                yaml_single_quoted(&token_file)
+            ),
+        )?;
+
+        let execute_output = execute_trace(
+            &db_path,
+            &config_dir,
+            TraceId(trace_id.clone()),
+            true,
+            Some(&enabled_config),
+        )?;
+        let requests = handle.join().expect("server thread");
+        let completed_bundle = load_trace_bundle(&db_path, TraceId(trace_id))?;
+        let completed_trace_frame = build_trace_frame(&completed_bundle);
+
+        assert_eq!(
+            execute_output
+                .get("result")
+                .and_then(|result| result.get("success"))
+                .and_then(Value::as_bool),
+            Some(true)
+        );
+        assert_eq!(requests.len(), 1);
+        assert!(trace_has_completed_execution(&completed_bundle));
+        assert!(
+            completed_bundle
+                .audit_events
+                .iter()
+                .any(|event| event.event_type == "real_execution_failed")
+        );
+        assert!(
+            completed_bundle
+                .audit_events
+                .iter()
+                .any(|event| event.event_type == "real_execution_completed")
+        );
+        assert_eq!(
+            completed_bundle
+                .evidence
+                .iter()
+                .filter(|item| item.kind == EvidenceKind::ExecutorResponse)
+                .count(),
+            2
+        );
+        assert_eq!(
+            completed_trace_frame
+                .executor_result
+                .as_ref()
+                .and_then(|result| result.get("success"))
+                .and_then(Value::as_bool),
+            Some(true)
+        );
+
+        let _ = std::fs::remove_file(db_path);
+        let _ = std::fs::remove_dir_all(config_dir);
         Ok(())
     }
 

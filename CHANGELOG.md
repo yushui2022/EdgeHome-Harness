@@ -48,6 +48,9 @@ implemented code, tests, docs, and eval evidence.
   records stale-trace rejection evidence before any backend call.
 - CLI execute one-shot guard rejects a second real execution attempt for a trace
   after `real_execution_completed` has already been recorded.
+- CLI execute now records backend/config/transport failures as redacted
+  executor failure evidence, a failed step, and an audit event without marking
+  the trace as completed.
 
 ## 0.1.0 - 2026-07-04
 
