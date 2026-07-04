@@ -45,6 +45,23 @@ MiniCPM / MiniCPM5-1B
 + Trace / Replay / Eval / Release Gate
 ```
 
+## Command Boundary
+
+MiniCPM never emits vendor payloads. Its output contract is a backend-neutral
+candidate JSON owned by this project.
+
+The model does not generate:
+
+- Home Assistant `entity_id`
+- MIoT `did / siid / piid / aiid`
+- Matter node, endpoint, cluster, attribute, or command IDs
+- MQTT topics or broker routes
+- tokens, backend URLs, or API payloads
+
+Those fields live in the device registry, backend adapter configuration, or
+executor layer. This keeps model output small and auditable, and prevents a
+small model from inventing vendor-specific identifiers.
+
 ## Why MiniCPM
 
 EdgeHome Harness is designed around the practical constraints of **small local
@@ -91,7 +108,8 @@ model is allowed to participate in a real execution chain:
 - Govern model output length, malformed JSON, retries, and repetition.
 - Parse and validate candidate JSON against Rust-owned schemas.
 - Normalize semantic slots into internal command types.
-- Resolve device aliases through a registry, not through the model.
+- Resolve device aliases through controlled memory and registry paths, not
+  through model-generated backend IDs.
 - Enforce capability boundaries such as `light.set_brightness` vs.
   unsupported `light.set_temperature`.
 - Apply deterministic policy for low, medium, high, blocked, and unknown risk.
@@ -128,9 +146,20 @@ Not claimed:
 - Production-ready smart-home gateway.
 - Replacement for Mi Home, Home Assistant, Matter, MQTT, or a smart speaker.
 - Full Mi Home / MIoT / miIO / Matter integration.
+- MQTT topic/payload compatibility.
 - Long-running benchmark on a real 2GB ARM board.
 - Proof that all smart-home natural-language inputs are understood.
 - Real-device execution enabled by default.
+
+## Backend Support Matrix
+
+| Backend | Status | What works | What is not claimed |
+| --- | --- | --- | --- |
+| Mock | Implemented | Deterministic dry-run payloads and eval baseline | Real device control |
+| Home Assistant | Demo adapter implemented | Service-call payload translation, with real execution disabled by default | Production deployment or full HA coverage |
+| MIoT / Xiaomi | Future adapter target | Explicitly fails closed when selected today | Xiaomi device support |
+| Matter | Future adapter target | Documented as an adapter direction only | Matter controller support |
+| MQTT | Future adapter target | Explicitly fails closed when selected today | Topic or payload compatibility |
 
 ## Architecture
 
@@ -153,6 +182,30 @@ flowchart TD
 
 The model is deliberately kept near the top of the pipeline. Everything after
 candidate generation is owned by the harness.
+
+## Command Pipeline Contract
+
+| Layer | Type | Owner | Trust level |
+| --- | --- | --- | --- |
+| Candidate JSON | `ModelCandidate` | MiniCPM / MockModel | Untrusted |
+| Internal command | `NormalizedCommand` | Rust Harness | Must be resolved and gated |
+| Verified plan | `ExecutionPlan` | Gate + planner | Trusted dry-run boundary |
+| Backend payload | `DryRunPlan.payload` | Backend adapter | Backend-specific |
+
+The canonical path is:
+
+```text
+User Chinese command
+  -> MiniCPM candidate JSON
+  -> Rust schema validation and semantic normalization
+  -> Device registry / memory resolution
+  -> Capability and policy gates
+  -> ExecutionPlan
+  -> BackendAdapter payload
+```
+
+Users customize devices and backend mappings through registries and adapter
+configuration. The MiniCPM output schema remains fixed and backend-neutral.
 
 ## Online Request Path
 

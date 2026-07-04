@@ -98,7 +98,7 @@ enum TraceCommand {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum MockMode {
+enum PipelineMode {
     Parse,
     DryRun,
 }
@@ -133,12 +133,12 @@ fn main() -> anyhow::Result<()> {
         Commands::Parse { mock, input } => {
             let profile = load_profile(&cli.config_dir, &cli.profile)
                 .with_context(|| format!("failed to load profile `{}`", cli.profile))?;
-            let output = run_mock_pipeline(
+            let output = run_harness_pipeline(
                 &cli.db_path,
                 &cli.config_dir,
                 &profile,
                 input,
-                MockMode::Parse,
+                PipelineMode::Parse,
                 mock,
             )?;
             print_json(&output)?;
@@ -146,12 +146,12 @@ fn main() -> anyhow::Result<()> {
         Commands::DryRun { mock, input } => {
             let profile = load_profile(&cli.config_dir, &cli.profile)
                 .with_context(|| format!("failed to load profile `{}`", cli.profile))?;
-            let output = run_mock_pipeline(
+            let output = run_harness_pipeline(
                 &cli.db_path,
                 &cli.config_dir,
                 &profile,
                 input,
-                MockMode::DryRun,
+                PipelineMode::DryRun,
                 mock,
             )?;
             print_json(&output)?;
@@ -197,12 +197,12 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-fn run_mock_pipeline(
+fn run_harness_pipeline(
     db_path: &Path,
     config_dir: &Path,
     profile: &RuntimeProfile,
     input: String,
-    mode: MockMode,
+    mode: PipelineMode,
     use_mock: bool,
 ) -> anyhow::Result<Value> {
     ensure_db_parent(db_path)?;
@@ -319,7 +319,7 @@ fn run_mock_pipeline(
             .with_evidence_refs(vec![parsed_json_ref.id.clone()]),
     )?;
 
-    let mut normalized = normalize_mock_candidate(&candidate)?;
+    let mut normalized = normalize_model_candidate(&candidate)?;
     if profile.memory_enabled
         && let Some((resolved, source)) =
             resolve_alias_from_memory_or_registry(&normalized, &candidate, &long_items, &registry)?
@@ -393,7 +393,7 @@ fn run_mock_pipeline(
         GateEvaluationRequest::new(trace.trace_id.clone(), normalized.clone())
             .with_evidence_refs(gate_evidence_refs.clone())
             .with_state_freshness(StateFreshness::Fresh)
-            .with_dry_run_ready(mode == MockMode::DryRun),
+            .with_dry_run_ready(mode == PipelineMode::DryRun),
     )?;
 
     let gate_status = if gate_evaluation.policy_decision == PolicyDecision::Deny {
@@ -407,7 +407,7 @@ fn run_mock_pipeline(
     )?;
 
     let mut dry_run_plan = None;
-    if mode == MockMode::DryRun {
+    if mode == PipelineMode::DryRun {
         if gate_evaluation.policy_decision == PolicyDecision::Deny
             || !gate_evaluation.blocking_reasons.is_empty()
         {
@@ -448,9 +448,9 @@ fn run_mock_pipeline(
     }
 
     let audit_event_type = match mode {
-        MockMode::Parse => "harness_parse_completed",
-        MockMode::DryRun if dry_run_plan.is_some() => "harness_dry_run_plan_generated",
-        MockMode::DryRun => "harness_dry_run_rejected",
+        PipelineMode::Parse => "harness_parse_completed",
+        PipelineMode::DryRun if dry_run_plan.is_some() => "harness_dry_run_plan_generated",
+        PipelineMode::DryRun => "harness_dry_run_rejected",
     };
     let policy_decision = gate_evaluation.policy_decision.clone();
     let dry_run_ready = dry_run_plan.is_some();
@@ -509,12 +509,12 @@ fn run_eval(
     let mut results = Vec::with_capacity(cases.len());
 
     for case in cases {
-        let output = run_mock_pipeline(
+        let output = run_harness_pipeline(
             db_path,
             config_dir,
             profile,
             case.input.clone(),
-            MockMode::DryRun,
+            PipelineMode::DryRun,
             use_mock,
         )?;
         results.push(evaluate_case_output(&case, &output)?);
@@ -1052,7 +1052,7 @@ fn mock_model_candidate(input: &UserInput) -> ModelCandidate {
     RulePreParser.pre_parse(input).unwrap_or_default()
 }
 
-fn normalize_mock_candidate(candidate: &ModelCandidate) -> anyhow::Result<NormalizedCommand> {
+fn normalize_model_candidate(candidate: &ModelCandidate) -> anyhow::Result<NormalizedCommand> {
     Ok(SemanticNormalizer.normalize(candidate)?)
 }
 
@@ -1063,7 +1063,7 @@ fn input_flag_label(flag: &InputFlag) -> &'static str {
     }
 }
 
-impl MockMode {
+impl PipelineMode {
     fn as_str(self) -> &'static str {
         match self {
             Self::Parse => "parse",
