@@ -1,15 +1,32 @@
-# EdgeHome Harness
+<div align="center">
+  <img src="docs/assets/edgehome-logo.svg" width="128" alt="EdgeHome Harness logo" />
+  <h1>EdgeHome Harness</h1>
+  <p><strong>A Rust safety harness for MiniCPM-powered edge home command agents.</strong></p>
+  <p>
+    <img alt="Rust 1.95+" src="https://img.shields.io/badge/Rust-1.95%2B-b7410e?style=flat-square&logo=rust&logoColor=white" />
+    <img alt="MiniCPM local 1B" src="https://img.shields.io/badge/MiniCPM-local%201B-0f766e?style=flat-square" />
+    <img alt="Release gate: 108 cases" src="https://img.shields.io/badge/eval%20gate-108%20cases-2563eb?style=flat-square" />
+    <img alt="Execution: dry-run by default" src="https://img.shields.io/badge/execution-dry--run%20default-334155?style=flat-square" />
+    <img alt="License: MIT OR Apache-2.0" src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-2f855a?style=flat-square" />
+  </p>
+  <p>
+    <a href="#quick-start">Quick Start</a> ·
+    <a href="#architecture">Architecture</a> ·
+    <a href="#command-contract">Command Contract</a> ·
+    <a href="#backend-support-matrix">Backends</a> ·
+    <a href="#customization-model">Customization</a>
+  </p>
+  <p><code>MiniCPM proposes.</code> <code>Rust decides.</code> <code>Adapters translate.</code></p>
+</div>
 
-![EdgeHome Harness overview](docs/assets/edgehome-harness-overview.jpg)
+<p align="center">
+  <img src="docs/assets/edgehome-harness-overview.jpg" width="920" alt="EdgeHome Harness overview" />
+</p>
 
-_Overview diagram. The current repository implements a dry-run execution
-boundary; real device execution is disabled by default._
-
-**A Rust safety harness for MiniCPM-powered edge home command agents.**
-
-```text
-MiniCPM proposes. Rust decides. Adapters translate.
-```
+<p align="center">
+  <em>Overview diagram. The current repository implements a dry-run execution
+  boundary; real device execution is disabled by default.</em>
+</p>
 
 EdgeHome Harness keeps a small local MiniCPM-class model in a narrow, auditable
 role: generate backend-neutral smart-home command candidates. Rust owns the
@@ -465,3 +482,12 @@ Small model.
 Strong harness.
 Fail-closed boundary.
 ```
+
+## License
+
+Licensed under either of:
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+- MIT license ([LICENSE-MIT](LICENSE-MIT))
+
+at your option.

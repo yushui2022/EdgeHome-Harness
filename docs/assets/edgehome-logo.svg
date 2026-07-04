@@ -1,0 +1,49 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">EdgeHome Harness logo</title>
+  <desc id="desc">A shielded home, chip, and validation mark representing a safe edge home command harness.</desc>
+  <defs>
+    <linearGradient id="bg" x1="64" y1="40" x2="448" y2="472" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FCFF"/>
+      <stop offset="1" stop-color="#EAF7F4"/>
+    </linearGradient>
+    <linearGradient id="shield" x1="128" y1="68" x2="384" y2="436" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0EA5E9"/>
+      <stop offset="1" stop-color="#0F766E"/>
+    </linearGradient>
+    <linearGradient id="chip" x1="180" y1="184" x2="332" y2="328" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1D4ED8"/>
+      <stop offset="1" stop-color="#0891B2"/>
+    </linearGradient>
+    <filter id="soft-shadow" x="24" y="24" width="464" height="464" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#0F172A" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <rect x="24" y="24" width="464" height="464" rx="96" fill="url(#bg)"/>
+  <rect x="36" y="36" width="440" height="440" rx="84" stroke="#BFE3EA" stroke-width="4"/>
+
+  <g filter="url(#soft-shadow)">
+    <path d="M256 62L391 116V221C391 327 336 410 256 454C176 410 121 327 121 221V116L256 62Z" fill="white"/>
+    <path d="M256 62L391 116V221C391 327 336 410 256 454C176 410 121 327 121 221V116L256 62Z" stroke="url(#shield)" stroke-width="18" stroke-linejoin="round"/>
+  </g>
+
+  <path d="M164 230L256 156L348 230" stroke="#0F172A" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M190 226V344H322V226" stroke="#0F172A" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <rect x="202" y="204" width="108" height="108" rx="24" fill="url(#chip)" stroke="#E0F2FE" stroke-width="8"/>
+  <path d="M218 184V204M246 176V204M274 176V204M302 184V204" stroke="#0EA5E9" stroke-width="10" stroke-linecap="round"/>
+  <path d="M218 312V332M246 312V340M274 312V340M302 312V332" stroke="#0F766E" stroke-width="10" stroke-linecap="round"/>
+  <path d="M182 220H202M174 256H202M182 292H202" stroke="#0EA5E9" stroke-width="10" stroke-linecap="round"/>
+  <path d="M310 220H330M310 256H338M310 292H330" stroke="#0F766E" stroke-width="10" stroke-linecap="round"/>
+
+  <text x="256" y="258" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="44" font-weight="800" fill="white">EH</text>
+  <path d="M230 284H282" stroke="white" stroke-width="8" stroke-linecap="round" opacity="0.85"/>
+
+  <path d="M174 378H226L242 362" stroke="#0EA5E9" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="162" cy="378" r="10" fill="#0EA5E9"/>
+  <path d="M338 378H286L270 362" stroke="#0F766E" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="350" cy="378" r="10" fill="#0F766E"/>
+
+  <circle cx="256" cy="382" r="31" fill="#ECFDF5" stroke="#0F766E" stroke-width="10"/>
+  <path d="M240 381L252 393L274 369" stroke="#0F766E" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
