@@ -123,6 +123,8 @@ MIoT bridge payload -> exact golden payload
 Matter bridge payload -> exact golden payload
 MIoT bridge HTTP post -> opt-in and token-redacted test path
 Matter bridge HTTP post -> opt-in and token-redacted test path
+Bridge HTTP poster -> bearer-authenticated local HTTP JSON request
+Bridge HTTP errors -> sanitized non-success response bodies
 Home Assistant executor evidence -> redacted service response and summarized post-state
 Bridge executor evidence -> redacted bridge response
 Invalid bridge route -> fail closed

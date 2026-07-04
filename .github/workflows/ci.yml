@@ -34,6 +34,17 @@ jobs:
       - name: Tests
         run: cargo test --workspace --locked
 
+      - name: JSON schema syntax
+        run: |
+          python - <<'PY'
+          import json
+          import pathlib
+
+          for path in pathlib.Path("docs/schemas").glob("*.json"):
+              json.loads(path.read_text(encoding="utf-8"))
+              print(f"validated {path}")
+          PY
+
       - name: Release eval gate
         run: cargo run --locked -q -p edgehome-cli -- --db-path edgehome-ci-gate.sqlite eval cases/zh-home.yaml --gate
 

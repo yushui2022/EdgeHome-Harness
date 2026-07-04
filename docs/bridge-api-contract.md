@@ -3,6 +3,14 @@
 This document defines the private bridge HTTP contract used by the MIoT/Xiaomi
 and Matter bridge executors.
 
+Machine-readable schemas are provided under:
+
+```text
+docs/schemas/miot-bridge-request.schema.json
+docs/schemas/matter-bridge-request.schema.json
+docs/schemas/bridge-response.schema.json
+```
+
 The bridge is intentionally outside this public repository. EdgeHome Harness
 owns verified internal commands and bridge request generation. The private
 bridge owns vendor credentials, device-specific identifiers, protocol calls,

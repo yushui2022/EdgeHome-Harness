@@ -24,6 +24,13 @@ Before every release, confirm these statements are still true:
 Run from the repository root:
 
 ```powershell
+powershell -ExecutionPolicy Bypass -File scripts\release-check.ps1
+```
+
+The script wraps the required commands, backend readiness checks, `git diff
+--check`, and lightweight repository hygiene checks. To run the checks manually:
+
+```powershell
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
@@ -56,6 +63,8 @@ Check:
 - `CHANGELOG.md` includes the release.
 - `docs/backend-adapter-contract.md` matches implemented adapters.
 - `docs/bridge-api-contract.md` matches MIoT/Matter bridge executor behavior.
+- `docs/schemas/*.schema.json` matches the current bridge request and response
+  contract.
 - `docs/mqtt-guarded-publish.md`, `docs/miot-bridge-adapter.md`,
   `docs/matter-bridge-adapter.md`, and `docs/home-assistant-gateway.md` match
   code behavior.

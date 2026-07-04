@@ -11,11 +11,11 @@
     <img alt="License: MIT OR Apache-2.0" src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-2f855a?style=flat-square" />
   </p>
   <p>
-    <a href="#quick-start">Quick Start</a> ·
-    <a href="#architecture">Architecture</a> ·
-    <a href="#command-contract">Command Contract</a> ·
-    <a href="#backend-support-matrix">Backends</a> ·
-    <a href="#customization-model">Customization</a> ·
+    <a href="#quick-start">Quick Start</a> |
+    <a href="#architecture">Architecture</a> |
+    <a href="#command-contract">Command Contract</a> |
+    <a href="#backend-support-matrix">Backends</a> |
+    <a href="#customization-model">Customization</a> |
     <a href="#roadmap-and-governance">Roadmap</a>
   </p>
   <p><code>MiniCPM proposes.</code> <code>Rust decides.</code> <code>Adapters translate.</code></p>
@@ -142,6 +142,12 @@ Run the release eval gate:
 
 ```powershell
 cargo run -q -p edgehome-cli -- --db-path edgehome-gate.sqlite eval cases/zh-home.yaml --gate
+```
+
+Run the full local release check:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\release-check.ps1
 ```
 
 Run the scripted demo:
@@ -496,6 +502,7 @@ bridge backend responses are recursively sanitized before trace storage.
 - [Command Pipeline Contract](docs/command-pipeline-contract.md)
 - [Backend Adapter Contract](docs/backend-adapter-contract.md)
 - [Bridge API Contract](docs/bridge-api-contract.md)
+- [Bridge JSON Schemas](docs/schemas/)
 - [MQTT Guarded Publish](docs/mqtt-guarded-publish.md)
 - [MIoT Bridge Adapter](docs/miot-bridge-adapter.md)
 - [Matter Bridge Adapter](docs/matter-bridge-adapter.md)
@@ -540,6 +547,9 @@ cargo test --workspace
 cargo run -q -p edgehome-cli -- --db-path edgehome-gate.sqlite eval cases/zh-home.yaml --gate
 git diff --check
 ```
+
+The same commands plus backend readiness checks and repository hygiene checks
+are wrapped by `scripts\release-check.ps1`.
 
 The same checks run in GitHub Actions for pushes and pull requests to `main`.
 

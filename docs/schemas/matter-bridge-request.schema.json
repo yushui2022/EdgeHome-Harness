@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://edgehome-harness.local/schemas/matter-bridge-request.schema.json",
+  "title": "EdgeHome Matter Bridge Execute Request",
+  "description": "Request body posted by EdgeHome Harness to a private Matter controller bridge after Rust validation, registry resolution, policy gating, and dry-run planning.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "route_id",
+    "device_id",
+    "action",
+    "command",
+    "arguments"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "matter"
+    },
+    "route_id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9_.:-]+$",
+      "description": "Opaque route owned by the private controller bridge. It maps to fabric/node/endpoint/cluster details outside the public harness."
+    },
+    "device_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Public harness device_id from the trusted device registry."
+    },
+    "action": {
+      "$ref": "#/$defs/action"
+    },
+    "command": {
+      "type": "string",
+      "enum": [
+        "on_off.on",
+        "on_off.off",
+        "level_control.move_to_level",
+        "level_control.step_up",
+        "level_control.step_down",
+        "thermostat.setpoint",
+        "thermostat.system_mode",
+        "window_covering.up_or_open",
+        "window_covering.down_or_close",
+        "door_lock.lock",
+        "door_lock.unlock",
+        "unknown"
+      ]
+    },
+    "arguments": {
+      "type": "object",
+      "description": "Normalized, backend-neutral arguments. The bridge maps them to concrete Matter controller commands."
+    }
+  },
+  "$defs": {
+    "action": {
+      "type": "string",
+      "enum": [
+        "turn_on",
+        "turn_off",
+        "set_brightness",
+        "increase_brightness",
+        "decrease_brightness",
+        "set_temperature",
+        "set_mode",
+        "open",
+        "close",
+        "lock",
+        "unlock",
+        "unknown"
+      ]
+    }
+  }
+}

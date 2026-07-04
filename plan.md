@@ -43,9 +43,11 @@ Current backend status:
 | MIoT / Xiaomi | Bridge request adapter implemented | Verified commands can become MIoT bridge requests; real Xiaomi support requires private bridge/device validation |
 | Matter | Bridge request adapter implemented | Verified commands can become Matter controller bridge requests; real control requires private Matter bridge/controller |
 | Bridge API contract | Implemented | Documents private MIoT/Matter bridge HTTP endpoints, response/error semantics, and URL rules |
+| Bridge JSON schemas | Implemented | Machine-readable MIoT request, Matter request, and bridge response schemas |
 | Backend check CLI | Implemented | Read-only route/config readiness validation for Home Assistant, MQTT, MIoT bridge, and Matter bridge |
 | Execution evidence privacy | Implemented | Real backend responses are redacted/bounded before trace storage |
 | Backend URL validation | Implemented | HA and bridge URLs reject query, fragment, userinfo, non-HTTP schemes, and missing hosts |
+| Local release check script | Implemented | Runs fmt, clippy, tests, eval gate, backend checks, diff check, and repository hygiene scan |
 
 Important implemented files:
 
@@ -66,10 +68,14 @@ docs/mqtt-guarded-publish.md
 docs/miot-bridge-adapter.md
 docs/matter-bridge-adapter.md
 docs/bridge-api-contract.md
+docs/schemas/miot-bridge-request.schema.json
+docs/schemas/matter-bridge-request.schema.json
+docs/schemas/bridge-response.schema.json
 docs/home-assistant-gateway.md
 docs/home-assistant-golden-payloads.md
 docs/real-minicpm-eval-report.md
 scripts/run-real-minicpm-eval.ps1
+scripts/release-check.ps1
 ```
 
 ## 2. Non-Negotiable Safety Rule
@@ -143,6 +149,7 @@ Never revert user changes unless the user explicitly asks.
 Run these before a release-quality commit:
 
 ```powershell
+powershell -ExecutionPolicy Bypass -File scripts\release-check.ps1
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace

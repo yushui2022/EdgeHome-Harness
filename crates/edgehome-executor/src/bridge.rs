@@ -175,6 +175,14 @@ pub fn validate_base_url(backend: &'static str, base_url: &str) -> ExecutorResul
 
 #[cfg(test)]
 mod tests {
+    use std::{
+        io::{Read, Write},
+        net::TcpListener,
+        thread,
+    };
+
+    use serde_json::json;
+
     use super::*;
 
     const BACKEND: &str = "test_bridge";
@@ -209,5 +217,142 @@ mod tests {
                 ExecutorError::BridgeUnsupportedBaseUrl { .. }
             ));
         }
+    }
+
+    #[test]
+    fn reqwest_poster_posts_json_to_local_bridge_with_bearer_token() {
+        let (base_url, handle) = spawn_bridge_response(
+            200,
+            json!({
+                "ok": true,
+                "route_id": "miot.bedroom_ac",
+                "state": "accepted"
+            })
+            .to_string(),
+        );
+        let config = BridgePostConfig {
+            backend: BACKEND,
+            base_url,
+            request_timeout_ms: 2_000,
+        };
+        let secrets = BridgeSecrets::new(BACKEND, "EDGEHOME_TEST_BRIDGE_TOKEN", "bridge-token")
+            .expect("secret");
+
+        let response = ReqwestBridgePoster
+            .post_json(
+                &config,
+                &secrets,
+                "/v1/miot/execute",
+                &json!({
+                    "protocol": "miot",
+                    "route_id": "miot.bedroom_ac",
+                    "arguments": {
+                        "temperature": 24
+                    }
+                }),
+            )
+            .expect("bridge response");
+        let request = handle.join().expect("server thread");
+
+        assert_eq!(response["ok"], true);
+        assert!(request.starts_with("POST /v1/miot/execute HTTP/1.1"));
+        assert!(
+            request
+                .to_ascii_lowercase()
+                .contains("authorization: bearer bridge-token")
+        );
+        assert!(request.contains("\"protocol\":\"miot\""));
+        assert!(request.contains("\"temperature\":24"));
+    }
+
+    #[test]
+    fn reqwest_poster_redacts_non_success_response_body() {
+        let (base_url, handle) = spawn_bridge_response(
+            500,
+            json!({
+                "ok": false,
+                "token": "bridge-response-secret",
+                "did": "private-xiaomi-did",
+                "message": "controller failed"
+            })
+            .to_string(),
+        );
+        let config = BridgePostConfig {
+            backend: BACKEND,
+            base_url,
+            request_timeout_ms: 2_000,
+        };
+        let secrets = BridgeSecrets::new(BACKEND, "EDGEHOME_TEST_BRIDGE_TOKEN", "bridge-token")
+            .expect("secret");
+
+        let error = ReqwestBridgePoster
+            .post_json(&config, &secrets, "/v1/matter/execute", &json!({}))
+            .expect_err("bridge returned non-success");
+        handle.join().expect("server thread");
+
+        match error {
+            ExecutorError::BridgeHttpStatus { status, body, .. } => {
+                assert_eq!(status, 500);
+                assert!(body.contains("controller failed"));
+                assert!(!body.contains("bridge-response-secret"));
+                assert!(!body.contains("private-xiaomi-did"));
+                assert!(body.contains("<redacted>"));
+            }
+            other => panic!("unexpected error: {other:?}"),
+        }
+    }
+
+    fn spawn_bridge_response(status: u16, body: String) -> (String, thread::JoinHandle<String>) {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind local test bridge");
+        let address = listener.local_addr().expect("local address");
+        let base_url = format!("http://{address}");
+        let handle = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().expect("accept request");
+            let mut request_bytes = Vec::new();
+            let mut buffer = [0_u8; 1024];
+            loop {
+                let read = stream.read(&mut buffer).expect("read request");
+                if read == 0 {
+                    break;
+                }
+                request_bytes.extend_from_slice(&buffer[..read]);
+                if request_complete(&request_bytes) {
+                    break;
+                }
+            }
+
+            let reason = if status == 200 {
+                "OK"
+            } else {
+                "Internal Server Error"
+            };
+            let response = format!(
+                "HTTP/1.1 {status} {reason}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                body.len(),
+                body
+            );
+            stream
+                .write_all(response.as_bytes())
+                .expect("write response");
+            String::from_utf8(request_bytes).expect("request is utf-8")
+        });
+        (base_url, handle)
+    }
+
+    fn request_complete(request: &[u8]) -> bool {
+        let Some(header_end) = request.windows(4).position(|window| window == b"\r\n\r\n") else {
+            return false;
+        };
+        let headers = String::from_utf8_lossy(&request[..header_end]);
+        let content_length = headers
+            .lines()
+            .find_map(|line| {
+                let (name, value) = line.split_once(':')?;
+                name.eq_ignore_ascii_case("content-length")
+                    .then(|| value.trim().parse::<usize>().ok())
+                    .flatten()
+            })
+            .unwrap_or(0);
+        request.len() >= header_end + 4 + content_length
     }
 }

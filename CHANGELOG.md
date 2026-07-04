@@ -30,6 +30,12 @@ implemented code, tests, docs, and eval evidence.
 - Home Assistant base URL validation now rejects query strings, fragments,
   username/password userinfo, non-HTTP schemes, and missing hosts during
   readiness checks and execution.
+- Local release check script for formatting, Clippy, workspace tests, eval gate,
+  backend readiness checks, diff hygiene, and lightweight repository hygiene.
+- Machine-readable bridge JSON schemas for MIoT request, Matter request, and
+  shared bridge response contracts.
+- Local HTTP bridge poster tests for bearer-authenticated JSON requests and
+  redacted non-success responses.
 
 ## 0.1.0 - 2026-07-04
 

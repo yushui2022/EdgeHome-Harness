@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://edgehome-harness.local/schemas/bridge-response.schema.json",
+  "title": "EdgeHome Private Bridge Response",
+  "description": "Recommended response shape for private MIoT/Xiaomi and Matter bridges. Bridge implementations may add bounded non-secret fields; EdgeHome Harness still redacts executor evidence before trace storage.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "ok"
+  ],
+  "properties": {
+    "ok": {
+      "type": "boolean"
+    },
+    "route_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "type": "string",
+      "description": "Short bridge/device state such as accepted, applied, verified, or queued."
+    },
+    "error_code": {
+      "type": "string",
+      "pattern": "^[a-z0-9_:-]+$"
+    },
+    "message": {
+      "type": "string",
+      "maxLength": 512
+    },
+    "observed_state": {
+      "type": "object",
+      "description": "Optional bounded post-state summary. Do not include credentials, raw tokens, private network URLs, or vendor/controller internals."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "ok": {
+            "const": false
+          }
+        },
+        "required": [
+          "ok"
+        ]
+      },
+      "then": {
+        "required": [
+          "error_code",
+          "message"
+        ]
+      }
+    }
+  ]
+}
