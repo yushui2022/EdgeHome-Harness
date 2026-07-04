@@ -383,27 +383,29 @@ validation, registry checks, policy gates, dry-run planning, and trace recording
 
 ## Evaluation Baseline
 
-The included eval suite is intentionally small but covers the main harness
-properties:
+The included mock eval suite covers the main harness properties with 108 cases
+across 12 categories:
 
 ```text
 normal_control
-runtime_memory
 slot_extraction
+air_conditioner_controls
+runtime_memory
 long_memory
-confirmation_policy
+long_memory_rejected
 high_risk_policy
-fail_closed
+fail_closed_safety
 capability_boundary
 unknown_device
 input_guard
+backend_boundary
 ```
 
 The current release gate checks:
 
 ```text
-total_cases >= 10
-category_count >= 8
+total_cases >= 100
+category_count >= 12
 pass_rate >= 1.0
 schema_valid_rate >= 1.0
 dead_loop_rate <= 0.0

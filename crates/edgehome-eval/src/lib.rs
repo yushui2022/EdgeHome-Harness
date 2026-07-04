@@ -60,6 +60,7 @@ pub struct ExpectedOutput {
     pub time_after: Option<String>,
     pub policy_decision: Option<PolicyDecision>,
     pub dry_run_ready: Option<bool>,
+    pub memory_write_status: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -77,6 +78,7 @@ pub struct EvalCaseResult {
     pub slots_correct: Option<bool>,
     pub policy_correct: Option<bool>,
     pub dry_run_correct: Option<bool>,
+    pub memory_write_correct: Option<bool>,
     pub input_guard_correct: Option<bool>,
     pub schema_valid: Option<bool>,
     pub fallback_used: bool,
@@ -137,8 +139,8 @@ pub struct EvalGateConfig {
 impl Default for EvalGateConfig {
     fn default() -> Self {
         Self {
-            min_total_cases: 10,
-            min_category_count: 8,
+            min_total_cases: 100,
+            min_category_count: 12,
             min_pass_rate: 1.0,
             min_schema_valid_rate: 1.0,
             max_dead_loop_rate: 0.0,
@@ -204,6 +206,11 @@ pub fn evaluate_case_output(case: &EvalCase, output: &Value) -> EvalResult<EvalC
         .get("dry_run_plan")
         .map(|value| !value.is_null())
         .unwrap_or(false);
+    let memory_write_status = output
+        .get("memory_write")
+        .and_then(|memory_write| memory_write.get("status"))
+        .and_then(Value::as_str)
+        .map(str::to_owned);
     let executable = output
         .get("executable")
         .and_then(Value::as_bool)
@@ -345,6 +352,16 @@ pub fn evaluate_case_output(case: &EvalCase, output: &Value) -> EvalResult<EvalC
         }
         ok
     });
+    let memory_write_correct = case.expected.memory_write_status.as_ref().map(|expected| {
+        let ok = memory_write_status.as_ref() == Some(expected);
+        if !ok {
+            failures.push(format!(
+                "memory_write_status expected `{expected}` got `{:?}`",
+                memory_write_status.as_ref()
+            ));
+        }
+        ok
+    });
 
     let expected_blocked = expected_blocked(&case.expected);
     let input_guard_correct = if case.expected_input_flags.is_empty() {
@@ -392,6 +409,7 @@ pub fn evaluate_case_output(case: &EvalCase, output: &Value) -> EvalResult<EvalC
         slots_correct,
         policy_correct,
         dry_run_correct,
+        memory_write_correct,
         input_guard_correct,
         schema_valid,
         fallback_used,
@@ -773,6 +791,7 @@ mod tests {
                 slots_correct: Some(true),
                 policy_correct: Some(true),
                 dry_run_correct: Some(true),
+                memory_write_correct: None,
                 input_guard_correct: None,
                 schema_valid: Some(true),
                 fallback_used: false,
@@ -798,6 +817,7 @@ mod tests {
                 slots_correct: Some(false),
                 policy_correct: Some(true),
                 dry_run_correct: Some(false),
+                memory_write_correct: None,
                 input_guard_correct: None,
                 schema_valid: Some(false),
                 fallback_used: true,
@@ -847,6 +867,7 @@ mod tests {
             slots_correct: Some(true),
             policy_correct: Some(true),
             dry_run_correct: Some(true),
+            memory_write_correct: None,
             input_guard_correct: None,
             schema_valid: Some(true),
             fallback_used: false,
@@ -890,6 +911,7 @@ mod tests {
                 slots_correct: Some(true),
                 policy_correct: Some(true),
                 dry_run_correct: Some(true),
+                memory_write_correct: None,
                 input_guard_correct: None,
                 schema_valid: Some(true),
                 fallback_used: false,
@@ -915,6 +937,7 @@ mod tests {
                 slots_correct: Some(false),
                 policy_correct: Some(true),
                 dry_run_correct: Some(false),
+                memory_write_correct: None,
                 input_guard_correct: None,
                 schema_valid: Some(false),
                 fallback_used: true,
@@ -968,6 +991,7 @@ mod tests {
             slots_correct: Some(true),
             policy_correct: Some(false),
             dry_run_correct: Some(false),
+            memory_write_correct: None,
             input_guard_correct: None,
             schema_valid: Some(true),
             fallback_used: false,

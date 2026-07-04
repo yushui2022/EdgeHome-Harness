@@ -108,11 +108,22 @@ impl InputGuard {
             &[
                 "home assistant token",
                 "entity_id",
+                "miot",
+                "matter",
+                "mqtt",
+                "did",
+                "siid",
+                "piid",
+                "aiid",
+                "topic",
+                "payload",
                 "miio token",
                 "http://",
                 "https://",
                 "ssh ",
                 "token=",
+                "令牌",
+                "后端地址",
             ],
         ) {
             flags.push(InputFlag::DangerousDirectBackendAccess);
@@ -260,7 +271,7 @@ impl RulePreParser {
                 },
                 ..ModelCandidate::default()
             }),
-            _ => parse_simple_alias_command(&text),
+            _ => parse_common_command(&text),
         }
     }
 }
@@ -350,12 +361,6 @@ pub struct SemanticNormalizer;
 
 impl SemanticNormalizer {
     pub fn normalize(&self, candidate: &ModelCandidate) -> ParserResult<NormalizedCommand> {
-        if let Some(brightness) = candidate.params.brightness
-            && brightness > 100
-        {
-            return Err(ParserError::BrightnessOutOfRange(brightness));
-        }
-
         let room = candidate.room.clone().unwrap_or_default();
         let risk = self.risk_for(&candidate.device_type);
 
@@ -399,6 +404,169 @@ fn normalize_spaces(value: &str) -> String {
     value.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
+fn compact_text(value: &str) -> String {
+    value.split_whitespace().collect::<String>()
+}
+
+fn parse_common_command(text: &str) -> Option<ModelCandidate> {
+    parse_scheduled_brightness_command(text)
+        .or_else(|| parse_brightness_command(text))
+        .or_else(|| parse_temperature_command(text))
+        .or_else(|| parse_mode_command(text))
+        .or_else(|| parse_relative_light_command(text))
+        .or_else(|| parse_lock_command(text))
+        .or_else(|| parse_simple_alias_command(text))
+}
+
+fn parse_scheduled_brightness_command(text: &str) -> Option<ModelCandidate> {
+    let compact = compact_text(text);
+    let (time_raw, rest) = compact.split_once("后把")?;
+    let (alias, brightness) = parse_alias_percent(rest)?;
+    let time_after = TimeNormalizer.normalize_time_after(time_raw)?;
+    Some(command_candidate(
+        alias,
+        Action::SetBrightness,
+        CommandParams {
+            brightness: Some(brightness),
+            time_after: Some(time_after),
+            ..CommandParams::default()
+        },
+    ))
+}
+
+fn parse_brightness_command(text: &str) -> Option<ModelCandidate> {
+    let compact = compact_text(text);
+    let body = compact.strip_prefix("把").unwrap_or(&compact);
+    let (alias, brightness) = parse_alias_percent(body)?;
+    Some(command_candidate(
+        alias,
+        Action::SetBrightness,
+        CommandParams {
+            brightness: Some(brightness),
+            ..CommandParams::default()
+        },
+    ))
+}
+
+fn parse_temperature_command(text: &str) -> Option<ModelCandidate> {
+    let compact = compact_text(text);
+    let body = compact.strip_prefix("把").unwrap_or(&compact);
+    let (alias, value) = body.split_once("调到")?;
+    let raw_temperature = value.strip_suffix('度')?;
+    let temperature = raw_temperature.parse::<i16>().ok()?;
+    Some(command_candidate(
+        alias,
+        Action::SetTemperature,
+        CommandParams {
+            temperature: Some(temperature),
+            ..CommandParams::default()
+        },
+    ))
+}
+
+fn parse_mode_command(text: &str) -> Option<ModelCandidate> {
+    let compact = compact_text(text);
+    let body = compact.strip_prefix("把").unwrap_or(&compact);
+    let (alias, mode) = body
+        .split_once("切到")
+        .or_else(|| body.split_once("切换到"))
+        .or_else(|| body.split_once("设为"))?;
+    let mode = mode.strip_suffix("模式").unwrap_or(mode);
+    if alias.is_empty() || mode.is_empty() {
+        return None;
+    }
+    Some(command_candidate(
+        alias,
+        Action::SetMode,
+        CommandParams {
+            mode: Some(mode.to_owned()),
+            ..CommandParams::default()
+        },
+    ))
+}
+
+fn parse_relative_light_command(text: &str) -> Option<ModelCandidate> {
+    let compact = compact_text(text);
+    let (action, alias) = if let Some(alias) = compact
+        .strip_suffix("调亮一点")
+        .and_then(|body| body.strip_prefix("把"))
+    {
+        (Action::IncreaseBrightness, alias)
+    } else if let Some(alias) = compact
+        .strip_suffix("再亮一点")
+        .and_then(|body| body.strip_prefix("把"))
+    {
+        (Action::IncreaseBrightness, alias)
+    } else if let Some(alias) = compact
+        .strip_suffix("调暗一点")
+        .and_then(|body| body.strip_prefix("把"))
+    {
+        (Action::DecreaseBrightness, alias)
+    } else if let Some(alias) = compact
+        .strip_suffix("再暗一点")
+        .and_then(|body| body.strip_prefix("把"))
+    {
+        (Action::DecreaseBrightness, alias)
+    } else {
+        return None;
+    };
+
+    if alias.is_empty() {
+        return None;
+    }
+
+    Some(command_candidate(alias, action, CommandParams::default()))
+}
+
+fn parse_lock_command(text: &str) -> Option<ModelCandidate> {
+    let compact = compact_text(text);
+    let (action, alias) = if let Some(alias) = compact.strip_prefix("锁上") {
+        (Action::Lock, alias)
+    } else if let Some(alias) = compact
+        .strip_suffix("锁上")
+        .and_then(|body| body.strip_prefix("把"))
+    {
+        (Action::Lock, alias)
+    } else if let Some(alias) = compact.strip_prefix("解锁") {
+        (Action::Unlock, alias)
+    } else if let Some(alias) = compact
+        .strip_suffix("解锁")
+        .and_then(|body| body.strip_prefix("把"))
+    {
+        (Action::Unlock, alias)
+    } else {
+        return None;
+    };
+
+    if alias.is_empty() || infer_device_type_from_alias(alias) != DeviceType::Lock {
+        return None;
+    }
+
+    Some(command_candidate(alias, action, CommandParams::default()))
+}
+
+fn parse_alias_percent(body: &str) -> Option<(&str, u8)> {
+    let (alias, value) = body.split_once("调到")?;
+    let raw_percent = value.strip_suffix('%')?;
+    let percent = raw_percent.parse::<u16>().ok()?;
+    if percent > u16::from(u8::MAX) {
+        return None;
+    }
+    Some((alias, percent as u8))
+}
+
+fn command_candidate(alias: &str, action: Action, params: CommandParams) -> ModelCandidate {
+    ModelCandidate {
+        intent: Intent::ControlDevice,
+        room: Some(Room::Unknown),
+        device_alias: Some(alias.to_owned()),
+        device_type: infer_device_type_from_alias(alias),
+        action,
+        params,
+        ..ModelCandidate::default()
+    }
+}
+
 fn parse_simple_alias_command(text: &str) -> Option<ModelCandidate> {
     let (action, alias) = if let Some(alias) = text.strip_prefix("打开") {
         (Action::TurnOn, alias)
@@ -427,6 +595,7 @@ fn parse_simple_alias_command(text: &str) -> Option<ModelCandidate> {
     if device_type == DeviceType::Unknown {
         return None;
     }
+    let action = normalize_action_for_device_type(action, &device_type);
 
     Some(ModelCandidate {
         intent: Intent::ControlDevice,
@@ -436,6 +605,14 @@ fn parse_simple_alias_command(text: &str) -> Option<ModelCandidate> {
         action,
         ..ModelCandidate::default()
     })
+}
+
+fn normalize_action_for_device_type(action: Action, device_type: &DeviceType) -> Action {
+    match (device_type, action) {
+        (DeviceType::Lock, Action::TurnOn) => Action::Unlock,
+        (DeviceType::Lock, Action::TurnOff) => Action::Lock,
+        (_, action) => action,
+    }
 }
 
 fn infer_device_type_from_alias(alias: &str) -> DeviceType {
@@ -704,6 +881,54 @@ mod tests {
         assert_eq!(command.device_type, DeviceType::AirConditioner);
         assert_eq!(command.action, Action::TurnOn);
         assert!(!command.can_enter_policy_gate());
+    }
+
+    #[test]
+    fn generic_brightness_command_can_be_standardized() {
+        let input = UserInput::new("把客厅主灯调到45%").expect("input");
+        let candidate = RulePreParser.pre_parse(&input).expect("candidate");
+        let command = SemanticNormalizer.normalize(&candidate).expect("command");
+
+        assert_eq!(candidate.device_alias.as_deref(), Some("客厅主灯"));
+        assert_eq!(command.device_type, DeviceType::Light);
+        assert_eq!(command.action, Action::SetBrightness);
+        assert_eq!(command.params.brightness, Some(45));
+    }
+
+    #[test]
+    fn generic_temperature_and_mode_commands_can_be_standardized() {
+        let temperature_input = UserInput::new("把主卧空调调到24度").expect("input");
+        let temperature_candidate = RulePreParser
+            .pre_parse(&temperature_input)
+            .expect("temperature candidate");
+        assert_eq!(
+            temperature_candidate.device_alias.as_deref(),
+            Some("主卧空调")
+        );
+        assert_eq!(temperature_candidate.action, Action::SetTemperature);
+        assert_eq!(temperature_candidate.params.temperature, Some(24));
+
+        let mode_input = UserInput::new("把卧室空调切到制冷模式").expect("input");
+        let mode_candidate = RulePreParser
+            .pre_parse(&mode_input)
+            .expect("mode candidate");
+        assert_eq!(mode_candidate.action, Action::SetMode);
+        assert_eq!(mode_candidate.params.mode.as_deref(), Some("制冷"));
+    }
+
+    #[test]
+    fn generic_lock_commands_use_lock_actions() {
+        let lock_input = UserInput::new("锁上前门门锁").expect("input");
+        let lock_candidate = RulePreParser
+            .pre_parse(&lock_input)
+            .expect("lock candidate");
+        assert_eq!(lock_candidate.action, Action::Lock);
+
+        let unlock_input = UserInput::new("打开入户门锁").expect("input");
+        let unlock_candidate = RulePreParser
+            .pre_parse(&unlock_input)
+            .expect("unlock candidate");
+        assert_eq!(unlock_candidate.action, Action::Unlock);
     }
 
     #[test]

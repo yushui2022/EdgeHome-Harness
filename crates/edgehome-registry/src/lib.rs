@@ -56,6 +56,9 @@ pub enum RegistryError {
     #[error("brightness is outside capability range: {value}")]
     BrightnessOutOfRange { value: u8 },
 
+    #[error("temperature is outside capability range: {value}")]
+    TemperatureOutOfRange { value: i16 },
+
     #[error("device target is ambiguous for room `{room}` and device type `{device_type}`")]
     AmbiguousDeviceTarget {
         room: String,
@@ -391,6 +394,14 @@ fn validate_params(rule: &CapabilityRule, params: &CommandParams) -> RegistryRes
             return Err(RegistryError::BrightnessOutOfRange { value: brightness });
         }
     }
+    if rule.action == Action::SetTemperature
+        && let Some(temperature) = params.temperature
+    {
+        let value = i64::from(temperature);
+        if rule.min.is_some_and(|min| value < min) || rule.max.is_some_and(|max| value > max) {
+            return Err(RegistryError::TemperatureOutOfRange { value: temperature });
+        }
+    }
     Ok(())
 }
 
@@ -702,6 +713,30 @@ capabilities:
         assert!(matches!(
             error,
             RegistryError::BrightnessOutOfRange { value: 150 }
+        ));
+    }
+
+    #[test]
+    fn temperature_above_capability_range_is_rejected() {
+        let registry = load_registry();
+        let command = command(
+            "bedroom_air_conditioner",
+            DeviceType::AirConditioner,
+            Action::SetTemperature,
+            CommandParams {
+                temperature: Some(31),
+                ..CommandParams::default()
+            },
+        );
+
+        let error = registry
+            .capability_resolver()
+            .validate(&command)
+            .expect_err("temperature out of range");
+
+        assert!(matches!(
+            error,
+            RegistryError::TemperatureOutOfRange { value: 31 }
         ));
     }
 

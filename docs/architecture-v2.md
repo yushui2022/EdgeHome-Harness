@@ -186,7 +186,8 @@ Evidence 真正 gate 的对象是版本质量。
 示例标准：
 
 ```text
-total_cases >= 1
+total_cases >= 100
+category_count >= 12
 pass_rate >= 1.0
 schema_valid_rate = 1.0
 dead_loop_rate = 0.0

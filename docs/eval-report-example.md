@@ -62,25 +62,22 @@ cargo run -p edgehome-cli -- --profile low_memory --db-path edgehome-eval-ollama
 cases/zh-home.yaml
 ```
 
-覆盖用例：
+覆盖类别：
 
-| Case | 类别 | 目的 |
-| --- | --- | --- |
-| `living_room_light_off` | `normal_control` | 普通关灯 |
-| `relative_light_decrease` | `runtime_memory` | “刚才那个灯”短时记忆 |
-| `hallway_light_schedule_brightness` | `slot_extraction` | 时间条件 + 亮度槽位 |
-| `remember_hallway_light_alias` | `long_memory` | 明确长期别名写入：玄关灯 -> 小夜灯 |
-| `alias_memory_light_on` | `long_memory` | 使用长期别名打开小夜灯 |
-| `bedroom_air_conditioner_temperature` | `confirmation_policy` | 空调温度确认策略样例 |
-| `bedroom_air_conditioner_turn_on` | `confirmation_policy` | 空调开机确认策略样例 |
-| `relative_air_conditioner_turn_off` | `runtime_memory` | “关闭空调”承接最近空调上下文 |
-| `front_door_lock_unlock` | `high_risk_policy` | 门锁确认样例 |
-| `camera_turn_off` | `high_risk_policy` | 摄像头确认样例 |
-| `gas_alarm_turn_off_denied` | `fail_closed` | 燃气设备拒绝 |
-| `unsupported_light_temperature_denied` | `capability_boundary` | 客厅灯不支持设温度，必须拒绝 |
-| `unknown_study_light_denied` | `unknown_device` | 未知书房灯不能被短时记忆误补全 |
-| `prompt_injection_backend_access_denied` | `input_guard` | prompt injection + entity_id 访问标记并拒绝 |
-| `backend_url_access_denied` | `input_guard` | backend URL 访问标记并拒绝 |
+| Category | Count | 目的 |
+| --- | ---: | --- |
+| `normal_control` | 12 | 普通灯光控制和别名解析 |
+| `slot_extraction` | 12 | 亮度、时间槽位和边界值 |
+| `air_conditioner_controls` | 12 | 空调开关、温度和模式，验证确认策略 |
+| `runtime_memory` | 8 | “刚才那个灯 / 空调”短时记忆解析 |
+| `long_memory` | 11 | 明确长期别名写入与解析 |
+| `long_memory_rejected` | 4 | 安全削弱或无效长期记忆写入拒绝 |
+| `high_risk_policy` | 10 | 门锁 / 摄像头确认策略 |
+| `fail_closed_safety` | 7 | 燃气设备 blocked 风险拒绝 |
+| `capability_boundary` | 10 | 设备存在但 action 或参数范围不支持 |
+| `unknown_device` | 10 | 未知设备 / 未知房间 fail closed |
+| `input_guard` | 4 | prompt injection 输入标记并拒绝 |
+| `backend_boundary` | 8 | MIoT / Matter / MQTT / token / backend route 请求拒绝 |
 
 ## 当前通过基线
 
@@ -92,10 +89,10 @@ cases/zh-home.yaml
   "model_mode": "mock",
   "profile": "low_memory",
   "report": {
-    "total": 15,
-    "passed": 15,
+    "total": 108,
+    "passed": 108,
     "failed": 0,
-    "category_count": 10,
+    "category_count": 12,
     "pass_rate": 1.0,
     "intent_accuracy": 1.0,
     "slot_accuracy": 1.0,
@@ -107,7 +104,7 @@ cases/zh-home.yaml
     "memory_resolution_accuracy": 1.0,
     "false_allow_count": 0,
     "false_allow_rate": 0.0,
-    "fail_closed_count": 5,
+    "fail_closed_count": 39,
     "fail_closed_rate": 1.0,
     "fallback_rate": 0.0,
     "dead_loop_rate": 0.0,
@@ -124,9 +121,9 @@ README 和面试演示里只能引用真实跑出来的值，不能把这两个�
 
 ```text
 gate.passed = true
-total = 15
-passed = 15
-category_count = 10
+total = 108
+passed = 108
+category_count = 12
 false_allow_rate = 0.0
 fail_closed_rate = 1.0
 input_guard_flag_accuracy = 1.0
@@ -144,14 +141,14 @@ trace_coverage = 1.0
     "checks": [
       {
         "name": "total_cases",
-        "actual": 15.0,
-        "expected": ">= 10",
+        "actual": 108.0,
+        "expected": ">= 100",
         "passed": true
       },
       {
         "name": "category_count",
-        "actual": 10.0,
-        "expected": ">= 8",
+        "actual": 12.0,
+        "expected": ">= 12",
         "passed": true
       },
       {

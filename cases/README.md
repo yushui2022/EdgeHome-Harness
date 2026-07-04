@@ -12,19 +12,21 @@ zh-home.yaml
 
 ## 覆盖范围
 
-当前 `zh-home.yaml` 覆盖 15 个 case，按风险与行为类别组织：
+当前 `zh-home.yaml` 覆盖 108 个 case，按风险与行为类别组织：
 
 ```text
 normal_control          普通灯光控制
-runtime_memory          短时相对指令
 slot_extraction         时间 / 亮度槽位抽取
+air_conditioner_controls 空调温度 / 模式 / 开关控制
+runtime_memory          短时相对指令
 long_memory             明确长期别名写入与解析
-confirmation_policy     中风险空调动作确认策略
+long_memory_rejected    安全削弱类长期记忆写入拒绝
 high_risk_policy        门锁 / 摄像头高风险确认策略
-fail_closed             燃气设备 blocked 风险拒绝
+fail_closed_safety      燃气设备 blocked 风险拒绝
 capability_boundary     设备存在但 action 不支持
 unknown_device          未知设备 / 未知房间 fail closed
 input_guard             prompt injection / backend access 输入标记
+backend_boundary        MIoT / Matter / MQTT / token / backend route 请求拒绝
 ```
 
 这组 case 专门覆盖“小模型 Harness”容易被忽略的问题：
@@ -104,8 +106,8 @@ CARGO_TARGET_DIR=/mnt/e/edgehome-target cargo run -q -p edgehome-cli -- --profil
 当前默认 gate 会检查：
 
 ```text
-total_cases >= 10
-category_count >= 8
+total_cases >= 100
+category_count >= 12
 pass_rate = 1.0
 schema_valid_rate = 1.0
 trace_coverage = 1.0

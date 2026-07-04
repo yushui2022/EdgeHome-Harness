@@ -466,16 +466,16 @@ git push origin main
 
 ---
 
-## 5. 剩余里程碑
+## 5. 后续里程碑
 
 ### M6. Eval cases 扩到 100 条
 
-状态：Pending
+状态：Done in current milestone
 
 为什么要做：
 
 ```text
-现在 eval baseline 只有 15 条，宣传时容易被质疑只是挑了几个样例。
+M6 之前 eval baseline 只有 15 条，宣传时容易被质疑只是挑了几个样例。
 100 条 eval case 的意义不是证明它理解所有智能家居输入，而是证明 harness 对正常、边界、危险、未知和注入输入有系统性回归覆盖。
 ```
 
@@ -491,28 +491,37 @@ M5 已保证 dry-run 只从 accepted gated command 进入。
 ```text
 cases/zh-home.yaml
 crates/edgehome-eval/src/lib.rs
-必要时补 parser/registry/gate 的小修复
+crates/edgehome-parser/src/lib.rs
+crates/edgehome-registry/src/lib.rs
+README.md
+cases/README.md
+docs/eval-report-example.md
+docs/architecture-v2.md
 ```
 
-建议 case 分布：
+实际 case 分布：
 
 ```text
 normal_control: 12
 slot_extraction: 12
-light_controls: 10
-air_conditioner_controls: 10
-runtime_memory: 10
-long_memory: 6
-confirmation_policy: 10
-high_risk_policy: 8
-capability_boundary: 8
-unknown_device: 8
-input_guard: 10
-fail_closed_safety: 8
-backend_boundary: 4
+air_conditioner_controls: 12
+runtime_memory: 8
+long_memory: 11
+long_memory_rejected: 4
+high_risk_policy: 10
+fail_closed_safety: 7
+capability_boundary: 10
+unknown_device: 10
+input_guard: 4
+backend_boundary: 8
 ```
 
-总数可以超过 100，但不能少于 100。
+实际总数：
+
+```text
+108 cases
+12 categories
+```
 
 每条 case 尽量写清：
 
@@ -554,17 +563,17 @@ long memory 写入但缺用户确认
 完成条件：
 
 ```text
-cases/zh-home.yaml >= 100 cases
-category_count >= 12
-pass_rate == 1.0
-schema_valid_rate == 1.0
-trace_coverage == 1.0
-false_allow_rate == 0.0
-fail_closed_rate == 1.0
-dead_loop_rate == 0.0
+cases/zh-home.yaml = 108 cases
+category_count = 12
+pass_rate = 1.0
+schema_valid_rate = 1.0
+trace_coverage = 1.0
+false_allow_rate = 0.0
+fail_closed_rate = 1.0
+dead_loop_rate = 0.0
 ```
 
-完成后把默认 gate 提高：
+默认 gate 已提高：
 
 ```rust
 EvalGateConfig {
@@ -579,20 +588,20 @@ EvalGateConfig {
 }
 ```
 
-验证命令：
+验证命令已通过：
 
 ```powershell
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
-cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-m6-eval.sqlite" eval cases\zh-home.yaml --gate
+cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-m6-first-pass.sqlite" eval cases\zh-home.yaml --gate
 git diff --check
 ```
 
 推荐提交：
 
 ```powershell
-git add cases/zh-home.yaml crates/edgehome-eval/src/lib.rs
+git add cases/zh-home.yaml crates/edgehome-eval/src/lib.rs crates/edgehome-parser/src/lib.rs crates/edgehome-registry/src/lib.rs README.md cases/README.md docs/eval-report-example.md docs/architecture-v2.md plan.md
 git commit -m "test: expand release eval coverage"
 git push origin main
 ```
