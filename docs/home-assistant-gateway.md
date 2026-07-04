@@ -37,6 +37,8 @@ verify_state_after_execute: true
 
 `base_url` may use `http://` or `https://`. Query strings and fragments are
 rejected so tokens or routing data cannot be smuggled through the URL.
+Username/password userinfo is rejected as well; use `token_env` or `token_file`
+for credentials.
 
 `execute_enabled` must stay false in public examples. Enable it only in private
 local config after dry-run, gate, confirmation, rate-limit, and idempotency
@@ -77,7 +79,7 @@ cargo run -q -p edgehome-cli -- backend check --backend home_assistant --registr
 ```
 
 The check command is read-only. It validates configured routes and execution
-prerequisites, but it does not call Home Assistant.
+prerequisites, including `base_url` shape, but it does not call Home Assistant.
 
 ## Dry-Run
 
@@ -133,6 +135,7 @@ unsupported action/domain pair
 missing token during real execute
 unsupported base URL
 base URL containing query or fragment data
+base URL containing username/password userinfo
 non-2xx Home Assistant response
 post-state fetch failure when verification is enabled
 execute_enabled = false

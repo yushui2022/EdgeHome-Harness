@@ -27,6 +27,9 @@ implemented code, tests, docs, and eval evidence.
   implementations.
 - Parsed bridge base URL validation shared by executor and backend readiness
   checks.
+- Home Assistant base URL validation now rejects query strings, fragments,
+  username/password userinfo, non-HTTP schemes, and missing hosts during
+  readiness checks and execution.
 
 ## 0.1.0 - 2026-07-04
 

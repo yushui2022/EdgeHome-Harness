@@ -14,6 +14,8 @@ Before every release, confirm these statements are still true:
 - Unsupported backends fail closed.
 - MQTT guarded publish remains opt-in and disabled by default.
 - Real executor responses are sanitized before trace storage.
+- Home Assistant and bridge base URLs reject query, fragment, and userinfo
+  secret carriers.
 - MIoT/Xiaomi and Matter are bridge request adapters. Do not claim universal
   device support without private bridge/controller validation evidence.
 

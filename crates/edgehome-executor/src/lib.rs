@@ -32,7 +32,7 @@ pub use bridge::validate_base_url as validate_bridge_base_url;
 pub use home_assistant::{
     HomeAssistantClient, HomeAssistantConfig, HomeAssistantExecutor, HomeAssistantGatewayReadiness,
     HomeAssistantSecrets, HomeAssistantServiceCall, HomeAssistantState, SecretsLoader,
-    home_assistant_service_call,
+    home_assistant_service_call, validate_home_assistant_base_url,
 };
 pub use matter::{
     MATTER_BACKEND_NAME, MatterBridgeAdapter, MatterBridgeConfig, MatterBridgeExecutor,

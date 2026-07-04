@@ -494,15 +494,8 @@ fn request_json(
 }
 
 fn home_assistant_url(base_url: &str, suffix: &str) -> ExecutorResult<String> {
+    validate_home_assistant_base_url(base_url)?;
     let base_url = base_url.trim();
-    if !(base_url.starts_with("http://") || base_url.starts_with("https://"))
-        || base_url.contains('?')
-        || base_url.contains('#')
-    {
-        return Err(ExecutorError::HomeAssistantUnsupportedBaseUrl(
-            base_url.to_owned(),
-        ));
-    }
     let url = format!(
         "{}/{}",
         base_url.trim_end_matches('/'),
@@ -511,6 +504,24 @@ fn home_assistant_url(base_url: &str, suffix: &str) -> ExecutorResult<String> {
     reqwest::Url::parse(&url)
         .map_err(|_| ExecutorError::HomeAssistantUnsupportedBaseUrl(base_url.to_owned()))?;
     Ok(url)
+}
+
+pub fn validate_home_assistant_base_url(base_url: &str) -> ExecutorResult<()> {
+    let base_url = base_url.trim();
+    let url = reqwest::Url::parse(base_url)
+        .map_err(|_| ExecutorError::HomeAssistantUnsupportedBaseUrl(base_url.to_owned()))?;
+    if !matches!(url.scheme(), "http" | "https")
+        || url.host_str().is_none()
+        || url.query().is_some()
+        || url.fragment().is_some()
+        || !url.username().is_empty()
+        || url.password().is_some()
+    {
+        return Err(ExecutorError::HomeAssistantUnsupportedBaseUrl(
+            base_url.to_owned(),
+        ));
+    }
+    Ok(())
 }
 
 fn ensure_success(status: u16, body: String) -> ExecutorResult<String> {
@@ -899,5 +910,27 @@ mod tests {
             error,
             ExecutorError::HomeAssistantUnsupportedBaseUrl(_)
         ));
+    }
+
+    #[test]
+    fn request_url_rejects_userinfo_in_base_url() {
+        let error = home_assistant_url("https://user:pass@ha.example.test:8123", "/api")
+            .expect_err("userinfo rejected");
+
+        assert!(matches!(
+            error,
+            ExecutorError::HomeAssistantUnsupportedBaseUrl(_)
+        ));
+    }
+
+    #[test]
+    fn base_url_validator_rejects_non_http_or_missing_host() {
+        for base_url in ["mqtt://ha.example.test", "http://", "https://"] {
+            let error = validate_home_assistant_base_url(base_url).expect_err("base URL rejected");
+            assert!(matches!(
+                error,
+                ExecutorError::HomeAssistantUnsupportedBaseUrl(_)
+            ));
+        }
     }
 }

@@ -19,7 +19,7 @@ use edgehome_executor::{
     DryRunPlanner, ExecutionTransaction, HomeAssistantClient, HomeAssistantConfig,
     HomeAssistantExecutor, MatterBridgeConfig, MatterBridgeExecutor, MiotBridgeConfig,
     MiotBridgeExecutor, MockExecutor, MqttConfig, MqttExecutor, MqttSecrets, SecretsLoader,
-    validate_bridge_base_url, validate_mqtt_topic,
+    validate_bridge_base_url, validate_home_assistant_base_url, validate_mqtt_topic,
 };
 use edgehome_gate::{GateCommandDecision, GateEngine, GateEvaluationRequest};
 use edgehome_memory::{
@@ -994,6 +994,7 @@ fn check_home_assistant_backend(
         backend_config_path(config_dir, backend_config, "home_assistant.yaml.example");
     let config = HomeAssistantConfig::load_from_path(&config_path)
         .with_context(|| format!("failed to load `{}`", config_path.display()))?;
+    validate_home_assistant_base_url(&config.base_url)?;
     let readiness = HomeAssistantExecutor::validate_routes(devices)?;
     let secret_available = SecretsLoader::load(&config)?.is_some();
     let dry_run_ready = readiness.route_count > 0 && readiness.routes_valid;
