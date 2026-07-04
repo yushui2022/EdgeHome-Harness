@@ -160,6 +160,16 @@ cargo test -p edgehome-executor home_assistant
 cargo test -p edgehome-executor dry_run_planner_translates_home_assistant
 ```
 
+The Home Assistant test group includes local HTTP gateway fixtures that verify:
+
+```text
+execute_enabled=true sends POST /api/services/<domain>/<service>
+Bearer token is sent to the gateway but not stored in executor evidence
+verify_state_after_execute=true fetches GET /api/states/<entity_id>
+post-state evidence stores a summary and redacts full attributes
+non-2xx Home Assistant response bodies are sanitized before surfacing
+```
+
 ## Claim Boundary
 
 Allowed public claim:

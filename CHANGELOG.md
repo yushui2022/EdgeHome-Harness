@@ -36,6 +36,8 @@ implemented code, tests, docs, and eval evidence.
   shared bridge response contracts.
 - Local HTTP bridge poster tests for bearer-authenticated JSON requests and
   redacted non-success responses.
+- Local HTTP Home Assistant gateway tests for opt-in service execution,
+  post-state fetch, token isolation, and sanitized non-success response bodies.
 
 ## 0.1.0 - 2026-07-04
 

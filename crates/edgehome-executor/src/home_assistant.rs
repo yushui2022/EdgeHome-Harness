@@ -564,6 +564,11 @@ fn home_assistant_state_summary(state: &HomeAssistantState) -> Value {
 mod tests {
     use super::*;
     use edgehome_core::{CommandParams, DeviceId, DeviceType, RiskLevel, Room};
+    use std::{
+        io::{Read, Write},
+        net::TcpListener,
+        thread,
+    };
 
     fn workspace_config(path: &str) -> PathBuf {
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -932,5 +937,199 @@ mod tests {
                 ExecutorError::HomeAssistantUnsupportedBaseUrl(_)
             ));
         }
+    }
+
+    #[test]
+    fn executor_execute_posts_service_and_fetches_redacted_state_summary() {
+        let (base_url, handle) = spawn_home_assistant_gateway(vec![
+            HttpFixtureResponse {
+                status: 200,
+                body: json!({
+                    "ok": true,
+                    "authorization": "Bearer leaked-response-token"
+                })
+                .to_string(),
+            },
+            HttpFixtureResponse {
+                status: 200,
+                body: json!({
+                    "entity_id": "light.hallway",
+                    "state": "on",
+                    "attributes": {
+                        "friendly_name": "Hallway",
+                        "access_token": "leaked-state-token"
+                    },
+                    "last_changed": "2026-07-04T12:00:00Z",
+                    "last_updated": "2026-07-04T12:00:01Z"
+                })
+                .to_string(),
+            },
+        ]);
+        let config = HomeAssistantConfig {
+            base_url,
+            execute_enabled: true,
+            verify_state_after_execute: true,
+            ..HomeAssistantConfig::default()
+        };
+        let secrets = HomeAssistantSecrets::new("ha-token").expect("secret");
+        let executor = HomeAssistantExecutor::from_config(&config, Some(secrets))
+            .with_route(
+                DeviceId::new("hallway_light").expect("device id"),
+                "light.hallway",
+            )
+            .expect("route");
+
+        let result = executor
+            .execute(&plan(Action::TurnOn, CommandParams::default()))
+            .expect("executed");
+        let requests = handle.join().expect("server thread");
+        let serialized = serde_json::to_string(&result).expect("serialize result");
+
+        assert!(result.success);
+        assert_eq!(requests.len(), 2);
+        assert!(requests[0].starts_with("POST /api/services/light/turn_on HTTP/1.1"));
+        assert!(requests[0].contains("\"entity_id\":\"light.hallway\""));
+        assert!(requests[1].starts_with("GET /api/states/light.hallway HTTP/1.1"));
+        for request in &requests {
+            assert!(
+                request
+                    .to_ascii_lowercase()
+                    .contains("authorization: bearer ha-token")
+            );
+        }
+        assert!(!serialized.contains("ha-token"));
+        assert!(!serialized.contains("leaked-response-token"));
+        assert!(!serialized.contains("leaked-state-token"));
+        assert!(!serialized.contains("friendly_name"));
+        assert!(serialized.contains("<redacted>"));
+        assert_eq!(
+            result
+                .raw_backend_response
+                .as_ref()
+                .and_then(|value| value.pointer("/post_state/state"))
+                .and_then(Value::as_str),
+            Some("on")
+        );
+        assert_eq!(
+            result
+                .raw_backend_response
+                .as_ref()
+                .and_then(|value| value.pointer("/post_state/attributes_redacted"))
+                .and_then(Value::as_bool),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn executor_execute_redacts_home_assistant_error_body() {
+        let (base_url, handle) = spawn_home_assistant_gateway(vec![HttpFixtureResponse {
+            status: 500,
+            body: json!({
+                "message": "service failed",
+                "token": "leaked-error-token"
+            })
+            .to_string(),
+        }]);
+        let config = HomeAssistantConfig {
+            base_url,
+            execute_enabled: true,
+            verify_state_after_execute: false,
+            ..HomeAssistantConfig::default()
+        };
+        let secrets = HomeAssistantSecrets::new("ha-token").expect("secret");
+        let executor = HomeAssistantExecutor::from_config(&config, Some(secrets))
+            .with_route(
+                DeviceId::new("hallway_light").expect("device id"),
+                "light.hallway",
+            )
+            .expect("route");
+
+        let error = executor
+            .execute(&plan(Action::TurnOn, CommandParams::default()))
+            .expect_err("HA returned non-success");
+        let requests = handle.join().expect("server thread");
+
+        assert_eq!(requests.len(), 1);
+        match error {
+            ExecutorError::HomeAssistantHttpStatus { status, body } => {
+                assert_eq!(status, 500);
+                assert!(body.contains("service failed"));
+                assert!(!body.contains("leaked-error-token"));
+                assert!(body.contains("<redacted>"));
+            }
+            other => panic!("unexpected error: {other:?}"),
+        }
+    }
+
+    #[derive(Debug, Clone)]
+    struct HttpFixtureResponse {
+        status: u16,
+        body: String,
+    }
+
+    fn spawn_home_assistant_gateway(
+        responses: Vec<HttpFixtureResponse>,
+    ) -> (String, thread::JoinHandle<Vec<String>>) {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind local HA fixture");
+        let address = listener.local_addr().expect("local address");
+        let base_url = format!("http://{address}");
+        let handle = thread::spawn(move || {
+            let mut requests = Vec::with_capacity(responses.len());
+            for response in responses {
+                let (mut stream, _) = listener.accept().expect("accept request");
+                let request = read_http_request(&mut stream);
+                requests.push(request);
+                let reason = if (200..300).contains(&response.status) {
+                    "OK"
+                } else {
+                    "Internal Server Error"
+                };
+                let raw_response = format!(
+                    "HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                    response.status,
+                    reason,
+                    response.body.len(),
+                    response.body
+                );
+                stream
+                    .write_all(raw_response.as_bytes())
+                    .expect("write response");
+            }
+            requests
+        });
+        (base_url, handle)
+    }
+
+    fn read_http_request(stream: &mut std::net::TcpStream) -> String {
+        let mut request_bytes = Vec::new();
+        let mut buffer = [0_u8; 1024];
+        loop {
+            let read = stream.read(&mut buffer).expect("read request");
+            if read == 0 {
+                break;
+            }
+            request_bytes.extend_from_slice(&buffer[..read]);
+            if request_complete(&request_bytes) {
+                break;
+            }
+        }
+        String::from_utf8(request_bytes).expect("request is utf-8")
+    }
+
+    fn request_complete(request: &[u8]) -> bool {
+        let Some(header_end) = request.windows(4).position(|window| window == b"\r\n\r\n") else {
+            return false;
+        };
+        let headers = String::from_utf8_lossy(&request[..header_end]);
+        let content_length = headers
+            .lines()
+            .find_map(|line| {
+                let (name, value) = line.split_once(':')?;
+                name.eq_ignore_ascii_case("content-length")
+                    .then(|| value.trim().parse::<usize>().ok())
+                    .flatten()
+            })
+            .unwrap_or(0);
+        request.len() >= header_end + 4 + content_length
     }
 }

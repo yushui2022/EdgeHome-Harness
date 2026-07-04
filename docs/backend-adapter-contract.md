@@ -116,6 +116,8 @@ Invalid Home Assistant entity_id -> fail closed
 Home Assistant dry-run -> no token required and no real service call
 Dry-run payload serialization -> no token/env secret leakage
 Real Home Assistant execute -> disabled by default
+Home Assistant local HTTP execute -> POST service call, GET post-state, redacted evidence
+Home Assistant HTTP errors -> sanitized non-success response bodies
 MQTT real publish -> disabled by default
 MIoT bridge execute -> disabled by default
 Matter bridge execute -> disabled by default
