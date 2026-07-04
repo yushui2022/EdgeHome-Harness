@@ -6,6 +6,7 @@
 #
 # MIoT identifiers such as did, siid, piid, and aiid must come from trusted
 # bridge configuration, not from MiniCPM output or public prompts.
+# Bridge HTTP contract: docs/bridge-api-contract.md
 
 backend: miio_local
 status: bridge_request_adapter

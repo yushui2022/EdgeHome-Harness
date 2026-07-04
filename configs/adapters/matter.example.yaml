@@ -3,6 +3,7 @@
 # Status: bridge request adapter implemented. EdgeHome Harness does not embed a
 # full Matter controller. A private Matter bridge/controller owns fabric access,
 # node/endpoint/cluster mapping, commissioning, and state verification.
+# Bridge HTTP contract: docs/bridge-api-contract.md
 
 backend: matter_bridge
 status: bridge_request_adapter

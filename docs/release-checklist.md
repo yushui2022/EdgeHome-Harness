@@ -53,6 +53,7 @@ Check:
 - README status table matches code.
 - `CHANGELOG.md` includes the release.
 - `docs/backend-adapter-contract.md` matches implemented adapters.
+- `docs/bridge-api-contract.md` matches MIoT/Matter bridge executor behavior.
 - `docs/mqtt-guarded-publish.md`, `docs/miot-bridge-adapter.md`,
   `docs/matter-bridge-adapter.md`, and `docs/home-assistant-gateway.md` match
   code behavior.

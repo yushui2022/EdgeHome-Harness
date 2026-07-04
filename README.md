@@ -393,6 +393,7 @@ Useful references:
 - [Customization Contract](docs/customization.md)
 - [Command Pipeline Contract](docs/command-pipeline-contract.md)
 - [Backend Adapter Contract](docs/backend-adapter-contract.md)
+- [Bridge API Contract](docs/bridge-api-contract.md)
 
 ## Running With MiniCPM Through Ollama
 
@@ -494,6 +495,7 @@ bridge backend responses are recursively sanitized before trace storage.
 - [Customization Contract](docs/customization.md)
 - [Command Pipeline Contract](docs/command-pipeline-contract.md)
 - [Backend Adapter Contract](docs/backend-adapter-contract.md)
+- [Bridge API Contract](docs/bridge-api-contract.md)
 - [MQTT Guarded Publish](docs/mqtt-guarded-publish.md)
 - [MIoT Bridge Adapter](docs/miot-bridge-adapter.md)
 - [Matter Bridge Adapter](docs/matter-bridge-adapter.md)

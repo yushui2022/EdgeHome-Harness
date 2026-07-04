@@ -19,7 +19,7 @@ use edgehome_executor::{
     DryRunPlanner, ExecutionTransaction, HomeAssistantClient, HomeAssistantConfig,
     HomeAssistantExecutor, MatterBridgeConfig, MatterBridgeExecutor, MiotBridgeConfig,
     MiotBridgeExecutor, MockExecutor, MqttConfig, MqttExecutor, MqttSecrets, SecretsLoader,
-    validate_mqtt_topic,
+    validate_bridge_base_url, validate_mqtt_topic,
 };
 use edgehome_gate::{GateCommandDecision, GateEngine, GateEvaluationRequest};
 use edgehome_memory::{
@@ -1172,14 +1172,8 @@ fn validate_matter_routes(
     Ok(route_count)
 }
 
-fn validate_bridge_base_url_for_check(backend: &str, base_url: &str) -> anyhow::Result<()> {
-    let base_url = base_url.trim();
-    if !(base_url.starts_with("http://") || base_url.starts_with("https://"))
-        || base_url.contains('?')
-        || base_url.contains('#')
-    {
-        anyhow::bail!("unsupported {backend} base URL `{base_url}`");
-    }
+fn validate_bridge_base_url_for_check(backend: &'static str, base_url: &str) -> anyhow::Result<()> {
+    validate_bridge_base_url(backend, base_url)?;
     Ok(())
 }
 

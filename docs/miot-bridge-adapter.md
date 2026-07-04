@@ -15,6 +15,9 @@ This repository does not claim universal Xiaomi device support. The bridge owns
 real Xiaomi credentials, device IDs, MIoT spec mapping, local/cloud protocol
 details, execution, and state readback.
 
+The bridge HTTP interface is specified in
+[Bridge API Contract](bridge-api-contract.md).
+
 ## Why Bridge Instead Of Direct Xiaomi JSON
 
 Different Xiaomi devices and MIoT profiles can require different identifiers and

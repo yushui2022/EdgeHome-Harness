@@ -8,6 +8,7 @@
 architecture-v2.md   V2 架构定调：Runtime Memory 主路径，Trace/Replay/Eval 观测闭环
 command-pipeline-contract.md  模型候选 JSON、内部命令、ExecutionPlan、BackendAdapter 的边界
 backend-adapter-contract.md  Mock / Home Assistant / MQTT dry-run / future adapter 的实现契约和 fail-closed 规则
+bridge-api-contract.md  MIoT / Matter 私有 bridge HTTP API 合同、错误语义和脱敏边界
 customization.md  用户如何定制设备、capability 和后端映射；模型输出 schema 为什么固定
 roadmap.md  当前 baseline、near-term work、adapter 顺序、硬件证据要求和 non-goals
 release-checklist.md  release 前必须跑的检查、gate 阈值、docs 审查和 secrets 审查

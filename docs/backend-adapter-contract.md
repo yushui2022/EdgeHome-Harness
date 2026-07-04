@@ -235,6 +235,9 @@ aiid
 Those values must live in a private MIoT bridge/controller. The public harness
 only emits a trusted bridge route ID and normalized arguments.
 
+The private bridge HTTP contract is defined in
+[Bridge API Contract](bridge-api-contract.md).
+
 Example registry route:
 
 ```yaml
@@ -278,6 +281,9 @@ cluster
 attribute
 command
 ```
+
+The private controller bridge HTTP contract is defined in
+[Bridge API Contract](bridge-api-contract.md).
 
 Example registry route:
 

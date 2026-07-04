@@ -152,9 +152,18 @@ pub fn validate_bridge_route(backend: &'static str, route_id: &str) -> ExecutorR
 
 pub fn validate_base_url(backend: &'static str, base_url: &str) -> ExecutorResult<()> {
     let base_url = base_url.trim();
-    if !(base_url.starts_with("http://") || base_url.starts_with("https://"))
-        || base_url.contains('?')
-        || base_url.contains('#')
+    let unsupported = || ExecutorError::BridgeUnsupportedBaseUrl {
+        backend: backend.to_owned(),
+        base_url: base_url.to_owned(),
+    };
+
+    let url = reqwest::Url::parse(base_url).map_err(|_| unsupported())?;
+    if !matches!(url.scheme(), "http" | "https")
+        || url.host_str().is_none()
+        || url.query().is_some()
+        || url.fragment().is_some()
+        || !url.username().is_empty()
+        || url.password().is_some()
     {
         return Err(ExecutorError::BridgeUnsupportedBaseUrl {
             backend: backend.to_owned(),
@@ -162,4 +171,43 @@ pub fn validate_base_url(backend: &'static str, base_url: &str) -> ExecutorResul
         });
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const BACKEND: &str = "test_bridge";
+
+    #[test]
+    fn base_url_accepts_http_and_https_without_secret_carriers() {
+        validate_base_url(BACKEND, "http://127.0.0.1:8787").expect("http base");
+        validate_base_url(BACKEND, "https://bridge.example.test/api").expect("https base");
+    }
+
+    #[test]
+    fn base_url_rejects_query_fragment_and_userinfo() {
+        for base_url in [
+            "https://bridge.example.test?token=secret",
+            "https://bridge.example.test/#secret",
+            "https://user:pass@bridge.example.test",
+        ] {
+            let error = validate_base_url(BACKEND, base_url).expect_err("invalid base URL");
+            assert!(matches!(
+                error,
+                ExecutorError::BridgeUnsupportedBaseUrl { .. }
+            ));
+        }
+    }
+
+    #[test]
+    fn base_url_rejects_non_http_schemes_and_missing_host() {
+        for base_url in ["mqtt://bridge.example.test", "http://", "https://"] {
+            let error = validate_base_url(BACKEND, base_url).expect_err("invalid base URL");
+            assert!(matches!(
+                error,
+                ExecutorError::BridgeUnsupportedBaseUrl { .. }
+            ));
+        }
+    }
 }

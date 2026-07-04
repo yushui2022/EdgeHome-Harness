@@ -42,6 +42,7 @@ Current backend status:
 | MQTT | Dry-run and guarded publish implemented | Configured topic/payload dry-run and opt-in broker publish |
 | MIoT / Xiaomi | Bridge request adapter implemented | Verified commands can become MIoT bridge requests; real Xiaomi support requires private bridge/device validation |
 | Matter | Bridge request adapter implemented | Verified commands can become Matter controller bridge requests; real control requires private Matter bridge/controller |
+| Bridge API contract | Implemented | Documents private MIoT/Matter bridge HTTP endpoints, response/error semantics, and URL rules |
 | Backend check CLI | Implemented | Read-only route/config readiness validation for Home Assistant, MQTT, MIoT bridge, and Matter bridge |
 | Execution evidence privacy | Implemented | Real backend responses are redacted/bounded before trace storage |
 
@@ -63,6 +64,7 @@ configs/devices.matter.example.yaml
 docs/mqtt-guarded-publish.md
 docs/miot-bridge-adapter.md
 docs/matter-bridge-adapter.md
+docs/bridge-api-contract.md
 docs/home-assistant-gateway.md
 docs/home-assistant-golden-payloads.md
 docs/real-minicpm-eval-report.md

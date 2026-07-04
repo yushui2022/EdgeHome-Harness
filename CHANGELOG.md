@@ -23,6 +23,10 @@ implemented code, tests, docs, and eval evidence.
   explicit execution.
 - Redacted executor response evidence for Home Assistant, MIoT bridge, and
   Matter bridge execution paths.
+- Bridge API contract documentation for private MIoT/Matter bridge
+  implementations.
+- Parsed bridge base URL validation shared by executor and backend readiness
+  checks.
 
 ## 0.1.0 - 2026-07-04
 

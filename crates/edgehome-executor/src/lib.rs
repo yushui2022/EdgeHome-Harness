@@ -28,6 +28,7 @@ use serde_json::{Value, json};
 use thiserror::Error;
 use time::{Duration, OffsetDateTime};
 
+pub use bridge::validate_base_url as validate_bridge_base_url;
 pub use home_assistant::{
     HomeAssistantClient, HomeAssistantConfig, HomeAssistantExecutor, HomeAssistantGatewayReadiness,
     HomeAssistantSecrets, HomeAssistantServiceCall, HomeAssistantState, SecretsLoader,

@@ -15,6 +15,9 @@ MiniCPM candidate JSON
 The private bridge owns commissioning, fabric membership, node IDs, endpoint
 IDs, cluster IDs, command IDs, attributes, and state verification.
 
+The bridge HTTP interface is specified in
+[Bridge API Contract](bridge-api-contract.md).
+
 ## Registry Route
 
 Example:
