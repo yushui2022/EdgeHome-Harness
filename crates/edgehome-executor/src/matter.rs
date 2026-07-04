@@ -361,6 +361,56 @@ mod tests {
         );
     }
 
+    #[test]
+    fn bridge_request_schema_matches_serialized_request_shape() {
+        let request = MatterBridgeExecutor::new(MatterBridgeConfig::default(), None)
+            .with_route(
+                DeviceId::new("hallway_light").expect("device id"),
+                "matter.hallway_light",
+            )
+            .expect("route")
+            .translate_plan(&plan())
+            .expect("request");
+        let request_json = serde_json::to_value(&request).expect("request json");
+        let schema = load_schema("matter-bridge-request.schema.json");
+        let required = schema
+            .get("required")
+            .and_then(Value::as_array)
+            .expect("schema required");
+
+        for key in request_json
+            .as_object()
+            .expect("request object")
+            .keys()
+            .map(String::as_str)
+        {
+            assert!(
+                required
+                    .iter()
+                    .any(|required_key| required_key.as_str() == Some(key)),
+                "schema required fields missing `{key}`"
+            );
+        }
+        assert_eq!(
+            schema.pointer("/properties/protocol/const"),
+            Some(&json!("matter"))
+        );
+        assert!(
+            schema
+                .pointer("/properties/command/enum")
+                .and_then(Value::as_array)
+                .expect("command enum")
+                .contains(&json!(request.command.clone()))
+        );
+        assert!(
+            schema
+                .pointer("/$defs/action/enum")
+                .and_then(Value::as_array)
+                .expect("action enum")
+                .contains(&json!(request.action.clone()))
+        );
+    }
+
     #[derive(Debug, Default, Clone)]
     struct RecordingPoster {
         payloads: Arc<Mutex<Vec<Value>>>,
@@ -411,5 +461,16 @@ mod tests {
         assert!(!serialized.contains("private-fabric"));
         assert!(!serialized.contains("private-node"));
         assert!(serialized.contains("<redacted>"));
+    }
+
+    fn load_schema(file_name: &str) -> Value {
+        let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("..")
+            .join("docs")
+            .join("schemas")
+            .join(file_name);
+        let content = std::fs::read_to_string(&path).expect("read schema");
+        serde_json::from_str(&content).expect("parse schema")
     }
 }

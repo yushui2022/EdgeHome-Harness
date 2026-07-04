@@ -43,7 +43,7 @@ Current backend status:
 | MIoT / Xiaomi | Bridge request adapter implemented | Verified commands can become MIoT bridge requests; real Xiaomi support requires private bridge/device validation |
 | Matter | Bridge request adapter implemented | Verified commands can become Matter controller bridge requests; real control requires private Matter bridge/controller |
 | Bridge API contract | Implemented | Documents private MIoT/Matter bridge HTTP endpoints, response/error semantics, and URL rules |
-| Bridge JSON schemas | Implemented | Machine-readable MIoT request, Matter request, and bridge response schemas |
+| Bridge JSON schemas | Implemented and drift-tested | Machine-readable MIoT request, Matter request, and bridge response schemas checked against serialized Rust requests |
 | Backend check CLI | Implemented | Read-only route/config readiness validation for Home Assistant, MQTT, MIoT bridge, and Matter bridge |
 | Execution evidence privacy | Implemented | Real backend responses are redacted/bounded before trace storage |
 | Backend URL validation | Implemented | HA and bridge URLs reject query, fragment, userinfo, non-HTTP schemes, and missing hosts |

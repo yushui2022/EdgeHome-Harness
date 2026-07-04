@@ -39,6 +39,8 @@ implemented code, tests, docs, and eval evidence.
 - Local HTTP Home Assistant gateway tests for opt-in service execution,
   post-state fetch, token isolation, and sanitized non-success response bodies.
 - Local MQTT broker fixture test for the default `rumqttc` publish path.
+- MIoT and Matter bridge schema drift tests against serialized Rust request
+  shapes.
 
 ## 0.1.0 - 2026-07-04
 

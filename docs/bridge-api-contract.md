@@ -11,6 +11,10 @@ docs/schemas/matter-bridge-request.schema.json
 docs/schemas/bridge-response.schema.json
 ```
 
+Executor tests load these schemas and compare them against serialized
+`MiotBridgeRequest` and `MatterBridgeRequest` values, so request-shape drift is
+caught before release.
+
 The bridge is intentionally outside this public repository. EdgeHome Harness
 owns verified internal commands and bridge request generation. The private
 bridge owns vendor credentials, device-specific identifiers, protocol calls,
