@@ -1,0 +1,44 @@
+# Example Home Assistant device registry.
+#
+# This file is a registry example, not a secret store. Do not put Home Assistant
+# tokens, private URLs, or real local credentials here.
+#
+# To use a Home Assistant device, copy the relevant entries into devices.yaml and
+# keep real execution disabled until dry-run and policy gates are verified.
+
+devices:
+  - device_id: living_room_main_light
+    aliases: ["living room light", "main living room light"]
+    room: living_room
+    device_type: light
+    backend: home_assistant
+    backend_entity_id: light.living_room
+    risk_level: low
+
+  - device_id: bedroom_air_conditioner
+    aliases: ["bedroom ac", "main bedroom ac"]
+    room: bedroom
+    device_type: air_conditioner
+    backend: home_assistant
+    backend_entity_id: climate.bedroom_ac
+    risk_level: medium
+
+capabilities:
+  light:
+    - action: turn_on
+    - action: turn_off
+    - action: set_brightness
+      min: 0
+      max: 100
+      unit: percent
+    - action: increase_brightness
+    - action: decrease_brightness
+
+  air_conditioner:
+    - action: turn_on
+    - action: turn_off
+    - action: set_temperature
+      min: 16
+      max: 30
+      unit: celsius
+    - action: set_mode

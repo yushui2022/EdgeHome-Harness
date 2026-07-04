@@ -1,0 +1,35 @@
+# Future MQTT adapter profile example.
+#
+# Status: design example only. The current code does not implement an MQTT
+# adapter. Selecting BackendKind::Mqtt fails closed.
+#
+# MQTT defines publish/subscribe transport. Smart-home topic and payload formats
+# are application-specific, so they must be configured here instead of emitted by
+# MiniCPM.
+
+backend: mqtt
+status: future_design_only
+
+connection:
+  broker_url_env: EDGEHOME_MQTT_BROKER_URL
+  username_env: EDGEHOME_MQTT_USERNAME
+  password_env: EDGEHOME_MQTT_PASSWORD
+
+routes:
+  - device_id: hallway_light
+    action: turn_on
+    topic: home/hallway/light/set
+    payload:
+      power: "on"
+
+  - device_id: hallway_light
+    action: turn_off
+    topic: home/hallway/light/set
+    payload:
+      power: "off"
+
+  - device_id: hallway_light
+    action: set_brightness
+    topic: home/hallway/light/set
+    payload_template:
+      brightness_pct: "{{ params.brightness }}"

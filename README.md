@@ -207,6 +207,30 @@ User Chinese command
 Users customize devices and backend mappings through registries and adapter
 configuration. The MiniCPM output schema remains fixed and backend-neutral.
 
+## Customization Model
+
+EdgeHome Harness is customizable at the registry and adapter layers, not by
+asking MiniCPM to emit vendor payloads.
+
+Users can customize:
+
+- device aliases
+- rooms and supported device records
+- risk levels
+- capability ranges
+- backend entity IDs
+- future backend adapter route mappings
+
+Users should not customize MiniCPM to emit Home Assistant `entity_id`, MIoT
+`did / siid / piid / aiid`, Matter route IDs, MQTT topics, tokens, URLs, or
+vendor API payloads directly.
+
+See:
+
+- [Customization Contract](docs/customization.md)
+- [Command Pipeline Contract](docs/command-pipeline-contract.md)
+- [Backend Adapter Contract](docs/backend-adapter-contract.md)
+
 ## Online Request Path
 
 A single request goes through this shape:

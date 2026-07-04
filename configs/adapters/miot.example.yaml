@@ -1,0 +1,38 @@
+# Future MIoT adapter profile example.
+#
+# Status: design example only. The current code does not implement a MIoT
+# adapter. Selecting BackendKind::MiioLocal fails closed.
+#
+# MIoT identifiers such as did, siid, piid, and aiid must come from trusted
+# configuration, not from MiniCPM output.
+
+backend: miot
+status: future_design_only
+
+auth:
+  token_env: EDGEHOME_MIOT_TOKEN
+
+routes:
+  - device_id: bedroom_air_conditioner
+    action: turn_on
+    method: action
+    did_env: EDGEHOME_MIOT_BEDROOM_AC_DID
+    siid: 2
+    aiid: 1
+    in: []
+
+  - device_id: bedroom_air_conditioner
+    action: turn_off
+    method: action
+    did_env: EDGEHOME_MIOT_BEDROOM_AC_DID
+    siid: 2
+    aiid: 2
+    in: []
+
+  - device_id: bedroom_air_conditioner
+    action: set_temperature
+    method: set_properties
+    did_env: EDGEHOME_MIOT_BEDROOM_AC_DID
+    siid: 2
+    piid: 6
+    value_template: "{{ params.temperature }}"

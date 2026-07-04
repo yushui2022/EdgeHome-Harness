@@ -13,7 +13,10 @@ strict_mode.yaml                更保守的策略 profile
 eval_mode.yaml                  eval 使用 profile
 demo_mode.yaml                  demo 使用 profile
 devices.yaml                    设备注册表与 capability / risk metadata
+devices.home_assistant.example.yaml  Home Assistant registry 示例，不含 secret
 home_assistant.yaml.example     Home Assistant demo backend 示例配置
+adapters/mqtt.example.yaml      MQTT future adapter profile 示例，当前不可运行
+adapters/miot.example.yaml      MIoT future adapter profile 示例，当前不可运行
 ```
 
 ## low_memory 主线
@@ -64,6 +67,7 @@ state freshness
 ```
 
 模型不能直接决定真实设备、风险等级、后端 route 或 `entity_id`。
+模型也不能直接输出 MIoT `did / siid / piid`、Matter route 或 MQTT topic。
 
 链路必须是：
 
@@ -80,6 +84,9 @@ state freshness
 ## Home Assistant 示例配置
 
 `home_assistant.yaml.example` 只作为 demo backend 示例。
+
+`devices.home_assistant.example.yaml` 展示 registry 中的 Home Assistant
+`backend_entity_id` 映射。它不是 token 配置，也不代表真实执行默认开启。
 
 真实 token 推荐来自环境变量：
 
@@ -105,4 +112,5 @@ $env:EDGEHOME_HA_TOKEN = "your-long-lived-access-token"
 高风险策略来自静态配置和设备注册表，不来自 1B 小模型判断。
 低内存 profile 不能引入默认重型依赖。
 配置变更必须通过 eval --gate。
+MIoT / MQTT adapter profile 当前只是 future design example。
 ```
