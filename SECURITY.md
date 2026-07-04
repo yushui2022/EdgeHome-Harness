@@ -13,10 +13,12 @@ documented `0.1.x` prototype baseline.
 Important current limitations:
 
 - Real device execution is disabled by default.
-- Mock, Home Assistant demo, and MQTT dry-run payload paths are implemented.
-- MQTT real broker publish is not enabled by default.
-- MIoT/Xiaomi and Matter are future adapter targets, not implemented backend
-  support today.
+- Mock, Home Assistant, MQTT, MIoT bridge, and Matter bridge dry-run payload
+  paths are implemented.
+- MQTT real broker publish and bridge execution paths are opt-in and disabled
+  by default.
+- MIoT/Xiaomi and Matter support require private bridge/controller
+  configuration and real-device validation before any production claim.
 
 ## What To Report
 
@@ -35,7 +37,10 @@ Please report:
 Do not post real secrets or exploitable details in a public issue:
 
 - Home Assistant tokens.
-- MIoT or miIO tokens.
+- MQTT broker credentials.
+- MIoT, miIO, or MIoT bridge tokens.
+- Matter bridge tokens, fabric details, node IDs, endpoint IDs, or controller
+  secrets.
 - Private URLs or LAN topology.
 - Real device IDs that should remain private.
 - Step-by-step exploit details for bypassing a safety gate.

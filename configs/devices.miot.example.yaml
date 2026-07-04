@@ -1,0 +1,24 @@
+# Example MIoT/Xiaomi bridge device registry.
+#
+# This file is a registry example, not a MIoT secret store. Real did/siid/piid
+# values belong in the private MIoT bridge, not in MiniCPM prompts or public
+# repository files.
+
+devices:
+  - device_id: bedroom_air_conditioner
+    aliases: ["bedroom ac", "main bedroom ac"]
+    room: bedroom
+    device_type: air_conditioner
+    backend: miio_local
+    backend_entity_id: miot.bedroom_ac
+    risk_level: medium
+
+capabilities:
+  air_conditioner:
+    - action: turn_on
+    - action: turn_off
+    - action: set_temperature
+      min: 16
+      max: 30
+      unit: celsius
+    - action: set_mode

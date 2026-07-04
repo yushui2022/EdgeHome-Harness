@@ -18,3 +18,7 @@ request_timeout_ms: 8000
 # Must remain false by default. Real execution should only be enabled for an
 # explicit local test after gate, dry-run, and confirmation checks have passed.
 execute_enabled: false
+
+# When real execution is explicitly enabled, fetch entity state after the
+# service call and include the redacted state summary in the executor response.
+verify_state_after_execute: true

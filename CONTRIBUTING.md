@@ -85,15 +85,17 @@ Before marking a backend as implemented:
    and missing secrets.
 6. Update README, `docs/backend-adapter-contract.md`, and `CHANGELOG.md`.
 
-Until those steps are done, keep the backend listed as a future target or
-fail-closed path.
+Until those steps are done, keep the backend listed as not implemented or as a
+fail-closed path. For bridge adapters, do not claim real device support until a
+private bridge/controller and device validation evidence exist.
 
 ## Documentation Claims
 
 Public wording should be conservative:
 
-- Say "demo adapter" when execution coverage is partial.
-- Say "future target" when code and tests do not implement the backend.
+- Say "gateway boundary" or "bridge adapter" when code implements translation
+  but real ecosystem coverage still depends on private infrastructure.
+- Say "not implemented" when code and tests do not implement the backend.
 - Say "dry-run" unless real execution is explicitly implemented, configured,
   and tested.
 - Separate mock eval metrics from real MiniCPM/Ollama metrics.

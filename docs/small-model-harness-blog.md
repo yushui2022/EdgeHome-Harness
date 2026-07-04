@@ -327,7 +327,7 @@ Evidence 不再 gate 每一次普通用户动作，而是用于失败分析、tr
 
 它也不宣称替代米家 App、小米音箱或 Home Assistant。
 
-当前默认执行器是 MockExecutor，Home Assistant 是 demo backend boundary。未来可以继续扩展 MQTT、Matter、MIoT、miIO 或其他本地设备协议，但这些仍是未来 adapter target，不是当前已支持能力。Harness 主体不和某一个设备生态绑定死。
+当前默认执行仍然是 dry-run。Home Assistant gateway boundary、MQTT guarded publish、MIoT bridge request、Matter bridge request 已经在 adapter 层实现，但真实设备执行默认关闭；MIoT 和 Matter 的真实生态支持仍需要私有 bridge/controller 与设备验证证据。Harness 主体不和某一个设备生态绑定死。
 
 更准确地说，当前项目是：
 

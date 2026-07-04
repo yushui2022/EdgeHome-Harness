@@ -13,17 +13,19 @@ Implemented today:
   capability checks, policy gates, and `GatedCommand`.
 - Dry-run `ExecutionPlan`.
 - Mock adapter.
-- Home Assistant demo payload adapter.
-- MQTT dry-run payload adapter.
+- Home Assistant gateway boundary with dry-run payloads, opt-in REST execute,
+  route validation, and optional post-state fetch.
+- MQTT dry-run payload adapter and guarded publish executor.
+- MIoT/Xiaomi bridge request adapter and opt-in bridge executor.
+- Matter controller bridge request adapter and opt-in bridge executor.
 - 108-case mock eval gate across 12 categories.
 - Trace, replay, audit, storage, and low-memory profile documentation.
 
 Not implemented today:
 
-- Real MIoT/Xiaomi adapter.
-- Matter controller adapter.
-- MQTT real broker publish.
-- Production smart-home gateway behavior.
+- Universal Xiaomi device support without a private MIoT bridge.
+- Embedded full Matter controller and fabric commissioning.
+- Production deployment hardening beyond documented gateway boundaries.
 - Real-device execution enabled by default.
 - Long-running physical 2GB ARM benchmark.
 
@@ -34,8 +36,8 @@ Not implemented today:
    missing mappings, and unsupported capabilities.
 3. Publish a separate real MiniCPM/Ollama eval report that does not overwrite
    mock gate metrics.
-4. Harden Home Assistant demo documentation and examples around dry-run,
-   secrets, and disabled-by-default execution.
+4. Add private real-device validation notes only after bridge/controller logs
+   and hardware evidence exist.
 5. Improve trace and replay examples for failure diagnosis.
 
 ## Adapter Work
@@ -52,12 +54,14 @@ Backend adapters should be added only when they have:
 
 Candidate order:
 
-1. Expand Home Assistant demo coverage while keeping real execution gated.
-2. Add guarded MQTT real publish as an explicit execution mode, not as default
-   behavior.
-3. Research MIoT/Xiaomi mappings with real device profiles before claiming
-   support.
-4. Treat Matter as a controller integration project, not a JSON payload format.
+1. Keep Home Assistant gateway execution gated and add more service/domain
+   coverage only with tests.
+2. Validate MQTT guarded publish against a local test broker with opt-in
+   integration evidence.
+3. Validate MIoT/Xiaomi through a private bridge and at least one real device
+   before making device-support claims.
+4. Validate Matter through a private controller bridge before making
+   real-device control claims.
 
 ## Hardware Work
 

@@ -11,10 +11,10 @@ appear.
 | Backend | Status | Behavior |
 | --- | --- | --- |
 | Mock | Implemented | Produces deterministic dry-run payloads |
-| Home Assistant | Demo adapter implemented | Produces service-call dry-run payloads |
-| MIoT / Xiaomi | Future target | Fails closed today |
-| Matter | Future target | Not represented as an implemented backend today |
-| MQTT | Dry-run adapter implemented | Produces configured topic/payload dry-run payloads |
+| Home Assistant | Gateway boundary implemented | Produces service-call dry-run payloads; opt-in REST execution; route validation; optional post-state fetch |
+| MIoT / Xiaomi | Bridge request adapter implemented | Produces MIoT bridge requests; opt-in bridge execution; private bridge owns did/siid/piid mapping |
+| Matter | Bridge request adapter implemented | Produces Matter controller bridge requests; opt-in bridge execution; private bridge owns fabric/node/endpoint/cluster mapping |
+| MQTT | Dry-run and guarded publish implemented | Produces configured topic/payload dry-run payloads; opt-in broker publish through `rumqttc` |
 
 ## Adapter Inputs
 
@@ -60,12 +60,16 @@ Implemented adapters:
 MockAdapter
 HomeAssistantAdapter
 MqttAdapter
+MiotAdapter
+MatterBridgeAdapter
 ```
 
-Unsupported backend kinds must return a clear error:
+Unsupported, unconfigured, or invalid backend routes must return a clear error:
 
 ```text
-backend adapter is not implemented: miio_local
+missing MQTT topic route for device `...`
+invalid bridge route for backend `...`
+missing bridge token for backend `...`
 ```
 
 ## Adapter Rules
@@ -112,6 +116,12 @@ MiioLocal selected -> BackendAdapterNotImplemented
 Home Assistant dry-run -> no token required and no real service call
 Dry-run payload serialization -> no token/env secret leakage
 Real Home Assistant execute -> disabled by default
+MQTT real publish -> disabled by default
+MIoT bridge execute -> disabled by default
+Matter bridge execute -> disabled by default
+MIoT bridge payload -> exact golden payload
+Matter bridge payload -> exact golden payload
+Invalid bridge route -> fail closed
 ```
 
 These tests are deliberately about adapter boundaries. They do not claim full
@@ -165,9 +175,8 @@ MiniCPM.
 MQTT is a publish/subscribe protocol. It does not define a universal smart-home
 JSON format.
 
-The current adapter produces deterministic dry-run publish payloads. Real broker
-publish is not enabled by default and requires a separate explicit execution
-mode.
+The adapter produces deterministic dry-run publish payloads and the executor can
+publish to a configured broker only when `execute_enabled = true`.
 
 The MQTT route comes from `DeviceRecord.backend_entity_id` or future adapter
 profile configuration. It is not emitted by MiniCPM.
@@ -188,31 +197,29 @@ Example dry-run payload:
 }
 ```
 
-An adapter profile may define:
+The device registry defines:
 
 ```text
 topic
-payload template
-QoS, if needed
-retain, if needed
 ```
 
-Example profile:
+The adapter profile defines connection and publish defaults:
 
 ```yaml
 backend: mqtt
-status: dry_run_adapter
-routes:
-  - device_id: hallway_light
-    action: turn_on
-    topic: home/hallway/light/set
-    payload:
-      power: "on"
+broker_url_env: EDGEHOME_MQTT_BROKER_URL
+username_env: EDGEHOME_MQTT_USERNAME
+password_env: EDGEHOME_MQTT_PASSWORD
+execute_enabled: false
 ```
 
-## Future MIoT Adapter
+## MIoT / Xiaomi Bridge Adapter
 
-MIoT devices commonly require IDs such as:
+The MIoT adapter is implemented as a bridge-request boundary. EdgeHome Harness
+does not claim universal Xiaomi support and does not embed all MIoT local/cloud
+protocol details.
+
+MIoT devices commonly require identifiers such as:
 
 ```text
 did
@@ -221,27 +228,44 @@ piid
 aiid
 ```
 
-A future MIoT adapter must read those values from an adapter profile or secure
-device registry extension. The model must not emit them.
+Those values must live in a private MIoT bridge/controller. The public harness
+only emits a trusted bridge route ID and normalized arguments.
 
-Example design only:
+Example registry route:
 
 ```yaml
-backend: miot
-status: future_design_only
-routes:
-  - device_id: bedroom_air_conditioner
-    action: set_temperature
-    method: set_properties
-    did_env: EDGEHOME_MIOT_BEDROOM_AC_DID
-    siid: 2
-    piid: 6
+backend: miio_local
+backend_entity_id: miot.bedroom_ac
 ```
 
-## Future Matter Adapter
+Example dry-run request:
 
-Matter is not a JSON payload format. A future Matter adapter would need a
-controller and a route model for:
+```json
+{
+  "backend": "miio_local",
+  "protocol": "miot",
+  "route_id": "miot.bedroom_ac",
+  "bridge_path": "/v1/miot/execute",
+  "request": {
+    "protocol": "miot",
+    "route_id": "miot.bedroom_ac",
+    "action": "set_temperature",
+    "method": "set_properties",
+    "arguments": {
+      "temperature": 24
+    }
+  }
+}
+```
+
+Real execution calls a configured bridge only when `execute_enabled = true` and
+a bridge token is available through `EDGEHOME_MIOT_BRIDGE_TOKEN` or equivalent
+private configuration.
+
+## Matter Bridge Adapter
+
+Matter is not a vendor JSON payload format. The implemented adapter emits
+bridge requests for a configured Matter controller bridge. The bridge owns:
 
 ```text
 node
@@ -251,7 +275,36 @@ attribute
 command
 ```
 
-Until that exists in code and tests, Matter must remain a future adapter target.
+Example registry route:
+
+```yaml
+backend: matter_bridge
+backend_entity_id: matter.hallway_light
+```
+
+Example dry-run request:
+
+```json
+{
+  "backend": "matter_bridge",
+  "protocol": "matter",
+  "route_id": "matter.hallway_light",
+  "bridge_path": "/v1/matter/execute",
+  "request": {
+    "protocol": "matter",
+    "route_id": "matter.hallway_light",
+    "action": "set_brightness",
+    "command": "level_control.move_to_level",
+    "arguments": {
+      "level_pct": 30
+    }
+  }
+}
+```
+
+Real execution calls a configured bridge only when `execute_enabled = true` and
+a bridge token is available through `EDGEHOME_MATTER_BRIDGE_TOKEN` or
+equivalent private configuration.
 
 ## Minimum Tests For Any New Adapter
 
@@ -265,5 +318,6 @@ no token or secret leakage
 dry-run does not execute real device calls
 ```
 
-Only after those tests pass should README language move from "future target" to
-"implemented".
+Only after those tests pass should README language move from "not implemented"
+to "implemented". For bridge adapters, README language must still say real
+device support requires private bridge/controller validation.

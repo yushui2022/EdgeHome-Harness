@@ -1,0 +1,25 @@
+# Example Matter bridge device registry.
+#
+# This file is a registry example, not a Matter fabric/controller store. Real
+# node IDs, endpoint IDs, cluster IDs, and commissioning material belong in the
+# private Matter bridge/controller.
+
+devices:
+  - device_id: hallway_light
+    aliases: ["hallway light", "hallway strip"]
+    room: hallway
+    device_type: light
+    backend: matter_bridge
+    backend_entity_id: matter.hallway_light
+    risk_level: low
+
+capabilities:
+  light:
+    - action: turn_on
+    - action: turn_off
+    - action: set_brightness
+      min: 0
+      max: 100
+      unit: percent
+    - action: increase_brightness
+    - action: decrease_brightness

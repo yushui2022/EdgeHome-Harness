@@ -24,6 +24,7 @@ pub struct HomeAssistantConfig {
     pub token_file: Option<PathBuf>,
     pub request_timeout_ms: u64,
     pub execute_enabled: bool,
+    pub verify_state_after_execute: bool,
 }
 
 impl Default for HomeAssistantConfig {
@@ -34,6 +35,7 @@ impl Default for HomeAssistantConfig {
             token_file: None,
             request_timeout_ms: 8_000,
             execute_enabled: false,
+            verify_state_after_execute: true,
         }
     }
 }
@@ -206,6 +208,7 @@ pub struct HomeAssistantExecutor {
     client: HomeAssistantClient,
     routes: HashMap<DeviceId, String>,
     execute_enabled: bool,
+    verify_state_after_execute: bool,
 }
 
 impl HomeAssistantExecutor {
@@ -214,6 +217,7 @@ impl HomeAssistantExecutor {
             client,
             routes: HashMap::new(),
             execute_enabled,
+            verify_state_after_execute: false,
         }
     }
 
@@ -225,6 +229,7 @@ impl HomeAssistantExecutor {
             HomeAssistantClient::new(config, secrets),
             config.execute_enabled,
         )
+        .with_post_state_verification(config.verify_state_after_execute)
     }
 
     pub fn from_device_records(
@@ -241,7 +246,30 @@ impl HomeAssistantExecutor {
             client,
             routes,
             execute_enabled,
+            verify_state_after_execute: false,
         }
+    }
+
+    pub fn validate_routes(
+        devices: &[DeviceRecord],
+    ) -> ExecutorResult<HomeAssistantGatewayReadiness> {
+        let mut route_count = 0;
+        for device in devices
+            .iter()
+            .filter(|device| device.backend == BackendKind::HomeAssistant)
+        {
+            validate_entity_id(&device.backend_entity_id)?;
+            route_count += 1;
+        }
+        Ok(HomeAssistantGatewayReadiness {
+            route_count,
+            routes_valid: true,
+        })
+    }
+
+    pub fn with_post_state_verification(mut self, enabled: bool) -> Self {
+        self.verify_state_after_execute = enabled;
+        self
     }
 
     pub fn with_route(
@@ -296,6 +324,11 @@ impl Executor for HomeAssistantExecutor {
 
         let service_call = self.translate_plan(plan)?;
         let response = self.client.call_service(&service_call)?;
+        let post_state = if self.verify_state_after_execute {
+            Some(self.client.fetch_state(&service_call.entity_id)?)
+        } else {
+            None
+        };
         Ok(ExecutionResult {
             success: true,
             message: format!(
@@ -307,9 +340,16 @@ impl Executor for HomeAssistantExecutor {
                 "service": service_call.service_name(),
                 "entity_id": service_call.entity_id,
                 "response": response,
+                "post_state": post_state,
             })),
         })
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct HomeAssistantGatewayReadiness {
+    pub route_count: usize,
+    pub routes_valid: bool,
 }
 
 pub fn home_assistant_service_call(
@@ -569,7 +609,7 @@ fn ensure_success(status: u16, body: String) -> ExecutorResult<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use edgehome_core::{CommandParams, DeviceId};
+    use edgehome_core::{CommandParams, DeviceId, DeviceType, RiskLevel, Room};
 
     fn workspace_config(path: &str) -> PathBuf {
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -598,6 +638,7 @@ mod tests {
 
         assert_eq!(config.token_env, "EDGEHOME_HA_TOKEN");
         assert!(!config.execute_enabled);
+        assert!(config.verify_state_after_execute);
         assert!(config.base_url.starts_with("http://"));
     }
 
@@ -773,6 +814,27 @@ mod tests {
         assert!(matches!(
             error,
             ExecutorError::MissingHomeAssistantRoute(device_id) if device_id == "hallway_light"
+        ));
+    }
+
+    #[test]
+    fn gateway_route_validation_rejects_invalid_entity_id() {
+        let devices = vec![DeviceRecord {
+            device_id: DeviceId::new("hallway_light").expect("device id"),
+            aliases: vec!["hallway light".to_owned()],
+            room: Room::Hallway,
+            device_type: DeviceType::Light,
+            backend: BackendKind::HomeAssistant,
+            backend_entity_id: "light.hallway/../../token".to_owned(),
+            risk_level: RiskLevel::Low,
+        }];
+
+        let error = HomeAssistantExecutor::validate_routes(&devices)
+            .expect_err("invalid entity id rejected");
+
+        assert!(matches!(
+            error,
+            ExecutorError::InvalidHomeAssistantEntityId(_)
         ));
     }
 

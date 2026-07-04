@@ -7,7 +7,7 @@
 ```text
 EdgeHome Harness 是 1B 端侧小模型 Harness。
 智能家居本地控制中台是产品形态。
-Home Assistant 是第一阶段 demo backend boundary，不是项目本体。
+Home Assistant / MQTT / MIoT bridge / Matter bridge 是 adapter boundary，不是项目本体。
 ```
 
 ## 总体组件
@@ -31,7 +31,7 @@ flowchart LR
   Harness --> SQLite
   Harness -->|"Mode A"| HA
   HA --> Devices
-  Harness -->|"Mode C future"| Miio
+  Harness -->|"Mode C bridge"| Miio
   Miio --> Devices
 ```
 
@@ -165,11 +165,12 @@ HA service call translation
 
 ```text
 MockExecutor 是默认执行路径。
-HomeAssistantExecutor 是 demo backend。
+HomeAssistantExecutor 是 Home Assistant gateway boundary。
 真实 execute 默认关闭，需要显式 execute_enabled = true。
 HomeAssistantExecutor 会拒绝非 home_assistant backend 的 dry-run plan。
 eval / release gate 不依赖真实设备。
-MIoT / miIO / MQTT / Matter 只作为未来 backend 扩展描述，不是当前支持能力。
+MQTT guarded publish、MIoT bridge、Matter bridge 是当前 adapter boundary。
+真实设备执行默认关闭，需要私有 broker/bridge/controller、secret、确认和验证证据。
 ```
 
 配置样例：

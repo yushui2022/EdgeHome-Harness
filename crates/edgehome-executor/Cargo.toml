@@ -16,3 +16,5 @@ serde_json.workspace = true
 serde_yaml.workspace = true
 thiserror.workspace = true
 time.workspace = true
+rumqttc = { version = "0.25.1", default-features = false }
+reqwest = { workspace = true, features = ["blocking"] }

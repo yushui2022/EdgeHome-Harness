@@ -1,0 +1,16 @@
+# Matter bridge executor profile example.
+#
+# Status: bridge request adapter implemented. EdgeHome Harness does not embed a
+# full Matter controller. A private Matter bridge/controller owns fabric access,
+# node/endpoint/cluster mapping, commissioning, and state verification.
+
+backend: matter_bridge
+status: bridge_request_adapter
+
+base_url: http://127.0.0.1:9797
+token_env: EDGEHOME_MATTER_BRIDGE_TOKEN
+request_timeout_ms: 5000
+
+# Must remain false by default. Enable only when a trusted Matter bridge is
+# running and dry-run/gate/confirmation checks have passed.
+execute_enabled: false

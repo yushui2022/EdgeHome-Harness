@@ -12,10 +12,9 @@ Before every release, confirm these statements are still true:
 - Backend adapters translate verified internal plans.
 - Real device execution is disabled by default.
 - Unsupported backends fail closed.
-- MQTT remains dry-run-only unless guarded real publish code, tests, and docs
-  prove otherwise.
-- MIoT/Xiaomi and Matter remain future targets unless code, config, golden
-  tests, docs, and real controller/device validation prove otherwise.
+- MQTT guarded publish remains opt-in and disabled by default.
+- MIoT/Xiaomi and Matter are bridge request adapters. Do not claim universal
+  device support without private bridge/controller validation evidence.
 
 ## 2. Required Commands
 
@@ -48,6 +47,9 @@ Check:
 - README status table matches code.
 - `CHANGELOG.md` includes the release.
 - `docs/backend-adapter-contract.md` matches implemented adapters.
+- `docs/mqtt-guarded-publish.md`, `docs/miot-bridge-adapter.md`,
+  `docs/matter-bridge-adapter.md`, and `docs/home-assistant-gateway.md` match
+  code behavior.
 - `docs/customization.md` still says model JSON is canonical and backend
   mappings are configurable below the model.
 - `docs/waic-one-page.md` avoids production, Xiaomi, Matter, MQTT, or 2GB
@@ -65,7 +67,10 @@ git diff --cached
 Confirm no committed file contains:
 
 - Home Assistant tokens.
-- MIoT or miIO tokens.
+- MQTT broker credentials.
+- MIoT, miIO, or MIoT bridge tokens.
+- Matter bridge tokens, fabric details, controller secrets, node IDs, or
+  endpoint IDs.
 - Private LAN URLs.
 - Real device IDs that should not be public.
 - Local SQLite demo databases.
@@ -78,7 +83,7 @@ Each release note should include:
 - Eval gate summary.
 - Known limitations.
 - Backends implemented today.
-- Backends that remain future targets.
+- Backends that require private bridge/controller or real-device validation.
 
 Do not mix mock eval metrics with real MiniCPM/Ollama metrics. If real-model
 metrics are published, report model name, runtime, hardware, latency, retries,

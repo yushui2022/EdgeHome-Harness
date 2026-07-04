@@ -47,7 +47,7 @@ risk_level
 capability rules
 backend kind
 backend_entity_id
-future adapter route mappings
+adapter route mappings
 ```
 
 Users should not customize MiniCPM to emit:
@@ -187,42 +187,45 @@ The model never emits `light.hallway`.
 
 ## MQTT Example
 
-MQTT dry-run payload translation is implemented. Real broker publish remains
-disabled unless a future explicit execution mode is configured. MQTT route
-mappings should look like this:
+MQTT dry-run payload translation and guarded publish are implemented. Real
+broker publish remains disabled unless explicit private execution config is
+enabled. MQTT route mappings live in the device registry:
 
 ```yaml
+device_id: hallway_light
 backend: mqtt
-status: dry_run_adapter
-routes:
-  - device_id: hallway_light
-    action: turn_on
-    topic: home/hallway/light/set
-    payload:
-      power: "on"
+backend_entity_id: home/hallway/light/set
 ```
 
-Topics and payload templates are adapter-owned. MiniCPM must not emit MQTT
-topics.
+Topics are registry-owned. MiniCPM must not emit MQTT topics.
 
-## MIoT Example
+## MIoT Bridge Example
 
-MIoT is not implemented today. A future MIoT adapter should read device/spec IDs
-from config or secure environment variables:
+MIoT/Xiaomi uses a bridge request adapter. Real Xiaomi device support requires a
+private MIoT bridge that owns device/spec IDs and tokens:
 
 ```yaml
-backend: miot
-status: future_design_only
-routes:
-  - device_id: bedroom_air_conditioner
-    action: set_temperature
-    method: set_properties
-    did_env: EDGEHOME_MIOT_BEDROOM_AC_DID
-    siid: 2
-    piid: 6
+device_id: bedroom_air_conditioner
+backend: miio_local
+backend_entity_id: miot.bedroom_ac
 ```
 
-Until a real adapter and tests exist, MIoT remains a future target.
+The bridge maps `miot.bedroom_ac` to real `did / siid / piid / aiid` values.
+MiniCPM must not emit those values.
+
+## Matter Bridge Example
+
+Matter uses a controller bridge request adapter. The bridge owns fabric, node,
+endpoint, cluster, command, and attribute mapping:
+
+```yaml
+device_id: hallway_light
+backend: matter_bridge
+backend_entity_id: matter.hallway_light
+```
+
+The bridge maps `matter.hallway_light` to the actual Matter controller route.
+MiniCPM must not emit Matter node or cluster IDs.
 
 ## Acceptance Rule
 

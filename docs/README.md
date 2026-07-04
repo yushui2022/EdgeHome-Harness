@@ -16,7 +16,13 @@ release-checklist.md  release 前必须跑的检查、gate 阈值、docs 审查�
 model-parameters.md  MiniCPM5-1B / Ollama 参数、输出治理、调参顺序
 deployment-modes.md  Mode A/B/C 部署方式、Home Assistant 接入边界
 home-assistant-demo.md  Home Assistant demo 后端、安全边界、token 管理
+home-assistant-gateway.md  Home Assistant gateway boundary、真实执行开关、状态回读
+home-assistant-golden-payloads.md  Home Assistant dry-run golden payloads 和 claim boundary
+mqtt-guarded-publish.md  MQTT dry-run payload 与 guarded publish executor
+miot-bridge-adapter.md  MIoT/Xiaomi bridge request adapter 与真实设备验证边界
+matter-bridge-adapter.md  Matter controller bridge adapter 与非目标
 eval-report-example.md  eval / replay 样例报告和面试表达
+real-minicpm-eval-report.md  真实 MiniCPM/Ollama eval report 工作流和报告模板
 demo-walkthrough.md  面试演示脚本顺序、展示点和非目标
 small-model-harness-blog.md  对外宣传博客草稿：为什么做小模型 Harness、当前进展和目标
 waic-one-page.md  对外 one-page 口径：定位、证据、当前边界和未来 adapter 方向
@@ -28,6 +34,6 @@ waic-one-page.md  对外 one-page 口径：定位、证据、当前边界和未�
 不要在 docs 或 configs 中保存真实 token。
 不要把 Home Assistant 讲成项目本体。
 不要宣传所有米家设备都能纯离线控制。
-不要把 MIoT / Matter future adapter target 写成当前已实现。
-不要把 MQTT dry-run payload adapter 写成真实 broker publish。
+不要把 MIoT / Matter bridge adapter 写成全量生态支持。
+不要把 MQTT guarded publish 写成默认真实 broker publish。
 ```

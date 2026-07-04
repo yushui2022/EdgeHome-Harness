@@ -14,6 +14,13 @@ implemented code, tests, docs, and eval evidence.
 - Contributor, security, roadmap, release checklist, and GitHub issue/PR
   templates.
 - MQTT dry-run payload adapter with golden payload and fail-closed topic tests.
+- Home Assistant golden payload documentation.
+- Real MiniCPM/Ollama eval report workflow and script.
+- Guarded MQTT publish executor, disabled by default.
+- MIoT/Xiaomi bridge request adapter and opt-in bridge executor.
+- Matter controller bridge request adapter and opt-in bridge executor.
+- Home Assistant gateway route validation and optional post-state fetch after
+  explicit execution.
 
 ## 0.1.0 - 2026-07-04
 

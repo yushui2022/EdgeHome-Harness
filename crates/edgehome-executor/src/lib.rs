@@ -4,7 +4,11 @@
 //! accepts `ExecutionPlan`/`DryRunPlan` created after parser, registry, gate, and
 //! policy checks have already happened.
 
+mod bridge;
 mod home_assistant;
+mod matter;
+mod miot;
+mod mqtt;
 
 use std::{collections::HashMap, path::PathBuf};
 
@@ -24,8 +28,21 @@ use thiserror::Error;
 use time::{Duration, OffsetDateTime};
 
 pub use home_assistant::{
-    HomeAssistantClient, HomeAssistantConfig, HomeAssistantExecutor, HomeAssistantSecrets,
-    HomeAssistantServiceCall, HomeAssistantState, SecretsLoader, home_assistant_service_call,
+    HomeAssistantClient, HomeAssistantConfig, HomeAssistantExecutor, HomeAssistantGatewayReadiness,
+    HomeAssistantSecrets, HomeAssistantServiceCall, HomeAssistantState, SecretsLoader,
+    home_assistant_service_call,
+};
+pub use matter::{
+    MATTER_BACKEND_NAME, MatterBridgeAdapter, MatterBridgeConfig, MatterBridgeExecutor,
+    MatterBridgeRequest, MatterBridgeSecrets, matter_payload,
+};
+pub use miot::{
+    MIOT_BACKEND_NAME, MiotAdapter, MiotBridgeConfig, MiotBridgeExecutor, MiotBridgeRequest,
+    MiotBridgeSecrets, miot_payload,
+};
+pub use mqtt::{
+    MqttAdapter, MqttConfig, MqttExecutor, MqttPublishRequest, MqttPublisher, MqttSecrets,
+    RumqttcMqttPublisher, mqtt_payload, validate_mqtt_topic,
 };
 
 pub type ExecutorResult<T> = Result<T, ExecutorError>;
@@ -74,6 +91,30 @@ pub enum ExecutorError {
     #[error("invalid MQTT topic: {0}")]
     InvalidMqttTopic(String),
 
+    #[error("failed to read MQTT config `{path}`: {source}")]
+    MqttConfigRead {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+
+    #[error("failed to parse MQTT config `{path}`: {source}")]
+    MqttConfigParse {
+        path: PathBuf,
+        source: serde_yaml::Error,
+    },
+
+    #[error("missing MQTT secret/config; set `{env_var}` or configure broker_url")]
+    MqttSecretMissing { env_var: String },
+
+    #[error("invalid MQTT broker URL: {0}")]
+    InvalidMqttBrokerUrl(String),
+
+    #[error("invalid MQTT QoS: {0}")]
+    InvalidMqttQos(u8),
+
+    #[error("MQTT publish failed: {0}")]
+    MqttPublishFailed(String),
+
     #[error("missing Home Assistant route for device `{0}`")]
     MissingHomeAssistantRoute(String),
 
@@ -106,6 +147,52 @@ pub enum ExecutorError {
 
     #[error("unsupported Home Assistant action `{action}` for entity `{entity_id}`")]
     UnsupportedHomeAssistantAction { action: String, entity_id: String },
+
+    #[error("failed to read MIoT bridge config `{path}`: {source}")]
+    MiotBridgeConfigRead {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+
+    #[error("failed to parse MIoT bridge config `{path}`: {source}")]
+    MiotBridgeConfigParse {
+        path: PathBuf,
+        source: serde_yaml::Error,
+    },
+
+    #[error("failed to read Matter bridge config `{path}`: {source}")]
+    MatterBridgeConfigRead {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+
+    #[error("failed to parse Matter bridge config `{path}`: {source}")]
+    MatterBridgeConfigParse {
+        path: PathBuf,
+        source: serde_yaml::Error,
+    },
+
+    #[error("missing bridge route for backend `{backend}` and device `{device_id}`")]
+    MissingBridgeRoute { backend: String, device_id: String },
+
+    #[error("invalid bridge route for backend `{backend}`: {route}")]
+    InvalidBridgeRoute { backend: String, route: String },
+
+    #[error("missing bridge token for backend `{backend}`; set `{env_var}`")]
+    BridgeSecretMissing { backend: String, env_var: String },
+
+    #[error("unsupported bridge base URL for backend `{backend}`: {base_url}")]
+    BridgeUnsupportedBaseUrl { backend: String, base_url: String },
+
+    #[error("bridge HTTP error for backend `{backend}`: {message}")]
+    BridgeHttp { backend: String, message: String },
+
+    #[error("bridge backend `{backend}` returned status {status}: {body}")]
+    BridgeHttpStatus {
+        backend: String,
+        status: u16,
+        body: String,
+    },
 
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
@@ -163,24 +250,6 @@ impl BackendAdapter for HomeAssistantAdapter {
         plan: &ExecutionPlan,
     ) -> ExecutorResult<Value> {
         home_assistant_payload(device, command, plan)
-    }
-}
-
-#[derive(Debug, Default, Clone, Copy)]
-pub struct MqttAdapter;
-
-impl BackendAdapter for MqttAdapter {
-    fn kind(&self) -> BackendKind {
-        BackendKind::Mqtt
-    }
-
-    fn dry_run_payload(
-        &self,
-        device: &DeviceRecord,
-        command: &NormalizedCommand,
-        _plan: &ExecutionPlan,
-    ) -> ExecutorResult<Value> {
-        mqtt_payload(device, command)
     }
 }
 
@@ -433,8 +502,9 @@ fn backend_name(backend: &BackendKind) -> &'static str {
     match backend {
         BackendKind::Mock => "mock",
         BackendKind::HomeAssistant => "home_assistant",
-        BackendKind::MiioLocal => "miio_local",
+        BackendKind::MiioLocal => MIOT_BACKEND_NAME,
         BackendKind::Mqtt => "mqtt",
+        BackendKind::MatterBridge => MATTER_BACKEND_NAME,
     }
 }
 
@@ -463,9 +533,8 @@ fn backend_payload(
         BackendKind::Mock => MockAdapter.dry_run_payload(device, command, plan),
         BackendKind::HomeAssistant => HomeAssistantAdapter.dry_run_payload(device, command, plan),
         BackendKind::Mqtt => MqttAdapter.dry_run_payload(device, command, plan),
-        BackendKind::MiioLocal => Err(ExecutorError::BackendAdapterNotImplemented {
-            backend: backend_name(&device.backend).to_owned(),
-        }),
+        BackendKind::MiioLocal => MiotAdapter.dry_run_payload(device, command, plan),
+        BackendKind::MatterBridge => MatterBridgeAdapter.dry_run_payload(device, command, plan),
     }
 }
 
@@ -489,59 +558,6 @@ fn home_assistant_payload(
             "time_after": command.params.time_after,
         }
     }))
-}
-
-fn mqtt_payload(device: &DeviceRecord, command: &NormalizedCommand) -> ExecutorResult<Value> {
-    let topic = device.backend_entity_id.trim();
-    if topic.is_empty() {
-        return Err(ExecutorError::MissingMqttRoute(device.device_id.0.clone()));
-    }
-    validate_mqtt_topic(topic)?;
-
-    Ok(json!({
-        "backend": "mqtt",
-        "device_id": device.device_id,
-        "topic": topic,
-        "qos": 0,
-        "retain": false,
-        "room": device.room,
-        "device_type": device.device_type,
-        "action": command.action,
-        "payload": mqtt_action_payload(command),
-        "condition": {
-            "time_after": command.params.time_after,
-        }
-    }))
-}
-
-fn mqtt_action_payload(command: &NormalizedCommand) -> Value {
-    match command.action {
-        Action::TurnOn => json!({ "power": "on" }),
-        Action::TurnOff => json!({ "power": "off" }),
-        Action::SetBrightness => json!({ "brightness_pct": command.params.brightness }),
-        Action::IncreaseBrightness => json!({ "brightness_delta": "increase" }),
-        Action::DecreaseBrightness => json!({ "brightness_delta": "decrease" }),
-        Action::SetTemperature => json!({ "temperature": command.params.temperature }),
-        Action::SetMode => json!({ "mode": command.params.mode }),
-        Action::Open => json!({ "state": "open" }),
-        Action::Close => json!({ "state": "close" }),
-        Action::Lock => json!({ "state": "locked" }),
-        Action::Unlock => json!({ "state": "unlocked" }),
-        Action::Unknown => json!({ "operation": "unknown" }),
-    }
-}
-
-fn validate_mqtt_topic(topic: &str) -> ExecutorResult<()> {
-    if topic.is_empty()
-        || topic != topic.trim()
-        || topic.starts_with('$')
-        || topic.contains('#')
-        || topic.contains('+')
-        || topic.chars().any(|character| character.is_control())
-    {
-        return Err(ExecutorError::InvalidMqttTopic(topic.to_owned()));
-    }
-    Ok(())
 }
 
 fn operation_name(action: &Action) -> &'static str {
@@ -629,6 +645,14 @@ mod tests {
         DeviceRecord {
             backend: BackendKind::MiioLocal,
             backend_entity_id: "miio.local.hallway_light".to_owned(),
+            ..light_device()
+        }
+    }
+
+    fn matter_light_device() -> DeviceRecord {
+        DeviceRecord {
+            backend: BackendKind::MatterBridge,
+            backend_entity_id: "matter.hallway_light".to_owned(),
             ..light_device()
         }
     }
@@ -963,15 +987,92 @@ mod tests {
     }
 
     #[test]
-    fn dry_run_planner_rejects_unimplemented_miio_backend() {
+    fn dry_run_planner_translates_miot_bridge_payload() {
         let gated = accepted_gated_command();
-        let error = DryRunPlanner
+        let plan = DryRunPlanner
             .plan_gated(&gated, &miio_light_device())
-            .expect_err("miio adapter is not implemented");
+            .expect("miot bridge dry-run plan");
+
+        assert_eq!(plan.backend, "miio_local");
+        assert_eq!(
+            plan.payload,
+            json!({
+                "backend": "miio_local",
+                "protocol": "miot",
+                "device_id": "hallway_light",
+                "route_id": "miio.local.hallway_light",
+                "room": "hallway",
+                "device_type": "light",
+                "action": "set_brightness",
+                "bridge_path": "/v1/miot/execute",
+                "request": {
+                    "protocol": "miot",
+                    "route_id": "miio.local.hallway_light",
+                    "device_id": "hallway_light",
+                    "action": "set_brightness",
+                    "method": "set_properties",
+                    "arguments": {
+                        "brightness_pct": 30
+                    }
+                },
+                "condition": {
+                    "time_after": "22:00"
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn dry_run_planner_translates_matter_bridge_payload() {
+        let gated = accepted_gated_command();
+        let plan = DryRunPlanner
+            .plan_gated(&gated, &matter_light_device())
+            .expect("matter bridge dry-run plan");
+
+        assert_eq!(plan.backend, "matter_bridge");
+        assert_eq!(
+            plan.payload,
+            json!({
+                "backend": "matter_bridge",
+                "protocol": "matter",
+                "device_id": "hallway_light",
+                "route_id": "matter.hallway_light",
+                "room": "hallway",
+                "device_type": "light",
+                "action": "set_brightness",
+                "bridge_path": "/v1/matter/execute",
+                "request": {
+                    "protocol": "matter",
+                    "route_id": "matter.hallway_light",
+                    "device_id": "hallway_light",
+                    "action": "set_brightness",
+                    "command": "level_control.move_to_level",
+                    "arguments": {
+                        "level_pct": 30
+                    }
+                },
+                "condition": {
+                    "time_after": "22:00"
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn dry_run_planner_rejects_invalid_bridge_route() {
+        let gated = accepted_gated_command();
+        let device = DeviceRecord {
+            backend_entity_id: "miot/../../route".to_owned(),
+            ..miio_light_device()
+        };
+        let error = DryRunPlanner
+            .plan_gated(&gated, &device)
+            .expect_err("invalid bridge route is rejected");
 
         assert!(matches!(
             error,
-            ExecutorError::BackendAdapterNotImplemented { backend } if backend == "miio_local"
+            ExecutorError::InvalidBridgeRoute { backend, route }
+                if backend == "miot_bridge" && route == "miot/../../route"
         ));
     }
 

@@ -6,12 +6,17 @@ use anyhow::Context;
 use clap::{Parser, Subcommand};
 use edgehome_config::{RuntimeProfile, load_profile};
 use edgehome_core::{
-    DeviceId, DeviceType, ModelCandidate, NormalizedCommand, PolicyDecision, UserInput,
+    DeviceId, DeviceType, DryRunPlan, ModelCandidate, NormalizedCommand, PolicyDecision, RiskLevel,
+    UserInput,
 };
 use edgehome_eval::{
     EvalGateConfig, EvalReport, evaluate_case_output, evaluate_release_gate, load_cases,
 };
-use edgehome_executor::DryRunPlanner;
+use edgehome_executor::{
+    DryRunPlanner, ExecutionTransaction, HomeAssistantClient, HomeAssistantConfig,
+    HomeAssistantExecutor, MatterBridgeConfig, MatterBridgeExecutor, MiotBridgeConfig,
+    MiotBridgeExecutor, MockExecutor, MqttConfig, MqttExecutor, MqttSecrets, SecretsLoader,
+};
 use edgehome_gate::{GateCommandDecision, GateEngine, GateEvaluationRequest};
 use edgehome_memory::{
     ContextAssembler, ExplicitMemoryWriteDetection, ExplicitMemoryWriteDetector,
@@ -77,6 +82,13 @@ enum Commands {
     },
     Replay {
         trace_id: String,
+    },
+    Execute {
+        trace_id: String,
+        #[arg(long)]
+        confirm: bool,
+        #[arg(long)]
+        backend_config: Option<PathBuf>,
     },
     Trace {
         #[command(subcommand)]
@@ -180,6 +192,20 @@ fn main() -> anyhow::Result<()> {
         }
         Commands::Replay { trace_id } => {
             let output = replay_trace(&cli.db_path, TraceId(trace_id))?;
+            print_json(&output)?;
+        }
+        Commands::Execute {
+            trace_id,
+            confirm,
+            backend_config,
+        } => {
+            let output = execute_trace(
+                &cli.db_path,
+                &cli.config_dir,
+                TraceId(trace_id),
+                confirm,
+                backend_config.as_deref(),
+            )?;
             print_json(&output)?;
         }
         Commands::Trace {
@@ -604,6 +630,158 @@ fn replay_trace(db_path: &Path, trace_id: TraceId) -> anyhow::Result<Value> {
             "audit_count": bundle.audit_events.len(),
         },
         "evidence": bundle.evidence,
+    }))
+}
+
+fn execute_trace(
+    db_path: &Path,
+    config_dir: &Path,
+    trace_id: TraceId,
+    user_confirmed: bool,
+    backend_config: Option<&Path>,
+) -> anyhow::Result<Value> {
+    ensure_db_parent(db_path)?;
+
+    let bundle = load_trace_bundle(db_path, trace_id.clone())?;
+    let dry_run_ref = latest_evidence(&bundle.evidence, EvidenceKind::DryRunPlan)
+        .context("trace has no dry-run plan to execute")?;
+    let dry_run: DryRunPlan = serde_json::from_value(dry_run_ref.content.clone())
+        .context("failed to parse dry-run plan evidence")?;
+    let risk = latest_evidence(&bundle.evidence, EvidenceKind::NormalizedCommand)
+        .and_then(|evidence| {
+            serde_json::from_value::<NormalizedCommand>(evidence.content.clone()).ok()
+        })
+        .map(|command| command.risk)
+        .unwrap_or(RiskLevel::High);
+
+    let registry_path = config_dir.join("devices.yaml");
+    let registry = DeviceRegistry::load_from_path(&registry_path).with_context(|| {
+        format!(
+            "failed to load device registry `{}`",
+            registry_path.display()
+        )
+    })?;
+    let device = registry.get_device(&dry_run.plan.target)?;
+    let mut transaction = ExecutionTransaction::default();
+
+    let result = match dry_run.backend.as_str() {
+        "mock" => {
+            let executor = MockExecutor::new(true);
+            transaction.execute(
+                &executor,
+                &dry_run,
+                risk,
+                user_confirmed,
+                time::OffsetDateTime::now_utc(),
+            )?
+        }
+        "home_assistant" => {
+            let config_path =
+                backend_config_path(config_dir, backend_config, "home_assistant.yaml.example");
+            let config = HomeAssistantConfig::load_from_path(&config_path)
+                .with_context(|| format!("failed to load `{}`", config_path.display()))?;
+            let secrets = SecretsLoader::load(&config)?;
+            let client = HomeAssistantClient::new(&config, secrets);
+            let executor = HomeAssistantExecutor::new(client, config.execute_enabled)
+                .with_post_state_verification(config.verify_state_after_execute)
+                .with_route(device.device_id.clone(), &device.backend_entity_id)?;
+            transaction.execute(
+                &executor,
+                &dry_run,
+                risk,
+                user_confirmed,
+                time::OffsetDateTime::now_utc(),
+            )?
+        }
+        "mqtt" => {
+            let config_path =
+                backend_config_path(config_dir, backend_config, "adapters/mqtt.example.yaml");
+            let config = MqttConfig::load_from_path(&config_path)
+                .with_context(|| format!("failed to load `{}`", config_path.display()))?;
+            let secrets = MqttSecrets::load(&config)?;
+            let executor = MqttExecutor::from_config(&config, secrets)
+                .with_route(device.device_id.clone(), &device.backend_entity_id)?;
+            transaction.execute(
+                &executor,
+                &dry_run,
+                risk,
+                user_confirmed,
+                time::OffsetDateTime::now_utc(),
+            )?
+        }
+        "miio_local" => {
+            let config_path =
+                backend_config_path(config_dir, backend_config, "adapters/miot.example.yaml");
+            let config = MiotBridgeConfig::load_from_path(&config_path)
+                .with_context(|| format!("failed to load `{}`", config_path.display()))?;
+            let executor = MiotBridgeExecutor::from_config(&config)?
+                .with_route(device.device_id.clone(), &device.backend_entity_id)?;
+            transaction.execute(
+                &executor,
+                &dry_run,
+                risk,
+                user_confirmed,
+                time::OffsetDateTime::now_utc(),
+            )?
+        }
+        "matter_bridge" => {
+            let config_path =
+                backend_config_path(config_dir, backend_config, "adapters/matter.example.yaml");
+            let config = MatterBridgeConfig::load_from_path(&config_path)
+                .with_context(|| format!("failed to load `{}`", config_path.display()))?;
+            let executor = MatterBridgeExecutor::from_config(&config)?
+                .with_route(device.device_id.clone(), &device.backend_entity_id)?;
+            transaction.execute(
+                &executor,
+                &dry_run,
+                risk,
+                user_confirmed,
+                time::OffsetDateTime::now_utc(),
+            )?
+        }
+        backend => anyhow::bail!("execute is not wired for backend `{backend}`"),
+    };
+
+    let trace_store = TraceStore::open(db_path)?;
+    let audit_sink = AuditSink::open(db_path)?;
+    let result_ref = trace_store.record_evidence(NewEvidence::new(
+        EvidenceKind::ExecutorResponse,
+        SourceSystem::Executor,
+        "real executor response",
+        serde_json::to_value(&result)?,
+    ))?;
+    trace_store.append_step(
+        &trace_id,
+        NewCommandStep::new("real_execute", StepStatus::Succeeded)
+            .with_evidence_refs(vec![dry_run_ref.id.clone(), result_ref.id.clone()]),
+    )?;
+    audit_sink.append(
+        NewAuditEvent::new(
+            "real_execution_completed",
+            "explicit execute command completed through backend executor",
+            json!({
+                "trace_id": trace_id.0.as_str(),
+                "backend": dry_run.backend.as_str(),
+                "target": dry_run.plan.target.0.as_str(),
+                "user_confirmed": user_confirmed,
+                "success": result.success,
+            }),
+        )
+        .with_trace_id(trace_id.clone()),
+    )?;
+
+    Ok(json!({
+        "trace_id": trace_id,
+        "mode": "execute",
+        "backend": dry_run.backend,
+        "target": dry_run.plan.target,
+        "user_confirmed": user_confirmed,
+        "result": result,
+        "evidence_refs": {
+            "dry_run_plan": dry_run_ref.id,
+            "executor_response": result_ref.id,
+        },
+        "note": "real execution is explicit opt-in and remains disabled unless backend private config enables it"
     }))
 }
 
@@ -1104,6 +1282,16 @@ fn ensure_db_parent(path: &Path) -> anyhow::Result<()> {
             .with_context(|| format!("failed to create db parent `{}`", parent.display()))?;
     }
     Ok(())
+}
+
+fn backend_config_path(
+    config_dir: &Path,
+    backend_config: Option<&Path>,
+    default_relative_path: &str,
+) -> PathBuf {
+    backend_config
+        .map(Path::to_path_buf)
+        .unwrap_or_else(|| config_dir.join(default_relative_path))
 }
 
 fn print_json(value: &impl Serialize) -> anyhow::Result<()> {

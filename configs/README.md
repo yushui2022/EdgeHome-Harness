@@ -15,9 +15,12 @@ demo_mode.yaml                  demo 使用 profile
 devices.yaml                    设备注册表与 capability / risk metadata
 devices.home_assistant.example.yaml  Home Assistant registry 示例，不含 secret
 devices.mqtt.example.yaml       MQTT registry 示例，不含 broker secret
+devices.miot.example.yaml       MIoT bridge registry 示例，不含 did/siid/piid/token
+devices.matter.example.yaml     Matter bridge registry 示例，不含 node/endpoint/fabric secret
 home_assistant.yaml.example     Home Assistant demo backend 示例配置
-adapters/mqtt.example.yaml      MQTT dry-run adapter profile 示例；真实 publish 仍需显式执行模式
-adapters/miot.example.yaml      MIoT future adapter profile 示例，当前不可运行
+adapters/mqtt.example.yaml      MQTT guarded publish profile；真实 publish 默认关闭
+adapters/miot.example.yaml      MIoT bridge executor profile；真实执行默认关闭
+adapters/matter.example.yaml    Matter bridge executor profile；真实执行默认关闭
 ```
 
 ## low_memory 主线
@@ -113,6 +116,6 @@ $env:EDGEHOME_HA_TOKEN = "your-long-lived-access-token"
 高风险策略来自静态配置和设备注册表，不来自 1B 小模型判断。
 低内存 profile 不能引入默认重型依赖。
 配置变更必须通过 eval --gate。
-MQTT adapter profile 当前可用于 dry-run payload；真实 publish 仍未默认开启。
-MIoT adapter profile 当前只是 future design example。
+MQTT adapter 支持 dry-run payload 和 guarded publish；真实 publish 仍未默认开启。
+MIoT / Matter adapter 走 bridge request 边界；真实执行需要私有 bridge 和显式开启。
 ```

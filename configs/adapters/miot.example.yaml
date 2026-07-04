@@ -1,38 +1,19 @@
-# Future MIoT adapter profile example.
+# MIoT bridge executor profile example.
 #
-# Status: design example only. The current code does not implement a MIoT
-# adapter. Selecting BackendKind::MiioLocal fails closed.
+# Status: bridge request adapter implemented. This project does not claim
+# universal Xiaomi device support. The private bridge owns real did/siid/piid
+# mapping, token handling, local/cloud protocol details, and state readback.
 #
 # MIoT identifiers such as did, siid, piid, and aiid must come from trusted
-# configuration, not from MiniCPM output.
+# bridge configuration, not from MiniCPM output or public prompts.
 
-backend: miot
-status: future_design_only
+backend: miio_local
+status: bridge_request_adapter
 
-auth:
-  token_env: EDGEHOME_MIOT_TOKEN
+base_url: http://127.0.0.1:8787
+token_env: EDGEHOME_MIOT_BRIDGE_TOKEN
+request_timeout_ms: 5000
 
-routes:
-  - device_id: bedroom_air_conditioner
-    action: turn_on
-    method: action
-    did_env: EDGEHOME_MIOT_BEDROOM_AC_DID
-    siid: 2
-    aiid: 1
-    in: []
-
-  - device_id: bedroom_air_conditioner
-    action: turn_off
-    method: action
-    did_env: EDGEHOME_MIOT_BEDROOM_AC_DID
-    siid: 2
-    aiid: 2
-    in: []
-
-  - device_id: bedroom_air_conditioner
-    action: set_temperature
-    method: set_properties
-    did_env: EDGEHOME_MIOT_BEDROOM_AC_DID
-    siid: 2
-    piid: 6
-    value_template: "{{ params.temperature }}"
+# Must remain false by default. Enable only when a local MIoT bridge is running
+# and dry-run/gate/confirmation checks have passed.
+execute_enabled: false

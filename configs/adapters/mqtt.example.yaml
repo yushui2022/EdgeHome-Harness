@@ -1,35 +1,27 @@
-# MQTT adapter profile example.
+# MQTT executor profile example.
 #
-# Status: dry-run payload adapter implemented. Guarded real publish remains an
-# explicit future execution mode and must stay disabled by default.
+# Status: dry-run payload adapter and guarded publish executor implemented.
+# Real broker publish must stay disabled by default.
 #
 # MQTT defines publish/subscribe transport. Smart-home topic and payload formats
-# are application-specific, so they must be configured here instead of emitted by
-# MiniCPM.
+# are application-specific. Device topics are configured in the trusted device
+# registry, not emitted by MiniCPM.
 
 backend: mqtt
-status: dry_run_adapter
+status: guarded_publish_available
 
-connection:
-  broker_url_env: EDGEHOME_MQTT_BROKER_URL
-  username_env: EDGEHOME_MQTT_USERNAME
-  password_env: EDGEHOME_MQTT_PASSWORD
+# Optional fixed broker URL for local-only tests. Prefer broker_url_env for
+# private deployments and do not commit private URLs.
+broker_url:
+broker_url_env: EDGEHOME_MQTT_BROKER_URL
+username_env: EDGEHOME_MQTT_USERNAME
+password_env: EDGEHOME_MQTT_PASSWORD
 
-routes:
-  - device_id: hallway_light
-    action: turn_on
-    topic: home/hallway/light/set
-    payload:
-      power: "on"
+client_id: edgehome-harness
+request_timeout_ms: 5000
+qos: 0
+retain: false
 
-  - device_id: hallway_light
-    action: turn_off
-    topic: home/hallway/light/set
-    payload:
-      power: "off"
-
-  - device_id: hallway_light
-    action: set_brightness
-    topic: home/hallway/light/set
-    payload_template:
-      brightness_pct: "{{ params.brightness }}"
+# Must remain false by default. Enable only for an explicit local broker test
+# after dry-run, gate, confirmation, idempotency, and rate-limit checks pass.
+execute_enabled: false

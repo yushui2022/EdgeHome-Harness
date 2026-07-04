@@ -47,7 +47,7 @@ Chinese user command
   -> GatedCommand
   -> ExecutionPlan
   -> BackendAdapter payload
-  -> Mock / Home Assistant demo dry-run payload
+  -> Mock / Home Assistant / MQTT / MIoT bridge / Matter bridge payload
   -> Trace / Replay / Eval gate
 ```
 
@@ -79,10 +79,11 @@ traceability, and adapter boundaries:
 - `false_allow_rate = 0.0`.
 - `fail_closed_rate = 1.0`.
 - Typed `GatedCommand` boundary before dry-run planning.
-- Golden tests for exact Mock and Home Assistant demo adapter payloads.
+- Golden tests for exact Mock, Home Assistant, MQTT, MIoT bridge, and Matter
+  bridge adapter payloads.
 - Missing Home Assistant routes and invalid entity IDs fail closed.
-- MQTT dry-run payload translation is implemented; real MQTT publish and
-  miIO-local backend execution fail closed today.
+- MQTT guarded publish, MIoT bridge execution, and Matter bridge execution are
+  implemented as opt-in paths and disabled by default.
 
 This verifies covered harness regressions, not broad natural-language
 understanding, production readiness, or real-device deployment at scale.
@@ -99,14 +100,18 @@ Implemented:
 - Policy and capability gates with fail-closed behavior.
 - `GatedCommand` and dry-run `ExecutionPlan` boundary.
 - Mock backend adapter.
-- Home Assistant demo payload adapter.
+- Home Assistant gateway boundary.
+- MQTT guarded publish adapter.
+- MIoT/Xiaomi bridge request adapter.
+- Matter controller bridge request adapter.
 - SQLite-backed trace, replay, audit, evidence, and memory.
 - Release-gated eval suite.
 
 Not claimed:
 
 - Production-ready smart-home gateway.
-- Xiaomi / MIoT / Matter support today, or MQTT real broker publish today.
+- Universal Xiaomi / MIoT / Matter support, or MQTT real broker publish by
+  default.
 - Real-device execution enabled by default.
 - Full Home Assistant production coverage.
 - Model-generated vendor-ready JSON.
@@ -120,7 +125,8 @@ Customization happens below the model:
 
 - Add devices and aliases in the device registry.
 - Define supported capabilities and value ranges.
-- Configure backend routes such as Home Assistant entity IDs.
+- Configure backend routes such as Home Assistant entity IDs, MQTT topics, MIoT
+  bridge route IDs, and Matter bridge route IDs.
 - Add a new backend adapter with golden payload tests and fail-closed tests.
 
 This is the core design choice:
@@ -136,16 +142,20 @@ Customize the registry and adapter mappings.
 Current:
 
 - Mock: implemented for deterministic dry-run and eval.
-- Home Assistant: demo adapter implemented for service-call payloads, with real
-  execution disabled by default.
-- MQTT: dry-run payload adapter implemented; real broker publish remains
-  disabled.
+- Home Assistant: gateway boundary implemented for service-call payloads,
+  opt-in REST execution, route validation, and optional post-state fetch.
+- MQTT: dry-run payload adapter and guarded publish executor implemented; real
+  broker publish remains disabled by default.
+- MIoT / Xiaomi: bridge request adapter implemented; real Xiaomi device support
+  requires a private bridge and device-specific validation.
+- Matter: bridge request adapter implemented; real control requires a private
+  Matter controller bridge.
 
-Future targets:
+Future validation targets:
 
-- MIoT / Xiaomi adapter.
-- Matter controller adapter.
-- MQTT guarded real publish.
+- MQTT publish evidence against a local broker.
+- MIoT bridge logs with at least one real Xiaomi device.
+- Matter controller bridge logs with at least one real Matter device.
 
 Unsupported backends must fail closed until code, configuration, golden tests,
 secret-handling tests, and documentation all exist.

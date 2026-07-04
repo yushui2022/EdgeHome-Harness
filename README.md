@@ -52,11 +52,11 @@ enter a constrained command pipeline without being trusted as the executor.
 | `GateEngine` / `GatedCommand` boundary | Implemented |
 | Dry-run `ExecutionPlan` | Implemented |
 | Mock adapter | Implemented |
-| Home Assistant adapter | Demo payload adapter implemented |
-| MIoT / Xiaomi | Future adapter target; fails closed today |
-| Matter | Future adapter target |
-| MQTT | Dry-run payload adapter implemented; real publish disabled |
-| Real device execution | Disabled by default |
+| Home Assistant adapter | Gateway boundary with dry-run, opt-in execute, and route validation |
+| MIoT / Xiaomi | Bridge request adapter implemented; real device support requires a private bridge |
+| Matter | Bridge request adapter implemented; real control requires a Matter controller bridge |
+| MQTT | Dry-run payload adapter and guarded publish executor implemented |
+| Real device execution | Explicit opt-in only; disabled by default |
 | Release eval gate | 108 mock cases across 12 categories |
 
 ## Why This Exists
@@ -261,7 +261,7 @@ flowchart TD
     K --> L["GatedCommand"]
     L --> M["Dry-run ExecutionPlan"]
     M --> N["BackendAdapter Payload"]
-    N --> O["Mock / Home Assistant demo boundary"]
+    N --> O["Mock / HA / MQTT / MIoT bridge / Matter bridge"]
     O --> P["Trace / Replay / Eval Gate"]
 ```
 
@@ -296,10 +296,10 @@ User Chinese command
 | Backend | Status | What works | What is not claimed |
 | --- | --- | --- | --- |
 | Mock | Implemented | Deterministic dry-run payloads and eval baseline | Real device control |
-| Home Assistant | Demo adapter implemented | Service-call payload translation; real execution disabled by default | Production deployment or full HA coverage |
-| MIoT / Xiaomi | Future adapter target | Explicitly fails closed when selected today | Xiaomi device support |
-| Matter | Future adapter target | Documented as an adapter direction only | Matter controller support |
-| MQTT | Dry-run adapter implemented | Configured topic/payload dry-run translation; real publish disabled | Universal MQTT smart-home schema or production broker operation |
+| Home Assistant | Gateway boundary implemented | Service-call dry-run payloads; opt-in REST execution; route validation; optional post-state fetch | Full HA replacement or universal HA coverage |
+| MIoT / Xiaomi | Bridge request adapter implemented | Verified commands become MIoT bridge requests; execution can call a configured private bridge | Universal Xiaomi support or direct MIoT protocol ownership |
+| Matter | Bridge request adapter implemented | Verified commands become Matter controller bridge requests | Embedded full Matter controller, fabric commissioning, or universal device support |
+| MQTT | Dry-run and guarded publish implemented | Configured topic/payload translation; opt-in `rumqttc` broker publish | Universal MQTT smart-home schema or default real broker operation |
 
 Unsupported backend targets must fail closed. They must not silently fall back
 to mock payloads.
@@ -318,7 +318,12 @@ to mock payloads.
 - Device registry, registry-based resolution, and capability validation.
 - Policy gate with fail-closed behavior.
 - Typed `GatedCommand` boundary before dry-run planning.
-- `BackendAdapter` trait with Mock and Home Assistant demo payload adapters.
+- `BackendAdapter` trait with Mock, Home Assistant, MQTT, MIoT bridge, and
+  Matter bridge payload adapters.
+- Guarded MQTT publish executor and bridge executors for MIoT/Matter, all
+  disabled by default.
+- Home Assistant gateway boundary with route validation, token isolation, and
+  optional post-state fetch after explicit execution.
 - SQLite-backed evidence, audit, trace, replay, and long-term memory.
 - 108-case release eval gate across 12 categories.
 - Low-memory pressure policy for context/output reduction and rule-only
@@ -326,11 +331,11 @@ to mock payloads.
 
 ## Not Claimed
 
-- Production-ready smart-home gateway.
+- Replacement for a production smart-home platform.
 - Replacement for Mi Home, Home Assistant, Matter, MQTT, or a smart speaker.
-- Xiaomi / MIoT support today.
-- Matter controller support today.
-- MQTT real broker publish today.
+- Universal Xiaomi / MIoT device support.
+- Embedded full Matter controller support.
+- MQTT real broker publish by default.
 - Long-running benchmark on a real 2GB ARM board.
 - Proof that all smart-home natural-language inputs are understood.
 - Real-device execution enabled by default.
@@ -344,8 +349,9 @@ model:
 - add devices and aliases in the device registry;
 - define supported capabilities and value ranges;
 - set risk levels and policy behavior;
-- configure backend routes such as Home Assistant entity IDs;
-- add future backend adapter mappings with tests.
+- configure backend routes such as Home Assistant entity IDs, MQTT topics, MIoT
+  bridge route IDs, or Matter bridge route IDs;
+- add backend adapter mappings with tests.
 
 Do not ask MiniCPM to emit a vendor's JSON format directly. Keep model JSON
 canonical, then customize registry and adapter mappings.
@@ -378,6 +384,9 @@ validation, registry checks, policy gates, dry-run planning, and trace
 recording. Real MiniCPM evaluation should be reported separately from the mock
 release gate, with model output, latency, retry, and fallback metrics.
 
+For a reproducible real-model report workflow, see
+[Real MiniCPM / Ollama Eval Report](docs/real-minicpm-eval-report.md).
+
 ## Low-Memory Profile
 
 The default profile targets constrained edge environments:
@@ -407,8 +416,8 @@ See:
 
 ## Home Assistant Boundary
 
-Home Assistant is implemented as a demo backend boundary, not as the project
-itself.
+Home Assistant is implemented as a gateway boundary, not as the project itself
+and not as a Home Assistant replacement.
 
 The model never sees:
 
@@ -429,6 +438,21 @@ See:
 - [Home Assistant Demo](docs/home-assistant-demo.md)
 - [Deployment Modes](docs/deployment-modes.md)
 
+## Explicit Execute
+
+The CLI can execute a previously recorded dry-run trace, but only through an
+explicit command:
+
+```powershell
+cargo run -q -p edgehome-cli -- --db-path edgehome-demo.sqlite execute <trace_id> --confirm --backend-config private/backend.yaml
+```
+
+The command does not parse fresh natural language. It loads the existing
+`DryRunPlan` from trace evidence, applies confirmation/risk checks, then calls
+the selected backend executor. Public example configs keep `execute_enabled:
+false`, so real execution still fails closed unless private backend config
+explicitly enables it.
+
 ## Documentation
 
 - [WAIC One-Page](docs/waic-one-page.md)
@@ -436,8 +460,14 @@ See:
 - [Customization Contract](docs/customization.md)
 - [Command Pipeline Contract](docs/command-pipeline-contract.md)
 - [Backend Adapter Contract](docs/backend-adapter-contract.md)
+- [MQTT Guarded Publish](docs/mqtt-guarded-publish.md)
+- [MIoT Bridge Adapter](docs/miot-bridge-adapter.md)
+- [Matter Bridge Adapter](docs/matter-bridge-adapter.md)
 - [Roadmap](docs/roadmap.md)
 - [Release Checklist](docs/release-checklist.md)
+- [Real MiniCPM / Ollama Eval Report](docs/real-minicpm-eval-report.md)
+- [Home Assistant Gateway Boundary](docs/home-assistant-gateway.md)
+- [Home Assistant Golden Payloads](docs/home-assistant-golden-payloads.md)
 - [Eval Report Example](docs/eval-report-example.md)
 - [Demo Walkthrough](docs/demo-walkthrough.md)
 - [2GB RAM Profile](docs/2gb-profile.md)
@@ -452,7 +482,7 @@ crates/edgehome-registry   device registry, alias resolution, capability checks
 crates/edgehome-gate       deterministic policy and execution gates
 crates/edgehome-memory     short-session memory and confirmed long-term memory
 crates/edgehome-ollama     MiniCPM/Ollama adapter and output governor
-crates/edgehome-executor   dry-run planner, mock executor, Home Assistant boundary
+crates/edgehome-executor   dry-run planner, executors, backend adapter boundaries
 crates/edgehome-storage    SQLite-backed evidence storage
 crates/edgehome-trace      trace, audit, replay frame types
 crates/edgehome-eval       case loading, metrics, release gate

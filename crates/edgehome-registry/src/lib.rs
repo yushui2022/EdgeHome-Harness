@@ -80,6 +80,7 @@ pub enum BackendKind {
     HomeAssistant,
     MiioLocal,
     Mqtt,
+    MatterBridge,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

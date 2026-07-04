@@ -207,6 +207,6 @@ OutputGovernor 会识别 dead_loop，并给出 fallback 建议。
 ```text
 这是一个面向端侧小模型的 Agent Harness 项目。
 智能家居是垂直场景。
-Home Assistant 是 demo backend。
-真实设备执行默认关闭，优先展示 dry-run、trace、replay 和 gate。
+Home Assistant / MQTT / MIoT bridge / Matter bridge 都是 adapter boundary。
+真实设备执行默认关闭，优先展示 dry-run、trace、replay、gate 和 explicit execute 边界。
 ```
