@@ -112,7 +112,6 @@ Invalid MQTT topic -> fail closed
 Missing MQTT route -> fail closed
 Missing Home Assistant route -> fail closed
 Invalid Home Assistant entity_id -> fail closed
-MiioLocal selected -> BackendAdapterNotImplemented
 Home Assistant dry-run -> no token required and no real service call
 Dry-run payload serialization -> no token/env secret leakage
 Real Home Assistant execute -> disabled by default
@@ -121,6 +120,8 @@ MIoT bridge execute -> disabled by default
 Matter bridge execute -> disabled by default
 MIoT bridge payload -> exact golden payload
 Matter bridge payload -> exact golden payload
+MIoT bridge HTTP post -> opt-in and token-redacted test path
+Matter bridge HTTP post -> opt-in and token-redacted test path
 Invalid bridge route -> fail closed
 ```
 

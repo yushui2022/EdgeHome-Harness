@@ -229,24 +229,27 @@ docs/real-minicpm-eval-report.md
 Latest reviewed run:
 
 ```text
-date = 2026-07-04 20:38:18 +08:00
+date = 2026-07-04 21:29:47 +08:00
 model = openbmb/minicpm5:latest
 model_id = 08239e8f70e0
 cases = 108
-passed = 30
-failed = 78
-pass_rate = 0.2778
-schema_valid_rate = 0.8800
+passed = 104
+failed = 4
+pass_rate = 0.9630
+schema_valid_rate = 0.9500
 trace_coverage = 1.0
 false_allow_rate = 0.0
 fail_closed_rate = 1.0
-latency_avg_ms = 2638.64
-latency_p95_ms = 4054
+fallback_rate = 0.7778
+deterministic_repair_or_fallback_count = 84
+latency_avg_ms = 4829.49
+latency_p95_ms = 6023
 ```
 
-Interpretation: this is not a strong MiniCPM command-accuracy result, but it is
-useful safety evidence because the full real-model path is traceable and
-fail-closed. Do not market it as production parser accuracy.
+Interpretation: this is a strong model+harness path result, but not a pure
+MiniCPM parsing result. The high pass rate depends on deterministic Rust-side
+candidate repair/fallback in 84 of 108 cases. Do not market it as standalone
+model production accuracy.
 
 Required report fields:
 

@@ -28,16 +28,16 @@ Raw artifacts are intentionally kept under `artifacts/`, which is ignored by
 git:
 
 ```text
-artifacts\real-minicpm-eval-openbmb_minicpm5_latest-20260704-203818.json
-artifacts\real-minicpm-eval-openbmb_minicpm5_latest-20260704-203818.meta.txt
-artifacts\real-minicpm-eval-run-20260704-traceable.log
+artifacts\real-minicpm-eval-openbmb_minicpm5_latest-20260704-212946.json
+artifacts\real-minicpm-eval-openbmb_minicpm5_latest-20260704-212946.meta.txt
+artifacts\real-minicpm-eval-run-20260704-input-boundary.log
 ```
 
 ## Environment
 
 | Field | Value |
 | --- | --- |
-| Date | 2026-07-04 20:38:18 +08:00 |
+| Date | 2026-07-04 21:29:47 +08:00 |
 | OS | Microsoft Windows NT 10.0.26200.0 |
 | Device | Lenovo 82RC |
 | CPU | 12th Gen Intel(R) Core(TM) i5-12500H, 12 cores / 16 logical processors |
@@ -59,24 +59,25 @@ artifacts\real-minicpm-eval-run-20260704-traceable.log
 | --- | ---: |
 | total_cases | 108 |
 | category_count | 12 |
-| passed | 30 |
-| failed | 78 |
-| pass_rate | 0.2778 |
-| schema_valid_rate | 0.8800 |
-| intent_accuracy | 0.0256 |
-| slot_accuracy | 0.0000 |
-| policy_accuracy | 0.3900 |
-| dry_run_accuracy | 0.3900 |
+| passed | 104 |
+| failed | 4 |
+| pass_rate | 0.9630 |
+| schema_valid_rate | 0.9500 |
+| intent_accuracy | 0.9487 |
+| slot_accuracy | 0.9487 |
+| policy_accuracy | 0.9800 |
+| dry_run_accuracy | 0.9800 |
 | trace_coverage | 1.0000 |
 | false_allow_rate | 0.0000 |
 | fail_closed_rate | 1.0000 |
 | retry_rate | 0.0000 |
-| fallback_rate | 0.0000 |
+| fallback_rate | 0.7778 |
 | dead_loop_rate | 0.0000 |
-| latency_avg_ms | 2638.64 |
-| latency_p95_ms | 4054 |
+| latency_avg_ms | 4829.49 |
+| latency_p95_ms | 6023 |
 | false_allow_count | 0 |
 | fail_closed_count | 39 |
+| deterministic_repair_or_fallback_count | 84 |
 
 ## Failure Breakdown
 
@@ -84,32 +85,27 @@ Failed cases by trace rejection reason:
 
 | Rejection reason | Failed cases |
 | --- | ---: |
-| SchemaGate: intent is unknown | 67 |
-| Ollama output governor rejected model response | 7 |
-| SchemaGate: room is unknown | 4 |
+| Ollama output governor rejected model response: invalid JSON object missing | 4 |
 
 Failed cases by category:
 
 | Category | Failed cases |
 | --- | ---: |
-| air_conditioner_controls | 12 |
-| normal_control | 12 |
-| slot_extraction | 12 |
-| high_risk_policy | 10 |
-| capability_boundary | 10 |
-| runtime_memory | 8 |
-| long_memory | 7 |
-| fail_closed_safety | 7 |
+| capability_boundary | 2 |
+| normal_control | 1 |
+| slot_extraction | 1 |
 
-The model frequently produced schema-valid JSON whose semantic slots stayed
-`unknown`, especially `intent`, so the Rust `SchemaGate` rejected the command
-before dry-run planning. In 7 failed cases the output governor rejected the raw
-model response before normalization.
+The compact schema prompt plus deterministic Rust-side candidate repair greatly
+improved the end-to-end model+harness path. 84 of 108 cases used deterministic
+repair or fallback evidence, so this is not a pure standalone MiniCPM parsing
+score. The remaining 4 failures were raw model outputs that the output governor
+rejected before normalization because no valid JSON object was available.
 
 ## Safety Interpretation
 
-This is not a high natural-language accuracy result. It should not be presented
-as proof that the current MiniCPM profile understands the full eval set.
+This is a high end-to-end model+harness result, not a standalone model accuracy
+result. It should not be presented as proof that MiniCPM alone understands the
+full eval set without deterministic Rust repair and gates.
 
 It is useful evidence for the harness boundary:
 
@@ -118,12 +114,16 @@ trace_coverage = 1.0
 false_allow_rate = 0.0
 fail_closed_rate = 1.0
 all 39 expected-blocked cases failed closed
+InputBoundaryGate blocked direct backend-access attempts
 ```
 
 The real model path completed all 108 cases without crashing the eval runner.
-When the model returned unknown, malformed, or governor-rejected output, the
-harness produced a traceable deny result with no dry-run plan and no executable
-plan.
+When the model returned malformed or governor-rejected output, the harness
+produced a traceable deny result with no dry-run plan and no executable plan.
+When the model produced incomplete or conflicting slots, deterministic Rust-side
+repair could produce a traceable repaired candidate before registry resolution.
+That repair is reported through `fallback_rate`; it must stay visible in public
+claims.
 
 ## Claim Boundary
 
@@ -131,17 +131,18 @@ Allowed:
 
 ```text
 The real MiniCPM/Ollama path is reproducible, trace-covered, and fail-closed on
-the reviewed eval run. The current profile still has low command accuracy and
-needs prompt/model tuning before being presented as a strong parser.
+the reviewed eval run. The current high pass rate is a model+harness result with
+deterministic repair/fallback enabled, not a standalone model parsing benchmark.
 ```
 
 Not allowed:
 
 ```text
-Real MiniCPM achieves production command accuracy.
+Real MiniCPM alone achieves production command accuracy.
 Mock gate metrics are real-model metrics.
 The model safely outputs vendor-ready JSON.
 This run proves broad smart-home language understanding.
+Fallback/repair usage can be hidden from the report.
 ```
 
 ## Next Improvements
@@ -149,9 +150,10 @@ This run proves broad smart-home language understanding.
 Improve the model path without weakening the harness boundary:
 
 ```text
-1. tighten the MiniCPM system prompt around the canonical JSON enum values;
-2. add a small repair/retry loop only inside the output-governor boundary;
-3. keep false_allow_rate at 0.0 and fail_closed_rate at 1.0 as hard gates;
+1. reduce deterministic repair usage while keeping false_allow_rate at 0.0;
+2. add stricter negative tests for backend-access wording and vendor payload
+   requests;
+3. keep fail_closed_rate at 1.0 as a hard gate;
 4. continue using the deterministic mock gate as the release regression gate;
 5. keep real-device execution separate from model eval.
 ```

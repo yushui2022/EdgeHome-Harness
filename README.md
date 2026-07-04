@@ -261,10 +261,11 @@ of real-device deployment at scale.
 
 Real MiniCPM/Ollama behavior is tracked separately in
 [Real MiniCPM / Ollama Eval Report](docs/real-minicpm-eval-report.md). The
-latest reviewed run completed 108 cases with full trace coverage,
-`false_allow_rate = 0.0`, and `fail_closed_rate = 1.0`, but low command
-accuracy. Treat it as model-path evidence, not as the deterministic release
-gate.
+latest reviewed run completed 108 cases with 104 passing end-to-end,
+full trace coverage, `false_allow_rate = 0.0`, and `fail_closed_rate = 1.0`.
+It also used deterministic repair/fallback in 84 cases, so it is reported as
+model+harness evidence, not as standalone MiniCPM parsing accuracy and not as
+the deterministic release gate.
 
 ## Architecture
 

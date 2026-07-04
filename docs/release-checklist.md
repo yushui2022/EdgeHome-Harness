@@ -25,6 +25,10 @@ cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-release-gate.sqlite" eval cases\zh-home.yaml --gate
+cargo run -q -p edgehome-cli -- backend check --backend home_assistant --registry configs\devices.home_assistant.example.yaml
+cargo run -q -p edgehome-cli -- backend check --backend mqtt --registry configs\devices.mqtt.example.yaml
+cargo run -q -p edgehome-cli -- backend check --backend miot --registry configs\devices.miot.example.yaml
+cargo run -q -p edgehome-cli -- backend check --backend matter --registry configs\devices.matter.example.yaml
 git diff --check
 ```
 
@@ -38,6 +42,7 @@ schema_valid_rate >= 1.0
 trace_coverage >= 1.0
 false_allow_rate <= 0.0
 fail_closed_rate >= 1.0
+input_guard_flag_accuracy >= 1.0
 ```
 
 ## 3. Documentation Review

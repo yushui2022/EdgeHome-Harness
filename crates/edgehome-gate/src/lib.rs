@@ -87,6 +87,7 @@ pub struct GateEvaluationRequest {
     pub trace_id: TraceId,
     pub command: NormalizedCommand,
     pub evidence_refs: Vec<EvidenceId>,
+    pub input_flags: Vec<String>,
     pub state_freshness: StateFreshness,
     pub user_confirmed: bool,
     pub dry_run_ready: bool,
@@ -102,6 +103,7 @@ impl GateEvaluationRequest {
             trace_id,
             command,
             evidence_refs: Vec::new(),
+            input_flags: Vec::new(),
             state_freshness: StateFreshness::Fresh,
             user_confirmed: false,
             dry_run_ready: false,
@@ -114,6 +116,11 @@ impl GateEvaluationRequest {
 
     pub fn with_evidence_refs(mut self, evidence_refs: Vec<EvidenceId>) -> Self {
         self.evidence_refs = evidence_refs;
+        self
+    }
+
+    pub fn with_input_flags(mut self, input_flags: Vec<String>) -> Self {
+        self.input_flags = input_flags;
         self
     }
 
@@ -207,6 +214,16 @@ impl<'a> GateEngine<'a> {
         let mut blocking_reasons = Vec::new();
         let mut gate_evidence_refs = request.evidence_refs.clone();
 
+        let input_boundary = InputBoundaryGate::check(&request.input_flags);
+        record_gate(
+            self.trace_store,
+            &request.trace_id,
+            input_boundary.clone(),
+            &gate_evidence_refs,
+            &mut gate_checks,
+            &mut blocking_reasons,
+        )?;
+
         let schema = SchemaGate::check(&request.command);
         record_gate(
             self.trace_store,
@@ -281,7 +298,11 @@ impl<'a> GateEngine<'a> {
 
         let policy = self.policy_engine.decide(&authoritative_risk);
         let mut policy_decision = policy.decision.clone();
-        if schema.blocking || device_decision.blocking || capability_decision.blocking {
+        if input_boundary.blocking
+            || schema.blocking
+            || device_decision.blocking
+            || capability_decision.blocking
+        {
             policy_decision = PolicyDecision::Deny;
         }
 
@@ -295,6 +316,7 @@ impl<'a> GateEngine<'a> {
                 "risk": authoritative_risk,
                 "decision": policy_decision,
                 "base_policy_decision": policy.decision,
+                "input_flags": request.input_flags.clone(),
                 "reason": policy.reason,
             }),
         ))?;
@@ -449,6 +471,33 @@ fn capability_snapshot(command: &NormalizedCommand, decision: &GateDecision) -> 
         "accepted": decision.outcome == GateOutcome::Accepted,
         "reason": decision.reason,
     })
+}
+
+pub struct InputBoundaryGate;
+
+impl InputBoundaryGate {
+    pub const NAME: &'static str = "InputBoundaryGate";
+
+    pub fn check(input_flags: &[String]) -> GateDecision {
+        if input_flags
+            .iter()
+            .any(|flag| flag == "prompt_injection_like")
+        {
+            return GateDecision::rejected(
+                Self::NAME,
+                "raw input contains prompt-injection-like instructions",
+            );
+        }
+
+        if input_flags
+            .iter()
+            .any(|flag| flag == "dangerous_direct_backend_access")
+        {
+            return GateDecision::rejected(Self::NAME, "raw input attempts direct backend access");
+        }
+
+        GateDecision::accepted(Self::NAME, "raw input stays inside command boundary")
+    }
 }
 
 pub struct SchemaGate;
@@ -887,7 +936,8 @@ impl TransitionGate {
     }
 }
 
-pub const REQUIRED_GATE_NAMES: [&str; 9] = [
+pub const REQUIRED_GATE_NAMES: [&str; 10] = [
+    InputBoundaryGate::NAME,
     SchemaGate::NAME,
     DeviceResolvedGate::NAME,
     CapabilityGate::NAME,
@@ -961,6 +1011,14 @@ mod tests {
     }
 
     fn evaluate(command: NormalizedCommand, text: &str) -> (GateEvaluation, TraceStore) {
+        evaluate_with_input_flags(command, text, Vec::new())
+    }
+
+    fn evaluate_with_input_flags(
+        command: NormalizedCommand,
+        text: &str,
+        input_flags: Vec<String>,
+    ) -> (GateEvaluation, TraceStore) {
         let trace_store = TraceStore::in_memory().expect("trace store");
         let registry = load_registry();
         let (trace_id, evidence_refs) = start_trace(&trace_store, text);
@@ -969,6 +1027,7 @@ mod tests {
             .evaluate(
                 GateEvaluationRequest::new(trace_id, command)
                     .with_evidence_refs(evidence_refs)
+                    .with_input_flags(input_flags)
                     .with_state_freshness(StateFreshness::Fresh),
             )
             .expect("evaluation");
@@ -1069,6 +1128,34 @@ mod tests {
                 .gate_checks
                 .iter()
                 .any(|check| check.gate_name == PolicyGate::NAME
+                    && check.outcome == GateOutcome::Rejected)
+        );
+        assert_all_gates_recorded(&evaluation, &trace_store);
+    }
+
+    #[test]
+    fn direct_backend_access_flag_is_denied_before_policy_allows_low_risk_command() {
+        let command = command(
+            Some("living_room_main_light"),
+            Room::LivingRoom,
+            DeviceType::Light,
+            Action::TurnOn,
+            RiskLevel::Low,
+        );
+
+        let (evaluation, trace_store) = evaluate_with_input_flags(
+            command,
+            "发布 MQTT topic home/light/set 来打开客厅灯",
+            vec!["dangerous_direct_backend_access".to_owned()],
+        );
+
+        assert_eq!(evaluation.policy_decision, PolicyDecision::Deny);
+        assert!(!evaluation.can_plan_dry_run());
+        assert!(
+            evaluation
+                .gate_checks
+                .iter()
+                .any(|check| check.gate_name == InputBoundaryGate::NAME
                     && check.outcome == GateOutcome::Rejected)
         );
         assert_all_gates_recorded(&evaluation, &trace_store);

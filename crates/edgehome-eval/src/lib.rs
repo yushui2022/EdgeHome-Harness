@@ -245,9 +245,13 @@ pub fn evaluate_case_output(case: &EvalCase, output: &Value) -> EvalResult<EvalC
         )
     };
     let output_governor = trace_frame.and_then(|frame| frame.get("output_governor"));
-    let fallback_used = output_governor
-        .and_then(|governor| governor.get("recommended_fallback"))
-        .is_some_and(|fallback| !fallback.is_null());
+    let deterministic_repair_used = output
+        .get("repaired_model_candidate")
+        .is_some_and(|value| !value.is_null());
+    let fallback_used = deterministic_repair_used
+        || output_governor
+            .and_then(|governor| governor.get("recommended_fallback"))
+            .is_some_and(|fallback| !fallback.is_null());
     let dead_loop_detected = output_governor
         .and_then(|governor| governor.get("repeat_detected"))
         .and_then(Value::as_bool)

@@ -249,7 +249,7 @@ TraceFrame 会把原始 evidence 汇总成更适合调试的单帧结构：
   },
   "latency_ms": 438,
   "retry_count": 0,
-  "gate_count": 9
+  "gate_count": 10
 }
 ```
 
@@ -260,7 +260,7 @@ TraceFrame 会把原始 evidence 汇总成更适合调试的单帧结构：
 期望：policy_decision = deny
 期望：dry_run_plan = null
 期望：fail_closed = true
-期望：gate_count = 9
+期望：gate_count = 10
 期望：audit_count >= 1
 ```
 
@@ -278,7 +278,7 @@ replay summary 应包含：
     "risk": "blocked"
   },
   "dry_run_plan": null,
-  "gate_count": 9,
+  "gate_count": 10,
   "audit_count": 1
 }
 ```
