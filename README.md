@@ -55,7 +55,7 @@ enter a constrained command pipeline without being trusted as the executor.
 | Home Assistant adapter | Demo payload adapter implemented |
 | MIoT / Xiaomi | Future adapter target; fails closed today |
 | Matter | Future adapter target |
-| MQTT | Future adapter target; fails closed today |
+| MQTT | Dry-run payload adapter implemented; real publish disabled |
 | Real device execution | Disabled by default |
 | Release eval gate | 108 mock cases across 12 categories |
 
@@ -299,7 +299,7 @@ User Chinese command
 | Home Assistant | Demo adapter implemented | Service-call payload translation; real execution disabled by default | Production deployment or full HA coverage |
 | MIoT / Xiaomi | Future adapter target | Explicitly fails closed when selected today | Xiaomi device support |
 | Matter | Future adapter target | Documented as an adapter direction only | Matter controller support |
-| MQTT | Future adapter target | Explicitly fails closed when selected today | Topic or payload compatibility |
+| MQTT | Dry-run adapter implemented | Configured topic/payload dry-run translation; real publish disabled | Universal MQTT smart-home schema or production broker operation |
 
 Unsupported backend targets must fail closed. They must not silently fall back
 to mock payloads.
@@ -330,7 +330,7 @@ to mock payloads.
 - Replacement for Mi Home, Home Assistant, Matter, MQTT, or a smart speaker.
 - Xiaomi / MIoT support today.
 - Matter controller support today.
-- MQTT topic or payload compatibility today.
+- MQTT real broker publish today.
 - Long-running benchmark on a real 2GB ARM board.
 - Proof that all smart-home natural-language inputs are understood.
 - Real-device execution enabled by default.

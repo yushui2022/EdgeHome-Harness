@@ -68,6 +68,12 @@ pub enum ExecutorError {
     #[error("backend adapter is not implemented: {backend}")]
     BackendAdapterNotImplemented { backend: String },
 
+    #[error("missing MQTT topic route for device `{0}`")]
+    MissingMqttRoute(String),
+
+    #[error("invalid MQTT topic: {0}")]
+    InvalidMqttTopic(String),
+
     #[error("missing Home Assistant route for device `{0}`")]
     MissingHomeAssistantRoute(String),
 
@@ -157,6 +163,24 @@ impl BackendAdapter for HomeAssistantAdapter {
         plan: &ExecutionPlan,
     ) -> ExecutorResult<Value> {
         home_assistant_payload(device, command, plan)
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct MqttAdapter;
+
+impl BackendAdapter for MqttAdapter {
+    fn kind(&self) -> BackendKind {
+        BackendKind::Mqtt
+    }
+
+    fn dry_run_payload(
+        &self,
+        device: &DeviceRecord,
+        command: &NormalizedCommand,
+        _plan: &ExecutionPlan,
+    ) -> ExecutorResult<Value> {
+        mqtt_payload(device, command)
     }
 }
 
@@ -438,11 +462,10 @@ fn backend_payload(
     match &device.backend {
         BackendKind::Mock => MockAdapter.dry_run_payload(device, command, plan),
         BackendKind::HomeAssistant => HomeAssistantAdapter.dry_run_payload(device, command, plan),
-        BackendKind::MiioLocal | BackendKind::Mqtt => {
-            Err(ExecutorError::BackendAdapterNotImplemented {
-                backend: backend_name(&device.backend).to_owned(),
-            })
-        }
+        BackendKind::Mqtt => MqttAdapter.dry_run_payload(device, command, plan),
+        BackendKind::MiioLocal => Err(ExecutorError::BackendAdapterNotImplemented {
+            backend: backend_name(&device.backend).to_owned(),
+        }),
     }
 }
 
@@ -466,6 +489,59 @@ fn home_assistant_payload(
             "time_after": command.params.time_after,
         }
     }))
+}
+
+fn mqtt_payload(device: &DeviceRecord, command: &NormalizedCommand) -> ExecutorResult<Value> {
+    let topic = device.backend_entity_id.trim();
+    if topic.is_empty() {
+        return Err(ExecutorError::MissingMqttRoute(device.device_id.0.clone()));
+    }
+    validate_mqtt_topic(topic)?;
+
+    Ok(json!({
+        "backend": "mqtt",
+        "device_id": device.device_id,
+        "topic": topic,
+        "qos": 0,
+        "retain": false,
+        "room": device.room,
+        "device_type": device.device_type,
+        "action": command.action,
+        "payload": mqtt_action_payload(command),
+        "condition": {
+            "time_after": command.params.time_after,
+        }
+    }))
+}
+
+fn mqtt_action_payload(command: &NormalizedCommand) -> Value {
+    match command.action {
+        Action::TurnOn => json!({ "power": "on" }),
+        Action::TurnOff => json!({ "power": "off" }),
+        Action::SetBrightness => json!({ "brightness_pct": command.params.brightness }),
+        Action::IncreaseBrightness => json!({ "brightness_delta": "increase" }),
+        Action::DecreaseBrightness => json!({ "brightness_delta": "decrease" }),
+        Action::SetTemperature => json!({ "temperature": command.params.temperature }),
+        Action::SetMode => json!({ "mode": command.params.mode }),
+        Action::Open => json!({ "state": "open" }),
+        Action::Close => json!({ "state": "close" }),
+        Action::Lock => json!({ "state": "locked" }),
+        Action::Unlock => json!({ "state": "unlocked" }),
+        Action::Unknown => json!({ "operation": "unknown" }),
+    }
+}
+
+fn validate_mqtt_topic(topic: &str) -> ExecutorResult<()> {
+    if topic.is_empty()
+        || topic != topic.trim()
+        || topic.starts_with('$')
+        || topic.contains('#')
+        || topic.contains('+')
+        || topic.chars().any(|character| character.is_control())
+    {
+        return Err(ExecutorError::InvalidMqttTopic(topic.to_owned()));
+    }
+    Ok(())
 }
 
 fn operation_name(action: &Action) -> &'static str {
@@ -791,15 +867,98 @@ mod tests {
     }
 
     #[test]
-    fn dry_run_planner_rejects_unimplemented_mqtt_backend() {
-        let gated = accepted_gated_command();
-        let error = DryRunPlanner
+    fn dry_run_planner_translates_mqtt_light_turn_on_golden_payload() {
+        let command = NormalizedCommand {
+            action: Action::TurnOn,
+            params: CommandParams::default(),
+            ..command()
+        };
+        let gated = accepted_gated_for(command, PolicyDecision::Allow, RiskLevel::Low);
+        let plan = DryRunPlanner
             .plan_gated(&gated, &mqtt_light_device())
-            .expect_err("mqtt adapter is not implemented");
+            .expect("mqtt dry-run plan");
+
+        assert_eq!(plan.backend, "mqtt");
+        assert_eq!(
+            plan.payload,
+            json!({
+                "backend": "mqtt",
+                "device_id": "hallway_light",
+                "topic": "home/hallway/light/set",
+                "qos": 0,
+                "retain": false,
+                "room": "hallway",
+                "device_type": "light",
+                "action": "turn_on",
+                "payload": {
+                    "power": "on"
+                },
+                "condition": {
+                    "time_after": null
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn dry_run_planner_translates_mqtt_brightness_golden_payload() {
+        let gated = accepted_gated_command();
+        let plan = DryRunPlanner
+            .plan_gated(&gated, &mqtt_light_device())
+            .expect("mqtt dry-run plan");
+
+        assert_eq!(plan.backend, "mqtt");
+        assert_eq!(
+            plan.payload,
+            json!({
+                "backend": "mqtt",
+                "device_id": "hallway_light",
+                "topic": "home/hallway/light/set",
+                "qos": 0,
+                "retain": false,
+                "room": "hallway",
+                "device_type": "light",
+                "action": "set_brightness",
+                "payload": {
+                    "brightness_pct": 30
+                },
+                "condition": {
+                    "time_after": "22:00"
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn dry_run_planner_rejects_invalid_mqtt_topic() {
+        let gated = accepted_gated_command();
+        let device = DeviceRecord {
+            backend_entity_id: "home/+/light/set".to_owned(),
+            ..mqtt_light_device()
+        };
+        let error = DryRunPlanner
+            .plan_gated(&gated, &device)
+            .expect_err("invalid mqtt topic is rejected");
+
+        assert!(
+            matches!(error, ExecutorError::InvalidMqttTopic(topic) if topic == "home/+/light/set")
+        );
+    }
+
+    #[test]
+    fn dry_run_planner_rejects_missing_mqtt_route() {
+        let gated = accepted_gated_command();
+        let device = DeviceRecord {
+            backend_entity_id: " ".to_owned(),
+            ..mqtt_light_device()
+        };
+        let error = DryRunPlanner
+            .plan_gated(&gated, &device)
+            .expect_err("missing mqtt route is rejected");
 
         assert!(matches!(
             error,
-            ExecutorError::BackendAdapterNotImplemented { backend } if backend == "mqtt"
+            ExecutorError::MissingMqttRoute(device_id) if device_id == "hallway_light"
         ));
     }
 

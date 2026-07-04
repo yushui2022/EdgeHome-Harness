@@ -14,7 +14,7 @@ appear.
 | Home Assistant | Demo adapter implemented | Produces service-call dry-run payloads |
 | MIoT / Xiaomi | Future target | Fails closed today |
 | Matter | Future target | Not represented as an implemented backend today |
-| MQTT | Future target | Fails closed today |
+| MQTT | Dry-run adapter implemented | Produces configured topic/payload dry-run payloads |
 
 ## Adapter Inputs
 
@@ -59,12 +59,12 @@ Implemented adapters:
 ```text
 MockAdapter
 HomeAssistantAdapter
+MqttAdapter
 ```
 
 Unsupported backend kinds must return a clear error:
 
 ```text
-backend adapter is not implemented: mqtt
 backend adapter is not implemented: miio_local
 ```
 
@@ -102,9 +102,12 @@ Home Assistant light.turn_on -> exact dry-run payload
 Home Assistant light brightness -> exact dry-run payload
 Home Assistant climate temperature -> exact dry-run payload
 Home Assistant climate mode -> exact service-call payload
+MQTT light.turn_on -> exact publish dry-run payload
+MQTT light brightness -> exact publish dry-run payload
+Invalid MQTT topic -> fail closed
+Missing MQTT route -> fail closed
 Missing Home Assistant route -> fail closed
 Invalid Home Assistant entity_id -> fail closed
-MQTT selected -> BackendAdapterNotImplemented
 MiioLocal selected -> BackendAdapterNotImplemented
 Home Assistant dry-run -> no token required and no real service call
 Dry-run payload serialization -> no token/env secret leakage
@@ -157,12 +160,35 @@ Example payload:
 `entity_id` comes from `DeviceRecord.backend_entity_id`. It is not emitted by
 MiniCPM.
 
-## Future MQTT Adapter
+## MQTT Adapter
 
 MQTT is a publish/subscribe protocol. It does not define a universal smart-home
 JSON format.
 
-A future adapter profile should define:
+The current adapter produces deterministic dry-run publish payloads. Real broker
+publish is not enabled by default and requires a separate explicit execution
+mode.
+
+The MQTT route comes from `DeviceRecord.backend_entity_id` or future adapter
+profile configuration. It is not emitted by MiniCPM.
+
+Example dry-run payload:
+
+```json
+{
+  "backend": "mqtt",
+  "device_id": "hallway_light",
+  "topic": "home/hallway/light/set",
+  "qos": 0,
+  "retain": false,
+  "action": "turn_on",
+  "payload": {
+    "power": "on"
+  }
+}
+```
+
+An adapter profile may define:
 
 ```text
 topic
@@ -171,11 +197,11 @@ QoS, if needed
 retain, if needed
 ```
 
-Example design only:
+Example profile:
 
 ```yaml
 backend: mqtt
-status: future_design_only
+status: dry_run_adapter
 routes:
   - device_id: hallway_light
     action: turn_on

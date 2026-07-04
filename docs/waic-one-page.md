@@ -81,7 +81,8 @@ traceability, and adapter boundaries:
 - Typed `GatedCommand` boundary before dry-run planning.
 - Golden tests for exact Mock and Home Assistant demo adapter payloads.
 - Missing Home Assistant routes and invalid entity IDs fail closed.
-- MQTT and miIO-local backend selections fail closed today.
+- MQTT dry-run payload translation is implemented; real MQTT publish and
+  miIO-local backend execution fail closed today.
 
 This verifies covered harness regressions, not broad natural-language
 understanding, production readiness, or real-device deployment at scale.
@@ -105,7 +106,7 @@ Implemented:
 Not claimed:
 
 - Production-ready smart-home gateway.
-- Xiaomi / MIoT / Matter / MQTT support today.
+- Xiaomi / MIoT / Matter support today, or MQTT real broker publish today.
 - Real-device execution enabled by default.
 - Full Home Assistant production coverage.
 - Model-generated vendor-ready JSON.
@@ -137,12 +138,14 @@ Current:
 - Mock: implemented for deterministic dry-run and eval.
 - Home Assistant: demo adapter implemented for service-call payloads, with real
   execution disabled by default.
+- MQTT: dry-run payload adapter implemented; real broker publish remains
+  disabled.
 
 Future targets:
 
 - MIoT / Xiaomi adapter.
 - Matter controller adapter.
-- MQTT adapter.
+- MQTT guarded real publish.
 
 Unsupported backends must fail closed until code, configuration, golden tests,
 secret-handling tests, and documentation all exist.

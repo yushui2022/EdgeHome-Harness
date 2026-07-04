@@ -1,14 +1,14 @@
-# Future MQTT adapter profile example.
+# MQTT adapter profile example.
 #
-# Status: design example only. The current code does not implement an MQTT
-# adapter. Selecting BackendKind::Mqtt fails closed.
+# Status: dry-run payload adapter implemented. Guarded real publish remains an
+# explicit future execution mode and must stay disabled by default.
 #
 # MQTT defines publish/subscribe transport. Smart-home topic and payload formats
 # are application-specific, so they must be configured here instead of emitted by
 # MiniCPM.
 
 backend: mqtt
-status: future_design_only
+status: dry_run_adapter
 
 connection:
   broker_url_env: EDGEHOME_MQTT_BROKER_URL

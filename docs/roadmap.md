@@ -14,6 +14,7 @@ Implemented today:
 - Dry-run `ExecutionPlan`.
 - Mock adapter.
 - Home Assistant demo payload adapter.
+- MQTT dry-run payload adapter.
 - 108-case mock eval gate across 12 categories.
 - Trace, replay, audit, storage, and low-memory profile documentation.
 
@@ -21,7 +22,7 @@ Not implemented today:
 
 - Real MIoT/Xiaomi adapter.
 - Matter controller adapter.
-- MQTT adapter.
+- MQTT real broker publish.
 - Production smart-home gateway behavior.
 - Real-device execution enabled by default.
 - Long-running physical 2GB ARM benchmark.
@@ -52,8 +53,8 @@ Backend adapters should be added only when they have:
 Candidate order:
 
 1. Expand Home Assistant demo coverage while keeping real execution gated.
-2. Add MQTT as an app-defined topic/payload adapter, not as a universal
-   smart-home standard.
+2. Add guarded MQTT real publish as an explicit execution mode, not as default
+   behavior.
 3. Research MIoT/Xiaomi mappings with real device profiles before claiming
    support.
 4. Treat Matter as a controller integration project, not a JSON payload format.

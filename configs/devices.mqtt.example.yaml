@@ -1,0 +1,24 @@
+# Example MQTT device registry.
+#
+# This file is a registry example, not a broker secret store. MQTT topics are
+# configured here as backend routes. MiniCPM must not emit MQTT topics.
+
+devices:
+  - device_id: hallway_light
+    aliases: ["hallway light", "hallway strip"]
+    room: hallway
+    device_type: light
+    backend: mqtt
+    backend_entity_id: home/hallway/light/set
+    risk_level: low
+
+capabilities:
+  light:
+    - action: turn_on
+    - action: turn_off
+    - action: set_brightness
+      min: 0
+      max: 100
+      unit: percent
+    - action: increase_brightness
+    - action: decrease_brightness

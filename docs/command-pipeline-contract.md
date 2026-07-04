@@ -101,7 +101,7 @@ Examples:
 ```text
 MockAdapter -> deterministic mock payload
 HomeAssistantAdapter -> Home Assistant service-call payload
-Future MqttAdapter -> MQTT topic and payload
+MqttAdapter -> MQTT dry-run topic and payload
 Future MiotAdapter -> MIoT property/action payload
 Future MatterAdapter -> Matter command route
 ```

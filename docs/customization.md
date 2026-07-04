@@ -187,12 +187,13 @@ The model never emits `light.hallway`.
 
 ## MQTT Example
 
-MQTT is not implemented today. A future MQTT adapter should use route mappings
-like this:
+MQTT dry-run payload translation is implemented. Real broker publish remains
+disabled unless a future explicit execution mode is configured. MQTT route
+mappings should look like this:
 
 ```yaml
 backend: mqtt
-status: future_design_only
+status: dry_run_adapter
 routes:
   - device_id: hallway_light
     action: turn_on
@@ -201,7 +202,8 @@ routes:
       power: "on"
 ```
 
-Until a real adapter and tests exist, selecting MQTT fails closed.
+Topics and payload templates are adapter-owned. MiniCPM must not emit MQTT
+topics.
 
 ## MIoT Example
 

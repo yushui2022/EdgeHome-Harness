@@ -12,8 +12,10 @@ Before every release, confirm these statements are still true:
 - Backend adapters translate verified internal plans.
 - Real device execution is disabled by default.
 - Unsupported backends fail closed.
-- MIoT/Xiaomi, Matter, and MQTT remain future targets unless code, config,
-  golden tests, docs, and eval coverage prove otherwise.
+- MQTT remains dry-run-only unless guarded real publish code, tests, and docs
+  prove otherwise.
+- MIoT/Xiaomi and Matter remain future targets unless code, config, golden
+  tests, docs, and real controller/device validation prove otherwise.
 
 ## 2. Required Commands
 

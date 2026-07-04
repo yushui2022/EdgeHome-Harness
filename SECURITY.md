@@ -13,9 +13,10 @@ documented `0.1.x` prototype baseline.
 Important current limitations:
 
 - Real device execution is disabled by default.
-- Mock and Home Assistant demo dry-run paths are implemented.
-- MIoT/Xiaomi, Matter, and MQTT are future adapter targets, not implemented
-  backend support today.
+- Mock, Home Assistant demo, and MQTT dry-run payload paths are implemented.
+- MQTT real broker publish is not enabled by default.
+- MIoT/Xiaomi and Matter are future adapter targets, not implemented backend
+  support today.
 
 ## What To Report
 
