@@ -320,48 +320,46 @@ fn run_mock_pipeline(
     )?;
 
     let mut normalized = normalize_mock_candidate(&candidate)?;
-    if profile.memory_enabled {
-        if let Some((resolved, source)) =
+    if profile.memory_enabled
+        && let Some((resolved, source)) =
             resolve_alias_from_memory_or_registry(&normalized, &candidate, &long_items, &registry)?
-        {
-            let alias_resolution = trace_store.record_evidence(NewEvidence::new(
-                EvidenceKind::MemoryItem,
-                SourceSystem::Memory,
-                "alias memory resolved command target",
-                json!({
-                    "source": source,
-                    "before": normalized.clone(),
-                    "after": resolved.clone(),
-                }),
-            ))?;
-            trace_store.append_step(
-                &trace.trace_id,
-                NewCommandStep::new("alias_memory_resolution", StepStatus::Succeeded)
-                    .with_evidence_refs(vec![alias_resolution.id.clone()]),
-            )?;
-            normalized = resolved;
-        }
+    {
+        let alias_resolution = trace_store.record_evidence(NewEvidence::new(
+            EvidenceKind::MemoryItem,
+            SourceSystem::Memory,
+            "alias memory resolved command target",
+            json!({
+                "source": source,
+                "before": normalized.clone(),
+                "after": resolved.clone(),
+            }),
+        ))?;
+        trace_store.append_step(
+            &trace.trace_id,
+            NewCommandStep::new("alias_memory_resolution", StepStatus::Succeeded)
+                .with_evidence_refs(vec![alias_resolution.id.clone()]),
+        )?;
+        normalized = resolved;
     }
-    if profile.memory_enabled {
-        if let Some(resolved) = short_memory.resolve_relative_command(&normalized) {
-            if resolved != normalized {
-                let memory_resolution = trace_store.record_evidence(NewEvidence::new(
-                    EvidenceKind::MemoryItem,
-                    SourceSystem::Memory,
-                    "short memory resolved relative command",
-                    json!({
-                        "before": normalized.clone(),
-                        "after": resolved.clone(),
-                    }),
-                ))?;
-                trace_store.append_step(
-                    &trace.trace_id,
-                    NewCommandStep::new("short_memory_resolution", StepStatus::Succeeded)
-                        .with_evidence_refs(vec![memory_resolution.id.clone()]),
-                )?;
-                normalized = resolved;
-            }
-        }
+    if profile.memory_enabled
+        && let Some(resolved) = short_memory.resolve_relative_command(&normalized)
+        && resolved != normalized
+    {
+        let memory_resolution = trace_store.record_evidence(NewEvidence::new(
+            EvidenceKind::MemoryItem,
+            SourceSystem::Memory,
+            "short memory resolved relative command",
+            json!({
+                "before": normalized.clone(),
+                "after": resolved.clone(),
+            }),
+        ))?;
+        trace_store.append_step(
+            &trace.trace_id,
+            NewCommandStep::new("short_memory_resolution", StepStatus::Succeeded)
+                .with_evidence_refs(vec![memory_resolution.id.clone()]),
+        )?;
+        normalized = resolved;
     }
     let normalized_ref = trace_store.record_evidence(NewEvidence::new(
         EvidenceKind::NormalizedCommand,
@@ -993,18 +991,15 @@ fn resolve_alias_from_memory_or_registry(
     if let Some(item) = long_items
         .iter()
         .find(|item| item.kind == MemoryKind::DeviceAlias && item.key == alias)
+        && let Some(device_id) = item.value.get("device_id").and_then(Value::as_str)
     {
-        if let Some(device_id) = item.value.get("device_id").and_then(Value::as_str) {
-            let device_id = DeviceId::new(device_id)?;
-            let device = registry.get_device(&device_id)?;
-            if command.device_type != DeviceType::Unknown
-                && command.device_type != device.device_type
-            {
-                return Ok(None);
-            }
-            let resolved = command_for_device(command, device);
-            return Ok(Some((resolved, format!("long_memory:{}", item.id))));
+        let device_id = DeviceId::new(device_id)?;
+        let device = registry.get_device(&device_id)?;
+        if command.device_type != DeviceType::Unknown && command.device_type != device.device_type {
+            return Ok(None);
         }
+        let resolved = command_for_device(command, device);
+        return Ok(Some((resolved, format!("long_memory:{}", item.id))));
     }
 
     if let Ok(device) = registry.resolve_alias(alias) {

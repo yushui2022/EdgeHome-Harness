@@ -149,17 +149,9 @@ impl DryRunPlanner {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct MockExecutor {
     execute_enabled: bool,
-}
-
-impl Default for MockExecutor {
-    fn default() -> Self {
-        Self {
-            execute_enabled: false,
-        }
-    }
 }
 
 impl MockExecutor {
@@ -318,10 +310,10 @@ impl RateLimiter {
 
     pub fn check(&mut self, plan: &ExecutionPlan, now: OffsetDateTime) -> ExecutorResult<()> {
         let key = rate_limit_key(plan);
-        if let Some(last_seen) = self.last_seen.get(&key) {
-            if now - *last_seen < self.cooldown {
-                return Err(ExecutorError::RateLimited);
-            }
+        if let Some(last_seen) = self.last_seen.get(&key)
+            && now - *last_seen < self.cooldown
+        {
+            return Err(ExecutorError::RateLimited);
         }
         self.last_seen.insert(key, now);
         Ok(())

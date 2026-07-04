@@ -373,11 +373,10 @@ pub fn evaluate_case_output(case: &EvalCase, output: &Value) -> EvalResult<EvalC
     let fail_closed = expected_blocked && actual_denied && !dry_run_ready && !executable;
 
     let slots_correct = (!slot_checks.is_empty()).then(|| slot_checks.iter().all(|ok| *ok));
-    let passed = failures.is_empty() && trace_id.is_some();
-    let mut failures = failures;
     if trace_id.is_none() {
         failures.push("trace_id missing".to_owned());
     }
+    let passed = failures.is_empty();
 
     Ok(EvalCaseResult {
         id: case.id.clone(),

@@ -92,12 +92,11 @@ pub struct SecretsLoader;
 impl SecretsLoader {
     pub fn load(config: &HomeAssistantConfig) -> ExecutorResult<Option<HomeAssistantSecrets>> {
         let env_var = config.token_env.trim();
-        if !env_var.is_empty() {
-            if let Ok(token) = std::env::var(env_var) {
-                if !token.trim().is_empty() {
-                    return HomeAssistantSecrets::new(token).map(Some);
-                }
-            }
+        if !env_var.is_empty()
+            && let Ok(token) = std::env::var(env_var)
+            && !token.trim().is_empty()
+        {
+            return HomeAssistantSecrets::new(token).map(Some);
         }
 
         if let Some(token_file) = config.token_file.as_ref() {

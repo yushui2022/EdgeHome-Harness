@@ -63,20 +63,15 @@ impl DeviceId {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum Intent {
     ControlDevice,
     QueryStatus,
     CreateRule,
     UpdateMemory,
+    #[default]
     Unknown,
-}
-
-impl Default for Intent {
-    fn default() -> Self {
-        Self::Unknown
-    }
 }
 
 impl Intent {
@@ -85,7 +80,7 @@ impl Intent {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum Room {
     LivingRoom,
@@ -94,13 +89,8 @@ pub enum Room {
     Kitchen,
     Bathroom,
     Entrance,
+    #[default]
     Unknown,
-}
-
-impl Default for Room {
-    fn default() -> Self {
-        Self::Unknown
-    }
 }
 
 impl Room {
@@ -109,7 +99,7 @@ impl Room {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum DeviceType {
     Light,
@@ -120,13 +110,8 @@ pub enum DeviceType {
     Lock,
     Sensor,
     GasDevice,
+    #[default]
     Unknown,
-}
-
-impl Default for DeviceType {
-    fn default() -> Self {
-        Self::Unknown
-    }
 }
 
 impl DeviceType {
@@ -135,7 +120,7 @@ impl DeviceType {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum Action {
     TurnOn,
@@ -149,13 +134,8 @@ pub enum Action {
     Close,
     Lock,
     Unlock,
+    #[default]
     Unknown,
-}
-
-impl Default for Action {
-    fn default() -> Self {
-        Self::Unknown
-    }
 }
 
 impl Action {
@@ -164,7 +144,7 @@ impl Action {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum RiskLevel {
     Read,
@@ -172,13 +152,8 @@ pub enum RiskLevel {
     Medium,
     High,
     Blocked,
+    #[default]
     Unknown,
-}
-
-impl Default for RiskLevel {
-    fn default() -> Self {
-        Self::Unknown
-    }
 }
 
 impl RiskLevel {

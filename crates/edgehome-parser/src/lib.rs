@@ -310,10 +310,10 @@ impl SchemaValidator {
                 candidate.schema_version.0,
             ));
         }
-        if let Some(brightness) = candidate.params.brightness {
-            if brightness > 100 {
-                return Err(ParserError::BrightnessOutOfRange(brightness));
-            }
+        if let Some(brightness) = candidate.params.brightness
+            && brightness > 100
+        {
+            return Err(ParserError::BrightnessOutOfRange(brightness));
         }
 
         Ok(candidate)
@@ -350,10 +350,10 @@ pub struct SemanticNormalizer;
 
 impl SemanticNormalizer {
     pub fn normalize(&self, candidate: &ModelCandidate) -> ParserResult<NormalizedCommand> {
-        if let Some(brightness) = candidate.params.brightness {
-            if brightness > 100 {
-                return Err(ParserError::BrightnessOutOfRange(brightness));
-            }
+        if let Some(brightness) = candidate.params.brightness
+            && brightness > 100
+        {
+            return Err(ParserError::BrightnessOutOfRange(brightness));
         }
 
         let room = candidate.room.clone().unwrap_or_default();
@@ -584,10 +584,10 @@ fn first_duplicate_top_level_key(json_text: &str) -> ParserResult<Option<String>
             '{' => depth += 1,
             '}' => depth = depth.saturating_sub(1),
             ':' if depth == 1 => {
-                if let Some(key) = top_level_key_candidate.take() {
-                    if !keys.insert(key.clone()) {
-                        return Ok(Some(key));
-                    }
+                if let Some(key) = top_level_key_candidate.take()
+                    && !keys.insert(key.clone())
+                {
+                    return Ok(Some(key));
                 }
             }
             ',' if depth == 1 => top_level_key_candidate = None,

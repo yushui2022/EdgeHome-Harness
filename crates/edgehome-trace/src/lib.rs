@@ -593,7 +593,7 @@ impl TraceStore {
                     created_at
                 FROM gate_checks
                 WHERE trace_id = ?1
-                ORDER BY created_at ASC",
+                ORDER BY created_at ASC, rowid ASC",
                 &[text(&trace_id.0)],
             )?
             .into_iter()

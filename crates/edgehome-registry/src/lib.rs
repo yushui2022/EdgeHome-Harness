@@ -290,12 +290,12 @@ impl DeviceStateProvider for StateCache {
 pub type MockStateProvider = StateCache;
 
 fn validate_params(rule: &CapabilityRule, params: &CommandParams) -> RegistryResult<()> {
-    if rule.action == Action::SetBrightness {
-        if let Some(brightness) = params.brightness {
-            let value = i64::from(brightness);
-            if rule.min.is_some_and(|min| value < min) || rule.max.is_some_and(|max| value > max) {
-                return Err(RegistryError::BrightnessOutOfRange { value: brightness });
-            }
+    if rule.action == Action::SetBrightness
+        && let Some(brightness) = params.brightness
+    {
+        let value = i64::from(brightness);
+        if rule.min.is_some_and(|min| value < min) || rule.max.is_some_and(|max| value > max) {
+            return Err(RegistryError::BrightnessOutOfRange { value: brightness });
         }
     }
     Ok(())
