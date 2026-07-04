@@ -83,7 +83,7 @@ traceability, and adapter boundaries:
 - Missing Home Assistant routes and invalid entity IDs fail closed.
 - MQTT and miIO-local backend selections fail closed today.
 
-This proves covered harness regressions, not broad natural-language
+This verifies covered harness regressions, not broad natural-language
 understanding, production readiness, or real-device deployment at scale.
 
 ## Current Scope

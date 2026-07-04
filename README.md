@@ -2,358 +2,77 @@
 
 ![EdgeHome Harness overview](docs/assets/edgehome-harness-overview.jpg)
 
-**EdgeHome Harness** is a Rust agent harness built specifically for **MiniCPM-class
-1B edge models**, with the current default profile tuned for
-`openbmb/minicpm5:1b`.
+_Overview diagram. The current repository implements a dry-run execution
+boundary; real device execution is disabled by default._
 
-The project focuses on a constrained smart-home control scenario: Chinese IoT
-commands, local inference, structured JSON candidates, deterministic validation,
-safe execution boundaries, trace replay, and release-gated evaluation.
-
-It is not a generic chatbot framework. It is also not a replacement for Home
-Assistant, Mi Home, Matter, or a commercial smart speaker. The goal is narrower
-and more engineering-oriented:
-
-```text
-Turn a small local MiniCPM model that may repeat, drift, or produce unstable JSON
-into a bounded command-candidate generator.
-
-Then let Rust decide what is valid, safe, executable, traceable, and releasable.
-```
-
-## Core Idea
-
-```text
-ModelOutput != Command
-```
-
-MiniCPM proposes a candidate JSON object. The harness decides whether that
-candidate can become a `GatedCommand` and then an `ExecutionPlan`.
-
-Public shorthand:
+**A Rust safety harness for MiniCPM-powered edge home command agents.**
 
 ```text
 MiniCPM proposes. Rust decides. Adapters translate.
 ```
 
-The model never gets direct authority over devices, backend entity IDs, tokens,
-policy, memory writes, or execution. Those responsibilities stay in deterministic
-Rust components:
+EdgeHome Harness keeps a small local MiniCPM-class model in a narrow, auditable
+role: generate backend-neutral smart-home command candidates. Rust owns the
+parts that must be deterministic: schema validation, device resolution, policy
+gates, dry-run planning, traceability, evaluation, and backend payload
+translation.
+
+This is not a generic chatbot framework, a production smart-home gateway, a Mi
+Home replacement, a Home Assistant replacement, or a smart speaker. It is a
+reproducible engineering prototype for studying how a 1B local model can safely
+enter a constrained command pipeline without being trusted as the executor.
+
+## At A Glance
+
+| Area | Current status |
+| --- | --- |
+| Target model profile | MiniCPM / MiniCPM5-class local 1B model |
+| Model output | Backend-neutral candidate JSON |
+| Rust validation and normalization | Implemented |
+| Registry-based device resolution | Implemented |
+| `GateEngine` / `GatedCommand` boundary | Implemented |
+| Dry-run `ExecutionPlan` | Implemented |
+| Mock adapter | Implemented |
+| Home Assistant adapter | Demo payload adapter implemented |
+| MIoT / Xiaomi | Future adapter target; fails closed today |
+| Matter | Future adapter target |
+| MQTT | Future adapter target; fails closed today |
+| Real device execution | Disabled by default |
+| Release eval gate | 108 mock cases across 12 categories |
+
+## Why This Exists
+
+Small local models are useful for narrow slot extraction, but they are not safe
+execution authorities. They can omit fields, repeat, drift, produce malformed
+JSON, or invent identifiers that look plausible.
+
+EdgeHome Harness is built around one rule:
 
 ```text
-MiniCPM / MiniCPM5-1B
-+ Rust Harness
-+ Runtime Memory
-+ Output Governor
-+ Device Registry
-+ GateEngine / GatedCommand
-+ Dry-run / ExecutionPlan / BackendAdapter boundary
-+ Trace / Replay / Eval / Release Gate
+ModelOutput != Command
 ```
 
-## Command Boundary
+MiniCPM may propose:
 
-MiniCPM never emits vendor payloads. Its output contract is a backend-neutral
-candidate JSON owned by this project.
+- intent
+- room
+- device alias
+- device type
+- action
+- short parameters such as brightness, temperature, mode, or time condition
 
-The model does not generate:
+MiniCPM must not decide:
 
+- real `device_id`
 - Home Assistant `entity_id`
 - MIoT `did / siid / piid / aiid`
 - Matter node, endpoint, cluster, attribute, or command IDs
-- MQTT topics or broker routes
-- tokens, backend URLs, or API payloads
+- MQTT topics or payload routes
+- backend URLs, tokens, secrets, or execution switches
+- risk level or safety policy
 
-Those fields live in the device registry, backend adapter configuration, or
-executor layer. This keeps model output small and auditable, and prevents a
-small model from inventing vendor-specific identifiers.
-
-## Why MiniCPM
-
-EdgeHome Harness is designed around the practical constraints of **small local
-models**, especially MiniCPM-style 1B deployment:
-
-- Short context windows are preferred over long conversational history.
-- JSON output must be short, bounded, and schema checked.
-- Repetition and dead-loop behavior must be detected outside the model.
-- Runtime memory should be compact, structured, and optional under pressure.
-- Safety policy must not depend on model judgment.
-- Unknown devices, unsupported actions, and dangerous operations must fail
-  closed.
-
-The default runtime profile is intentionally MiniCPM-oriented:
-
-```yaml
-model_name: openbmb/minicpm5:1b
-temperature: 0.1
-top_p: 0.8
-top_k: 20
-repeat_penalty: 1.25
-num_ctx: 1024
-num_predict: 128
-timeout_ms: 8000
-retry_count: 1
-memory_enabled: true
-max_short_memory_turns: 3
-max_context_chars: 500
-executor_backend: mock
-```
-
-The architecture can be adapted to other small structured-output models, but the
-current project claim is deliberately scoped to MiniCPM/MiniCPM5-style local
-edge inference.
-
-## What This Project Demonstrates
-
-EdgeHome Harness demonstrates the engineering layer required before a small
-model is allowed to participate in a real execution chain:
-
-- Guard user input before it reaches the model.
-- Compile compact runtime memory instead of injecting full chat history.
-- Ask MiniCPM to generate candidate JSON only.
-- Govern model output length, malformed JSON, retries, and repetition.
-- Parse and validate candidate JSON against Rust-owned schemas.
-- Normalize semantic slots into internal command types.
-- Resolve device aliases through controlled memory and registry paths, not
-  through model-generated backend IDs.
-- Enforce capability boundaries such as `light.set_brightness` vs.
-  unsupported `light.set_temperature`.
-- Apply deterministic policy for low, medium, high, blocked, and unknown risk.
-- Produce dry-run plans before any real execution.
-- Record evidence, traces, audit events, and replayable failure frames.
-- Evaluate releases against regression gates such as false-allow rate and
-  fail-closed coverage.
-
-## Current Status
-
-This repository is a reproducible engineering prototype and interview-ready
-demonstration project.
-
-Implemented:
-
-- Rust workspace with separated crates for core types, parser, registry, gate,
-  memory, Ollama adapter, executor, storage, trace, eval, and CLI.
-- MiniCPM5-1B low-memory profile.
-- Mock model and mock executor path for deterministic demos.
-- Ollama structured-output request adapter.
-- Output governor for overlong output, invalid JSON, dead-loop detection, retry
-  policy, and fallback classification.
-- Runtime memory for short-session references and confirmed long-term aliases.
-- Device registry and capability validation.
-- Policy gate with fail-closed behavior.
-- Typed `GatedCommand` boundary before dry-run planning.
-- Dry-run execution planner.
-- `BackendAdapter` trait with Mock and Home Assistant dry-run payload adapters.
-- Home Assistant demo backend boundary and disabled-by-default execution path.
-- SQLite-backed evidence, audit, trace, replay, and long-term memory.
-- Evaluation cases and release gate metrics.
-- Low-memory pressure policy for context/output reduction and rule-only fallback.
-
-Not claimed:
-
-- Production-ready smart-home gateway.
-- Replacement for Mi Home, Home Assistant, Matter, MQTT, or a smart speaker.
-- Full Mi Home / MIoT / miIO / Matter integration.
-- MQTT topic/payload compatibility.
-- Long-running benchmark on a real 2GB ARM board.
-- Proof that all smart-home natural-language inputs are understood.
-- Real-device execution enabled by default.
-
-## Evidence Snapshot
-
-Current evidence is intentionally scoped to harness behavior, mock evaluation,
-dry-run planning, and backend adapter boundaries:
-
-- 108-case mock eval gate across 12 categories.
-- `pass_rate = 1.0`, `schema_valid_rate = 1.0`, and `trace_coverage = 1.0`.
-- `false_allow_rate = 0.0` and `fail_closed_rate = 1.0`.
-- Typed `GatedCommand` boundary: `DryRunPlanner::plan_gated(...)` only consumes
-  gate-accepted commands.
-- Golden adapter tests pin exact Mock and Home Assistant dry-run payloads.
-- Missing Home Assistant routes, invalid entity IDs, MQTT, and miIO-local paths
-  fail closed in tests.
-
-This evidence does not claim broad natural-language understanding, production
-readiness, real Xiaomi / MIoT / Matter / MQTT support, or a long-running real
-2GB hardware benchmark.
-
-## Backend Support Matrix
-
-| Backend | Status | What works | What is not claimed |
-| --- | --- | --- | --- |
-| Mock | Implemented | Deterministic dry-run payloads and eval baseline | Real device control |
-| Home Assistant | Demo adapter implemented | Service-call payload translation, with real execution disabled by default | Production deployment or full HA coverage |
-| MIoT / Xiaomi | Future adapter target | Explicitly fails closed when selected today | Xiaomi device support |
-| Matter | Future adapter target | Documented as an adapter direction only | Matter controller support |
-| MQTT | Future adapter target | Explicitly fails closed when selected today | Topic or payload compatibility |
-
-## Architecture
-
-```mermaid
-flowchart TD
-    A["Chinese smart-home command"] --> B["Input Guard"]
-    B --> C["Rule Pre-Parser"]
-    C --> D["Runtime Memory"]
-    D --> E["Context Compiler"]
-    E --> F["MiniCPM5-1B Candidate JSON"]
-    F --> G["Output Governor"]
-    G --> H["JSON / Schema Validator"]
-    H --> I["Semantic Normalizer"]
-    I --> J["Device Registry"]
-    J --> K["GateEngine / GatedCommand"]
-    K --> L["Dry-run ExecutionPlan"]
-    L --> M["BackendAdapter / Executor Boundary"]
-    M --> N["Trace / Replay / Eval"]
-```
-
-The model is deliberately kept near the top of the pipeline. Everything after
-candidate generation is owned by the harness.
-
-## Command Pipeline Contract
-
-| Layer | Type | Owner | Trust level |
-| --- | --- | --- | --- |
-| Candidate JSON | `ModelCandidate` | MiniCPM / MockModel | Untrusted |
-| Internal command | `NormalizedCommand` | Rust Harness | Must be resolved and gated |
-| Gated command | `GatedCommand` | GateEngine | Accepted internal command only |
-| Verified plan | `ExecutionPlan` | DryRunPlanner | Trusted dry-run boundary |
-| Backend payload | `DryRunPlan.payload` | Backend adapter | Backend-specific |
-
-The canonical path is:
-
-```text
-User Chinese command
-  -> MiniCPM candidate JSON
-  -> Rust schema validation and semantic normalization
-  -> Device registry / memory resolution
-  -> Capability and policy gates
-  -> GatedCommand
-  -> ExecutionPlan
-  -> BackendAdapter payload
-```
-
-Users customize devices and backend mappings through registries and adapter
-configuration. The MiniCPM output schema remains fixed and backend-neutral.
-
-## Customization Model
-
-EdgeHome Harness is customizable at the registry and adapter layers, not by
-asking MiniCPM to emit vendor payloads.
-
-Users can customize:
-
-- device aliases
-- rooms and supported device records
-- risk levels
-- capability ranges
-- backend entity IDs
-- future backend adapter route mappings
-
-Users should not customize MiniCPM to emit Home Assistant `entity_id`, MIoT
-`did / siid / piid / aiid`, Matter route IDs, MQTT topics, tokens, URLs, or
-vendor API payloads directly.
-
-See:
-
-- [Customization Contract](docs/customization.md)
-- [Command Pipeline Contract](docs/command-pipeline-contract.md)
-- [Backend Adapter Contract](docs/backend-adapter-contract.md)
-
-## Online Request Path
-
-A single request goes through this shape:
-
-```text
-1. User input is checked by Input Guard.
-2. High-confidence commands may be handled by the Rule Pre-Parser.
-3. Runtime Memory provides compact recent context and confirmed aliases.
-4. Context Compiler builds a short MiniCPM prompt.
-5. MiniCPM / Ollama generates candidate JSON.
-6. Output Governor rejects overlong, repetitive, malformed, or unstable output.
-7. JSON Parser and Schema Validator validate structure.
-8. Semantic Normalizer converts candidate fields into internal command types.
-9. Device Registry resolves aliases and checks known devices.
-10. Capability Gate verifies that the device supports the requested action.
-11. Policy Gate decides allow, require confirmation, or deny.
-12. GateEngine emits a `GatedCommand` only for accepted dry-run candidates.
-13. DryRunPlanner creates an ExecutionPlan from the accepted `GatedCommand`.
-14. BackendAdapter translates the plan into a backend-specific dry-run payload.
-15. Executor boundary remains disabled by default for real devices.
-16. Trace Recorder writes replayable evidence and audit data.
-17. Eval Gate uses traces and command results to prevent release regressions.
-```
-
-## Safety Model
-
-The harness treats every model output as untrusted.
-
-Examples of deterministic safety rules:
-
-- Unknown intent fails closed.
-- Unknown room fails closed.
-- Unknown device fails closed.
-- Missing `device_id` fails closed.
-- Unsupported capability fails closed.
-- Out-of-range brightness fails closed.
-- Blocked-risk device actions are denied.
-- Medium/high-risk actions require confirmation before real execution.
-- Prompt-injection-like input is flagged.
-- Backend access requests such as `entity_id`, local URLs, SSH, and tokens are
-  flagged.
-- Real execution is disabled by default.
-
-Example denied request:
-
-```text
-关闭燃气报警器
-```
-
-The mock pipeline normalizes it as a gas-device command, resolves the registry
-entry, then rejects it because the authoritative device risk is `blocked`.
-
-## Runtime Memory
-
-Memory is intentionally small and structured. It is not an unbounded chat log.
-
-Short-session memory handles references such as:
-
-```text
-把刚才那个灯再调暗一点
-关闭空调
-```
-
-Long-term memory only accepts explicit and confirmed writes, for example:
-
-```text
-以后把玄关灯叫小夜灯
-```
-
-Memory cannot weaken safety policy. The context compiler also enforces character
-budgets so low-resource devices do not keep growing prompts.
-
-## Low-Memory Profile
-
-The default profile targets constrained edge environments:
-
-```text
-2GB-4GB RAM
-local inference
-short context
-short JSON output
-bounded memory injection
-deterministic policy
-traceable failure
-```
-
-The resource pressure policy can reduce `num_ctx` and `num_predict`, and in
-critical pressure it can disable memory injection and switch to rule-only
-fallback.
-
-See:
-
-- [2GB RAM Profile](docs/2gb-profile.md)
-- [2GB Memory Budget](docs/2gb-memory-budget.md)
-- [Model Parameters](docs/model-parameters.md)
+Those values come from Rust types, `DeviceRegistry`, capability rules, policy
+configuration, adapter configuration, and explicit operator-controlled settings.
 
 ## Quick Start
 
@@ -362,7 +81,7 @@ Requirements:
 - Rust `1.95` or newer.
 - Optional: Ollama with `openbmb/minicpm5:1b` for real MiniCPM runs.
 
-Show the default low-memory configuration:
+Show the default low-memory profile:
 
 ```powershell
 cargo run -q -p edgehome-cli -- config show
@@ -374,47 +93,118 @@ Run a deterministic mock dry-run:
 cargo run -q -p edgehome-cli -- --db-path edgehome-demo.sqlite dry-run --mock "把客厅灯打开"
 ```
 
+Expected shape:
+
+```text
+policy_decision = allow
+dry_run_plan != null
+backend = mock
+trace_id is recorded
+```
+
 Run a denied safety case:
 
 ```powershell
 cargo run -q -p edgehome-cli -- --db-path edgehome-demo.sqlite dry-run --mock "关闭燃气报警器"
 ```
 
-Run the mock evaluation suite:
+Expected shape:
 
-```powershell
-cargo run -q -p edgehome-cli -- --db-path edgehome-eval.sqlite eval cases/zh-home.yaml --gate
+```text
+policy_decision = deny
+dry_run_plan = null
+blocking_reasons includes PolicyGate denial
+trace_id is recorded
 ```
 
-Run the demo script:
+Run the release eval gate:
+
+```powershell
+cargo run -q -p edgehome-cli -- --db-path edgehome-gate.sqlite eval cases/zh-home.yaml --gate
+```
+
+Run the scripted demo:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome-demo.sqlite
 ```
 
-## Running With MiniCPM Through Ollama
+## Example Pipeline
 
-The mock path is for deterministic demos and regression tests. To exercise the
-model path, start Ollama and make sure the configured model is available:
+User input:
 
-```powershell
-ollama pull openbmb/minicpm5:1b
-ollama serve
+```text
+晚上十点后把走廊灯调到30%
 ```
 
-Then run without `--mock`:
+MiniCPM candidate JSON stays backend-neutral:
 
-```powershell
-cargo run -q -p edgehome-cli -- --db-path edgehome-ollama.sqlite dry-run "把客厅灯打开"
+```json
+{
+  "intent": "control_device",
+  "room": "hallway",
+  "device_alias": "走廊灯",
+  "device_type": "light",
+  "action": "set_brightness",
+  "params": {
+    "brightness": 30,
+    "time_after": "22:00"
+  }
+}
 ```
 
-The Ollama response still goes through Output Governor, parser/schema
-validation, registry checks, policy gates, dry-run planning, and trace recording.
+Rust resolves and gates the internal command:
 
-## Evaluation Baseline
+```json
+{
+  "device_id": "hallway_light",
+  "device_type": "light",
+  "action": "set_brightness",
+  "policy": "allow",
+  "dry_run_ready": true
+}
+```
 
-The included mock eval suite covers the main harness properties with 108 cases
-across 12 categories:
+The Home Assistant demo adapter can then produce a service-call dry-run payload:
+
+```json
+{
+  "backend": "home_assistant",
+  "device_id": "hallway_light",
+  "entity_id": "light.hallway",
+  "service": "light.turn_on",
+  "service_path": "/api/services/light/turn_on",
+  "payload": {
+    "entity_id": "light.hallway",
+    "brightness_pct": 30
+  },
+  "condition": {
+    "time_after": "22:00"
+  }
+}
+```
+
+`entity_id` is produced by the adapter from registry data. It is not emitted by
+MiniCPM and is not part of the model prompt.
+
+## Release Gate Snapshot
+
+The current mock + low-memory release gate covers harness behavior and
+regression safety:
+
+| Metric | Current value |
+| --- | ---: |
+| Cases | 108 |
+| Categories | 12 |
+| Pass rate | 1.0 |
+| Schema valid rate | 1.0 |
+| Trace coverage | 1.0 |
+| False allow rate | 0.0 |
+| Fail-closed rate | 1.0 |
+| Input guard flag accuracy | 1.0 |
+| Retry rate | 0.0 |
+
+Coverage categories:
 
 ```text
 normal_control
@@ -431,27 +221,170 @@ input_guard
 backend_boundary
 ```
 
-The current release gate checks:
+This gate verifies covered harness regressions. It is not a broad
+natural-language understanding benchmark, a production-readiness claim, or proof
+of real-device deployment at scale.
 
-```text
-total_cases >= 100
-category_count >= 12
-pass_rate >= 1.0
-schema_valid_rate >= 1.0
-dead_loop_rate <= 0.0
-trace_coverage >= 1.0
-intent_accuracy >= 0.95
-slot_accuracy >= 0.90
-input_guard_flag_accuracy >= 1.0
-false_allow_rate <= 0.0
-fail_closed_rate >= 1.0
-retry_rate <= 0.30
+## Architecture
+
+```mermaid
+flowchart TD
+    A["Chinese smart-home command"] --> B["Input Guard"]
+    B --> C["Rule Pre-Parser"]
+    C --> D["Runtime Memory"]
+    D --> E["Context Compiler"]
+    E --> F["MiniCPM5-1B Candidate JSON"]
+    F --> G["Output Governor"]
+    G --> H["JSON / Schema Validator"]
+    H --> I["Semantic Normalizer"]
+    I --> J["DeviceRegistry / DeviceResolver"]
+    J --> K["Capability + Policy Gates"]
+    K --> L["GatedCommand"]
+    L --> M["Dry-run ExecutionPlan"]
+    M --> N["BackendAdapter Payload"]
+    N --> O["Mock / Home Assistant demo boundary"]
+    O --> P["Trace / Replay / Eval Gate"]
 ```
 
-Important: the mock eval proves harness behavior and regression coverage. It is
-not a broad natural-language understanding benchmark. Real MiniCPM evaluation
-should be run separately and reported with model output, latency, retry, and
-fallback metrics.
+The model is deliberately kept near the top of the pipeline. Everything after
+candidate generation is owned by the harness.
+
+## Command Contract
+
+| Layer | Type | Owner | Trust level |
+| --- | --- | --- | --- |
+| Candidate JSON | `ModelCandidate` | MiniCPM / Mock model | Untrusted |
+| Internal command | `NormalizedCommand` | Rust parser and normalizer | Must be resolved and gated |
+| Gated command | `GatedCommand` | `GateEngine` | Accepted internal command only |
+| Verified dry-run plan | `ExecutionPlan` | `DryRunPlanner` | Trusted dry-run boundary |
+| Backend payload | `DryRunPlan.payload` | `BackendAdapter` | Backend-specific dry-run output |
+
+Canonical flow:
+
+```text
+User Chinese command
+  -> MiniCPM candidate JSON
+  -> Rust schema validation and semantic normalization
+  -> Device registry / memory resolution
+  -> Capability and policy gates
+  -> GatedCommand
+  -> ExecutionPlan
+  -> BackendAdapter payload
+```
+
+## Backend Support Matrix
+
+| Backend | Status | What works | What is not claimed |
+| --- | --- | --- | --- |
+| Mock | Implemented | Deterministic dry-run payloads and eval baseline | Real device control |
+| Home Assistant | Demo adapter implemented | Service-call payload translation; real execution disabled by default | Production deployment or full HA coverage |
+| MIoT / Xiaomi | Future adapter target | Explicitly fails closed when selected today | Xiaomi device support |
+| Matter | Future adapter target | Documented as an adapter direction only | Matter controller support |
+| MQTT | Future adapter target | Explicitly fails closed when selected today | Topic or payload compatibility |
+
+Unsupported backend targets must fail closed. They must not silently fall back
+to mock payloads.
+
+## Implemented Scope
+
+- Rust workspace with separated crates for core types, config, parser, registry,
+  gate, memory, Ollama adapter, executor, storage, trace, eval, and CLI.
+- MiniCPM5-1B oriented low-memory runtime profile.
+- Mock model and mock executor path for deterministic demos and regression
+  testing.
+- Ollama structured-output request adapter.
+- Output governor for overlong output, invalid JSON, dead-loop detection, retry
+  policy, and fallback classification.
+- Runtime memory for short-session references and confirmed long-term aliases.
+- Device registry, registry-based resolution, and capability validation.
+- Policy gate with fail-closed behavior.
+- Typed `GatedCommand` boundary before dry-run planning.
+- `BackendAdapter` trait with Mock and Home Assistant demo payload adapters.
+- SQLite-backed evidence, audit, trace, replay, and long-term memory.
+- 108-case release eval gate across 12 categories.
+- Low-memory pressure policy for context/output reduction and rule-only
+  fallback.
+
+## Not Claimed
+
+- Production-ready smart-home gateway.
+- Replacement for Mi Home, Home Assistant, Matter, MQTT, or a smart speaker.
+- Xiaomi / MIoT support today.
+- Matter controller support today.
+- MQTT topic or payload compatibility today.
+- Long-running benchmark on a real 2GB ARM board.
+- Proof that all smart-home natural-language inputs are understood.
+- Real-device execution enabled by default.
+- Model-generated vendor-ready JSON.
+
+## Customization Model
+
+The model output contract is fixed and safe. Customization happens below the
+model:
+
+- add devices and aliases in the device registry;
+- define supported capabilities and value ranges;
+- set risk levels and policy behavior;
+- configure backend routes such as Home Assistant entity IDs;
+- add future backend adapter mappings with tests.
+
+Do not ask MiniCPM to emit a vendor's JSON format directly. Keep model JSON
+canonical, then customize registry and adapter mappings.
+
+Useful references:
+
+- [Customization Contract](docs/customization.md)
+- [Command Pipeline Contract](docs/command-pipeline-contract.md)
+- [Backend Adapter Contract](docs/backend-adapter-contract.md)
+
+## Running With MiniCPM Through Ollama
+
+The mock path is for deterministic demos and release regression tests. To
+exercise the real model path, start Ollama and make sure the configured model is
+available:
+
+```powershell
+ollama pull openbmb/minicpm5:1b
+ollama serve
+```
+
+Then run without `--mock`:
+
+```powershell
+cargo run -q -p edgehome-cli -- --db-path edgehome-ollama.sqlite dry-run "把客厅灯打开"
+```
+
+The Ollama response still goes through output governance, parser/schema
+validation, registry checks, policy gates, dry-run planning, and trace
+recording. Real MiniCPM evaluation should be reported separately from the mock
+release gate, with model output, latency, retry, and fallback metrics.
+
+## Low-Memory Profile
+
+The default profile targets constrained edge environments:
+
+```text
+2GB-4GB RAM
+local inference
+short context
+short JSON output
+bounded memory injection
+deterministic policy
+traceable failure
+```
+
+The resource pressure policy can reduce `num_ctx` and `num_predict`. Under
+critical pressure it can disable memory injection and switch to rule-only
+fallback.
+
+This is a design constraint, not a claim that a long-running real 2GB ARM board
+benchmark has been completed.
+
+See:
+
+- [2GB RAM Profile](docs/2gb-profile.md)
+- [2GB Memory Budget](docs/2gb-memory-budget.md)
+- [Model Parameters](docs/model-parameters.md)
 
 ## Home Assistant Boundary
 
@@ -477,6 +410,17 @@ See:
 - [Home Assistant Demo](docs/home-assistant-demo.md)
 - [Deployment Modes](docs/deployment-modes.md)
 
+## Documentation
+
+- [WAIC One-Page](docs/waic-one-page.md)
+- [Architecture V2](docs/architecture-v2.md)
+- [Customization Contract](docs/customization.md)
+- [Command Pipeline Contract](docs/command-pipeline-contract.md)
+- [Backend Adapter Contract](docs/backend-adapter-contract.md)
+- [Eval Report Example](docs/eval-report-example.md)
+- [Demo Walkthrough](docs/demo-walkthrough.md)
+- [2GB RAM Profile](docs/2gb-profile.md)
+
 ## Repository Layout
 
 ```text
@@ -501,43 +445,23 @@ scripts/                   demo and embedded validation scripts
 
 ## Development Checks
 
-Run tests:
-
-```powershell
-cargo test --workspace
-```
-
-Run formatting:
-
 ```powershell
 cargo fmt --all --check
-```
-
-Run Clippy:
-
-```powershell
 cargo clippy --workspace --all-targets -- -D warnings
-```
-
-Run the release gate:
-
-```powershell
+cargo test --workspace
 cargo run -q -p edgehome-cli -- --db-path edgehome-gate.sqlite eval cases/zh-home.yaml --gate
+git diff --check
 ```
 
-## Design Positioning
+## Positioning
 
 EdgeHome Harness is not trying to make MiniCPM act like a large cloud agent. It
 uses MiniCPM where a small local model is useful: converting natural language
 into a compact candidate. Everything that must be reliable is moved back into
 Rust.
 
-The intended message is:
-
 ```text
 Small model.
 Strong harness.
-Safe execution.
+Fail-closed boundary.
 ```
-
-That is the core value of this repository.
