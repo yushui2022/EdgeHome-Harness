@@ -46,6 +46,8 @@ implemented code, tests, docs, and eval evidence.
   Assistant, MQTT, MIoT bridge, and Matter bridge paths.
 - CLI execute freshness guard rejects dry-run traces older than 600 seconds and
   records stale-trace rejection evidence before any backend call.
+- CLI execute one-shot guard rejects a second real execution attempt for a trace
+  after `real_execution_completed` has already been recorded.
 
 ## 0.1.0 - 2026-07-04
 

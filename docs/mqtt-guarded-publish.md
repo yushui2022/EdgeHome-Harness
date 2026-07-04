@@ -103,9 +103,9 @@ CLI shape:
 cargo run -q -p edgehome-cli -- --db-path edgehome-demo.sqlite execute <trace_id> --confirm --backend-config private/mqtt.yaml
 ```
 
-The CLI executes only a fresh, previously recorded dry-run trace and rejects
-stale traces older than 600 seconds. Public example configs keep
-`execute_enabled: false`.
+The CLI executes only a fresh, one-shot, previously recorded dry-run trace. It
+rejects stale traces older than 600 seconds and rejects trace IDs that already
+completed real execution. Public example configs keep `execute_enabled: false`.
 
 ## Failure Behavior
 

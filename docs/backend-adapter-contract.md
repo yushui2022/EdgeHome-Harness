@@ -77,7 +77,9 @@ missing bridge token for backend `...`
 The CLI execute path accepts only a fresh `DryRunPlan` already recorded in trace
 evidence. It must not parse new natural-language input during execution, and it
 rejects dry-run traces older than 600 seconds before any backend call is made.
-Stale rejections are recorded as trace/audit evidence.
+It also rejects trace IDs that already have completed real execution, so a
+recorded dry-run trace is one-shot for real backend execution. Stale and
+duplicate rejections are recorded as trace/audit evidence.
 
 ## Adapter Rules
 

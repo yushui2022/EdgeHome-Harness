@@ -490,11 +490,12 @@ cargo run -q -p edgehome-cli -- --db-path edgehome-demo.sqlite execute <trace_id
 
 The command does not parse fresh natural language. It loads the existing
 `DryRunPlan` from trace evidence, rejects stale traces older than 600 seconds,
-applies confirmation/risk checks, then calls the selected backend executor.
-Public example configs keep `execute_enabled: false`, so real execution still
-fails closed unless private backend config explicitly enables it. Private
-backend secrets can be supplied by environment variables or token files outside
-the repository. Executor responses are recorded as redacted evidence: Home
+rejects trace IDs that have already completed real execution, applies
+confirmation/risk checks, then calls the selected backend executor. Public
+example configs keep `execute_enabled: false`, so real execution still fails
+closed unless private backend config explicitly enables it. Private backend
+secrets can be supplied by environment variables or token files outside the
+repository. Executor responses are recorded as redacted evidence: Home
 Assistant post-state stores a state summary instead of full attributes, MQTT
 evidence omits broker credentials, and bridge backend responses are recursively
 sanitized before trace storage.

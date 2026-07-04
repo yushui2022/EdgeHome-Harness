@@ -49,6 +49,7 @@ Current backend status:
 | Backend URL validation | Implemented | HA and bridge URLs reject query, fragment, userinfo, non-HTTP schemes, and missing hosts |
 | Bridge token file support | Implemented | MIoT/Matter private bridge tokens can come from env vars or private token files outside the repository |
 | Execute trace freshness | Implemented | CLI execute rejects dry-run traces older than 600 seconds before any backend call and records rejection evidence |
+| Execute trace one-shot guard | Implemented | CLI execute rejects a trace after real execution has completed once, preventing repeat backend calls from the same dry-run evidence |
 | Local release check script | Implemented | Runs fmt, clippy, tests, eval gate, backend checks, diff check, and repository hygiene scan |
 
 Important implemented files:
@@ -221,7 +222,7 @@ No failing tests
 No stale "future target" language for implemented bridge adapters
 No claim that real execution is default-on
 ExecutorResponse evidence is redacted/summarized before trace storage
-CLI execute tests cover Mock, Home Assistant, MQTT, MIoT bridge, Matter bridge, and stale-trace rejection
+CLI execute tests cover Mock, Home Assistant, MQTT, MIoT bridge, Matter bridge, stale-trace rejection, and duplicate-trace rejection
 No committed secrets
 ```
 

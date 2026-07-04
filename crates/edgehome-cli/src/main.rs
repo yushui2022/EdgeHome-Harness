@@ -1296,6 +1296,32 @@ fn execute_trace(
     let trace_store = TraceStore::open(db_path)?;
     let audit_sink = AuditSink::open(db_path)?;
     let now = time::OffsetDateTime::now_utc();
+    if trace_has_completed_execution(&bundle) {
+        trace_store.append_step(
+            &trace_id,
+            NewCommandStep::new("real_execute_rejected", StepStatus::Rejected)
+                .with_message("dry-run trace has already completed real execution")
+                .with_evidence_refs(vec![dry_run_ref.id.clone()]),
+        )?;
+        audit_sink.append(
+            NewAuditEvent::new(
+                "real_execution_rejected_duplicate_trace",
+                "explicit execute command rejected because the dry-run trace was already executed",
+                json!({
+                    "trace_id": trace_id.0.as_str(),
+                    "backend": dry_run.backend.as_str(),
+                    "target": dry_run.plan.target.0.as_str(),
+                    "user_confirmed": user_confirmed,
+                    "success": false,
+                }),
+            )
+            .with_trace_id(trace_id.clone()),
+        )?;
+        anyhow::bail!(
+            "dry-run trace `{}` has already been executed; create a new dry-run before execute",
+            trace_id.0
+        );
+    }
     let trace_age_seconds = trace_age_seconds(&bundle.trace, now);
     if trace_age_seconds > EXECUTE_TRACE_MAX_AGE_SECONDS {
         trace_store.append_step(
@@ -1452,6 +1478,17 @@ struct TraceBundle {
 
 fn trace_age_seconds(trace: &CommandTrace, now: time::OffsetDateTime) -> i64 {
     (now - trace.started_at).whole_seconds().max(0)
+}
+
+fn trace_has_completed_execution(bundle: &TraceBundle) -> bool {
+    bundle
+        .steps
+        .iter()
+        .any(|step| step.name == "real_execute" && step.status == StepStatus::Succeeded)
+        || bundle
+            .audit_events
+            .iter()
+            .any(|event| event.event_type == "real_execution_completed")
 }
 
 fn load_trace_bundle(db_path: &Path, trace_id: TraceId) -> anyhow::Result<TraceBundle> {
@@ -2357,6 +2394,45 @@ capabilities:
                 .and_then(|result| result.get("success"))
                 .and_then(Value::as_bool),
             Some(true)
+        );
+
+        let _ = std::fs::remove_file(db_path);
+        Ok(())
+    }
+
+    #[test]
+    fn execute_trace_rejects_duplicate_real_execution() -> anyhow::Result<()> {
+        let db_path = temp_db_path("edgehome-cli-duplicate-execute-trace");
+        let config_dir = workspace_config_dir();
+        let trace_id = dry_run_trace_id(&db_path, &config_dir, "打开客厅灯")?;
+
+        execute_trace(&db_path, &config_dir, TraceId(trace_id.clone()), true, None)?;
+        let error = execute_trace(&db_path, &config_dir, TraceId(trace_id.clone()), true, None)
+            .expect_err("duplicate trace rejected");
+        let bundle = load_trace_bundle(&db_path, TraceId(trace_id))?;
+
+        assert!(error.to_string().contains("already been executed"));
+        assert_eq!(
+            bundle
+                .evidence
+                .iter()
+                .filter(|item| item.kind == EvidenceKind::ExecutorResponse)
+                .count(),
+            1
+        );
+        assert_eq!(
+            bundle
+                .steps
+                .iter()
+                .filter(|step| step.name == "real_execute" && step.status == StepStatus::Succeeded)
+                .count(),
+            1
+        );
+        assert!(
+            bundle
+                .audit_events
+                .iter()
+                .any(|event| event.event_type == "real_execution_rejected_duplicate_trace")
         );
 
         let _ = std::fs::remove_file(db_path);

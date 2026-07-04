@@ -72,6 +72,8 @@ Check:
   Mock, Home Assistant, MQTT, MIoT bridge, and Matter bridge.
 - CLI execute stale-trace rejection still prevents backend calls for dry-run
   traces older than 600 seconds and records rejection evidence.
+- CLI execute duplicate-trace rejection still prevents a second backend call
+  after `real_execution_completed` has already been recorded for a trace.
 - `docs/customization.md` still says model JSON is canonical and backend
   mappings are configurable below the model.
 - `docs/waic-one-page.md` avoids production, Xiaomi, Matter, MQTT, or 2GB
