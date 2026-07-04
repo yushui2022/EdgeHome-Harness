@@ -148,17 +148,19 @@ Current:
 
 - Mock: implemented for deterministic dry-run and eval.
 - Home Assistant: gateway boundary implemented for service-call payloads,
-  opt-in REST execution, route validation, and optional post-state fetch.
-- MQTT: dry-run payload adapter and guarded publish executor implemented; real
-  broker publish remains disabled by default.
-- MIoT / Xiaomi: bridge request adapter implemented; real Xiaomi device support
-  requires a private bridge and device-specific validation.
-- Matter: bridge request adapter implemented; real control requires a private
-  Matter controller bridge.
+  opt-in REST execution, route validation, optional post-state fetch, and local
+  CLI execute verification.
+- MQTT: dry-run payload adapter and guarded publish executor implemented; local
+  broker publish is verified; real broker publish remains disabled by default.
+- MIoT / Xiaomi: bridge request adapter and opt-in bridge executor implemented;
+  local CLI bridge POST is verified; real Xiaomi device support requires a
+  private bridge and device-specific validation.
+- Matter: bridge request adapter and opt-in bridge executor implemented; local
+  CLI bridge POST is verified; real control requires a private Matter
+  controller bridge.
 
 Future validation targets:
 
-- MQTT publish evidence against a local broker.
 - MIoT bridge logs with at least one real Xiaomi device.
 - Matter controller bridge logs with at least one real Matter device.
 

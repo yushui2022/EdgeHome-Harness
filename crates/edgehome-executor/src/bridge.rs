@@ -1,4 +1,4 @@
-use std::{fmt, time::Duration};
+use std::{fmt, fs, path::Path, time::Duration};
 
 use serde_json::Value;
 
@@ -44,6 +44,26 @@ impl BridgeSecrets {
             return Ok(None);
         };
         Self::new(backend, token_env, token).map(Some)
+    }
+
+    pub fn load_with_file(
+        backend: &'static str,
+        token_env: impl AsRef<str>,
+        token_file: Option<&Path>,
+    ) -> ExecutorResult<Option<Self>> {
+        let token_env = token_env.as_ref();
+        if let Some(secrets) = Self::load(backend, token_env)? {
+            return Ok(Some(secrets));
+        }
+
+        if let Some(token_file) = token_file {
+            let token = fs::read_to_string(token_file)?;
+            if !token.trim().is_empty() {
+                return Self::new(backend, token_env, token).map(Some);
+            }
+        }
+
+        Ok(None)
     }
 
     pub fn load_required(
@@ -178,6 +198,7 @@ mod tests {
     use std::{
         io::{Read, Write},
         net::TcpListener,
+        path::PathBuf,
         thread,
     };
 
@@ -187,10 +208,37 @@ mod tests {
 
     const BACKEND: &str = "test_bridge";
 
+    fn temp_file_path(prefix: &str) -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "{prefix}-{}",
+            time::OffsetDateTime::now_utc().unix_timestamp_nanos()
+        ))
+    }
+
     #[test]
     fn base_url_accepts_http_and_https_without_secret_carriers() {
         validate_base_url(BACKEND, "http://127.0.0.1:8787").expect("http base");
         validate_base_url(BACKEND, "https://bridge.example.test/api").expect("https base");
+    }
+
+    #[test]
+    fn bridge_secrets_can_load_private_token_file() {
+        let token_file = temp_file_path("edgehome-bridge-token");
+        fs::write(&token_file, "bridge-token-from-file").expect("write token file");
+
+        let secrets = BridgeSecrets::load_with_file(
+            BACKEND,
+            "EDGEHOME_UNSET_BRIDGE_TEST_TOKEN",
+            Some(token_file.as_path()),
+        )
+        .expect("load token file")
+        .expect("secrets");
+
+        let debug = format!("{secrets:?}");
+        assert!(debug.contains("<redacted>"));
+        assert!(!debug.contains("bridge-token-from-file"));
+
+        let _ = fs::remove_file(token_file);
     }
 
     #[test]

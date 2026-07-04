@@ -57,8 +57,9 @@ invalid: mqtt://bridge.example.test
 ```
 
 Secrets are supplied through environment variables such as
-`EDGEHOME_MIOT_BRIDGE_TOKEN` or `EDGEHOME_MATTER_BRIDGE_TOKEN`; they must not be
-stored in public configs, prompts, traces, or docs.
+`EDGEHOME_MIOT_BRIDGE_TOKEN` / `EDGEHOME_MATTER_BRIDGE_TOKEN`, or through a
+private `token_file` configured outside the repository. They must not be stored
+in public configs, prompts, traces, or docs.
 
 ## Shared HTTP Shape
 

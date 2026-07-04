@@ -1065,7 +1065,7 @@ fn check_miot_backend(
         .with_context(|| format!("failed to load `{}`", config_path.display()))?;
     validate_bridge_base_url_for_check("miot_bridge", &config.base_url)?;
     let route_count = validate_miot_routes(&config, devices)?;
-    let secret_available = env_secret_available(&config.token_env);
+    let secret_available = secret_available(&config.token_env, config.token_file.as_deref());
     let dry_run_ready = route_count > 0;
     let execute_ready = dry_run_ready && config.execute_enabled && secret_available;
 
@@ -1100,7 +1100,7 @@ fn check_matter_backend(
         .with_context(|| format!("failed to load `{}`", config_path.display()))?;
     validate_bridge_base_url_for_check("matter_bridge", &config.base_url)?;
     let route_count = validate_matter_routes(&config, devices)?;
-    let secret_available = env_secret_available(&config.token_env);
+    let secret_available = secret_available(&config.token_env, config.token_file.as_deref());
     let dry_run_ready = route_count > 0;
     let execute_ready = dry_run_ready && config.execute_enabled && secret_available;
 
@@ -1210,6 +1210,16 @@ fn env_secret_available(env_var: &str) -> bool {
         && std::env::var(env_var)
             .ok()
             .is_some_and(|value| !value.trim().is_empty())
+}
+
+fn file_secret_available(token_file: Option<&Path>) -> bool {
+    token_file
+        .and_then(|path| fs::read_to_string(path).ok())
+        .is_some_and(|value| !value.trim().is_empty())
+}
+
+fn secret_available(env_var: &str, token_file: Option<&Path>) -> bool {
+    env_secret_available(env_var) || file_secret_available(token_file)
 }
 
 fn json_bool(value: &Value, key: &str) -> bool {
@@ -1975,6 +1985,13 @@ fn print_json(value: &impl Serialize) -> anyhow::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::{
+        io::{Read, Write},
+        net::TcpListener,
+        thread,
+        time::Duration,
+    };
+
     use edgehome_core::{Action, CommandParams, CommandSchemaVersion, Intent, RiskLevel, Room};
 
     fn workspace_config_dir() -> PathBuf {
@@ -1994,6 +2011,229 @@ mod tests {
             "{prefix}-{}.sqlite",
             time::OffsetDateTime::now_utc().unix_timestamp_nanos()
         ))
+    }
+
+    fn temp_dir_path(prefix: &str) -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "{prefix}-{}",
+            time::OffsetDateTime::now_utc().unix_timestamp_nanos()
+        ))
+    }
+
+    fn write_single_light_registry(
+        config_dir: &Path,
+        backend: &str,
+        backend_entity_id: &str,
+    ) -> anyhow::Result<()> {
+        std::fs::create_dir_all(config_dir)?;
+        std::fs::write(
+            config_dir.join("devices.yaml"),
+            format!(
+                r#"devices:
+  - device_id: living_room_main_light
+    aliases: ["客厅灯", "客厅主灯", "living room light"]
+    room: living_room
+    device_type: light
+    backend: {backend}
+    backend_entity_id: {backend_entity_id}
+    risk_level: low
+
+capabilities:
+  light:
+    - action: turn_on
+    - action: turn_off
+    - action: set_brightness
+      min: 0
+      max: 100
+      unit: percent
+    - action: increase_brightness
+    - action: decrease_brightness
+"#
+            ),
+        )?;
+        Ok(())
+    }
+
+    fn yaml_single_quoted(value: &Path) -> String {
+        format!("'{}'", value.to_string_lossy().replace('\'', "''"))
+    }
+
+    fn dry_run_trace_id(db_path: &Path, config_dir: &Path, input: &str) -> anyhow::Result<String> {
+        let profile = load_profile(workspace_config_dir(), "low_memory").expect("profile");
+        let dry_run_output = run_harness_pipeline(
+            db_path,
+            config_dir,
+            &profile,
+            input.to_owned(),
+            PipelineMode::DryRun,
+            true,
+        )?;
+
+        Ok(dry_run_output
+            .get("trace_id")
+            .and_then(Value::as_str)
+            .expect("trace_id")
+            .to_owned())
+    }
+
+    #[derive(Debug, Clone)]
+    struct HttpFixtureResponse {
+        status: u16,
+        body: String,
+    }
+
+    fn spawn_http_fixture(
+        responses: Vec<HttpFixtureResponse>,
+    ) -> (String, thread::JoinHandle<Vec<String>>) {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind local fixture");
+        let address = listener.local_addr().expect("local address");
+        let base_url = format!("http://{address}");
+        let handle = thread::spawn(move || {
+            let mut requests = Vec::with_capacity(responses.len());
+            for response in responses {
+                let (mut stream, _) = listener.accept().expect("accept request");
+                let request = read_http_request(&mut stream);
+                requests.push(request);
+                let reason = if (200..300).contains(&response.status) {
+                    "OK"
+                } else {
+                    "Internal Server Error"
+                };
+                let raw_response = format!(
+                    "HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+                    response.status,
+                    reason,
+                    response.body.len(),
+                    response.body
+                );
+                stream
+                    .write_all(raw_response.as_bytes())
+                    .expect("write response");
+            }
+            requests
+        });
+        (base_url, handle)
+    }
+
+    fn read_http_request(stream: &mut std::net::TcpStream) -> String {
+        let mut request_bytes = Vec::new();
+        let mut buffer = [0_u8; 1024];
+        loop {
+            let read = stream.read(&mut buffer).expect("read request");
+            if read == 0 {
+                break;
+            }
+            request_bytes.extend_from_slice(&buffer[..read]);
+            if request_complete(&request_bytes) {
+                break;
+            }
+        }
+        String::from_utf8(request_bytes).expect("request is utf-8")
+    }
+
+    fn request_complete(request: &[u8]) -> bool {
+        let Some(header_end) = request.windows(4).position(|window| window == b"\r\n\r\n") else {
+            return false;
+        };
+        let headers = String::from_utf8_lossy(&request[..header_end]);
+        let content_length = headers
+            .lines()
+            .find_map(|line| {
+                let (name, value) = line.split_once(':')?;
+                name.eq_ignore_ascii_case("content-length")
+                    .then(|| value.trim().parse::<usize>().ok())
+                    .flatten()
+            })
+            .unwrap_or(0);
+        request.len() >= header_end + 4 + content_length
+    }
+
+    #[derive(Debug, Clone, PartialEq)]
+    struct CapturedMqttPublish {
+        topic: String,
+        payload: Value,
+    }
+
+    fn spawn_mqtt_broker() -> (String, thread::JoinHandle<CapturedMqttPublish>) {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind local mqtt broker");
+        let address = listener.local_addr().expect("local address");
+        let broker_url = format!("mqtt://{address}");
+        let handle = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().expect("accept mqtt client");
+            stream
+                .set_read_timeout(Some(Duration::from_secs(5)))
+                .expect("set read timeout");
+
+            let connect = read_mqtt_packet(&mut stream).expect("read connect");
+            assert_eq!(connect.first().map(|byte| byte >> 4), Some(1));
+            stream
+                .write_all(&[0x20, 0x02, 0x00, 0x00])
+                .expect("write connack");
+
+            loop {
+                let packet = read_mqtt_packet(&mut stream).expect("read packet");
+                if packet.first().map(|byte| byte >> 4) == Some(3) {
+                    return parse_publish_packet(&packet);
+                }
+            }
+        });
+        (broker_url, handle)
+    }
+
+    fn read_mqtt_packet(stream: &mut std::net::TcpStream) -> std::io::Result<Vec<u8>> {
+        let mut packet = Vec::new();
+        let mut first = [0_u8; 1];
+        stream.read_exact(&mut first)?;
+        packet.push(first[0]);
+
+        let mut remaining_length = 0_usize;
+        let mut multiplier = 1_usize;
+        loop {
+            let mut encoded = [0_u8; 1];
+            stream.read_exact(&mut encoded)?;
+            packet.push(encoded[0]);
+            remaining_length += usize::from(encoded[0] & 0x7f) * multiplier;
+            if encoded[0] & 0x80 == 0 {
+                break;
+            }
+            multiplier *= 128;
+        }
+
+        let mut body = vec![0_u8; remaining_length];
+        stream.read_exact(&mut body)?;
+        packet.extend_from_slice(&body);
+        Ok(packet)
+    }
+
+    fn parse_publish_packet(packet: &[u8]) -> CapturedMqttPublish {
+        let (header_len, remaining_length) = decode_remaining_length(packet);
+        let end = header_len + remaining_length;
+        let body = &packet[header_len..end];
+        let topic_len = u16::from_be_bytes([body[0], body[1]]) as usize;
+        let topic_start = 2;
+        let topic_end = topic_start + topic_len;
+        let topic = String::from_utf8(body[topic_start..topic_end].to_vec()).expect("topic utf-8");
+        let qos = (packet[0] & 0b0000_0110) >> 1;
+        let payload_start = topic_end + if qos > 0 { 2 } else { 0 };
+        let payload: Value = serde_json::from_slice(&body[payload_start..]).expect("payload json");
+
+        CapturedMqttPublish { topic, payload }
+    }
+
+    fn decode_remaining_length(packet: &[u8]) -> (usize, usize) {
+        let mut remaining_length = 0_usize;
+        let mut multiplier = 1_usize;
+        let mut index = 1_usize;
+        loop {
+            let encoded = packet[index];
+            remaining_length += usize::from(encoded & 0x7f) * multiplier;
+            index += 1;
+            if encoded & 0x80 == 0 {
+                break;
+            }
+            multiplier *= 128;
+        }
+        (index, remaining_length)
     }
 
     fn unresolved_light_command() -> NormalizedCommand {
@@ -2108,6 +2348,245 @@ mod tests {
         );
 
         let _ = std::fs::remove_file(db_path);
+        Ok(())
+    }
+
+    #[test]
+    fn execute_trace_posts_home_assistant_gateway_from_private_config() -> anyhow::Result<()> {
+        let db_path = temp_db_path("edgehome-cli-ha-execute");
+        let config_dir = temp_dir_path("edgehome-cli-ha-config");
+        write_single_light_registry(&config_dir, "home_assistant", "light.living_room")?;
+        let token_file = config_dir.join("ha.token");
+        std::fs::write(&token_file, "ha-private-token")?;
+        let (base_url, handle) = spawn_http_fixture(vec![
+            HttpFixtureResponse {
+                status: 200,
+                body: json!({
+                    "ok": true,
+                    "access_token": "leaked-service-token"
+                })
+                .to_string(),
+            },
+            HttpFixtureResponse {
+                status: 200,
+                body: json!({
+                    "entity_id": "light.living_room",
+                    "state": "on",
+                    "attributes": {
+                        "friendly_name": "Living Room",
+                        "access_token": "leaked-state-token"
+                    },
+                    "last_changed": "2026-07-04T12:00:00Z",
+                    "last_updated": "2026-07-04T12:00:01Z"
+                })
+                .to_string(),
+            },
+        ]);
+        let backend_config = config_dir.join("home_assistant.private.yaml");
+        std::fs::write(
+            &backend_config,
+            format!(
+                "base_url: '{base_url}'\ntoken_env:\ntoken_file: {}\nrequest_timeout_ms: 2000\nexecute_enabled: true\nverify_state_after_execute: true\n",
+                yaml_single_quoted(&token_file)
+            ),
+        )?;
+
+        let trace_id = dry_run_trace_id(&db_path, &config_dir, "打开客厅灯")?;
+        let execute_output = execute_trace(
+            &db_path,
+            &config_dir,
+            TraceId(trace_id.clone()),
+            true,
+            Some(&backend_config),
+        )?;
+        let requests = handle.join().expect("server thread");
+        let bundle = load_trace_bundle(&db_path, TraceId(trace_id))?;
+        let serialized = serde_json::to_string(&execute_output)?;
+
+        assert_eq!(
+            execute_output.get("backend").and_then(Value::as_str),
+            Some("home_assistant")
+        );
+        assert_eq!(
+            execute_output
+                .get("result")
+                .and_then(|result| result.get("success"))
+                .and_then(Value::as_bool),
+            Some(true)
+        );
+        assert_eq!(requests.len(), 2);
+        assert!(requests[0].starts_with("POST /api/services/light/turn_on HTTP/1.1"));
+        assert!(requests[0].contains("\"entity_id\":\"light.living_room\""));
+        assert!(requests[1].starts_with("GET /api/states/light.living_room HTTP/1.1"));
+        for request in &requests {
+            assert!(
+                request
+                    .to_ascii_lowercase()
+                    .contains("authorization: bearer ha-private-token")
+            );
+        }
+        assert!(latest_evidence(&bundle.evidence, EvidenceKind::ExecutorResponse).is_some());
+        assert!(!serialized.contains("ha-private-token"));
+        assert!(!serialized.contains("leaked-service-token"));
+        assert!(!serialized.contains("leaked-state-token"));
+        assert!(!serialized.contains("friendly_name"));
+        assert_eq!(
+            execute_output
+                .pointer("/result/raw_backend_response/post_state/state")
+                .and_then(Value::as_str),
+            Some("on")
+        );
+
+        let _ = std::fs::remove_file(db_path);
+        let _ = std::fs::remove_dir_all(config_dir);
+        Ok(())
+    }
+
+    #[test]
+    fn execute_trace_publishes_mqtt_from_private_config() -> anyhow::Result<()> {
+        let db_path = temp_db_path("edgehome-cli-mqtt-execute");
+        let config_dir = temp_dir_path("edgehome-cli-mqtt-config");
+        write_single_light_registry(&config_dir, "mqtt", "home/living_room/light/set")?;
+        let (broker_url, handle) = spawn_mqtt_broker();
+        let backend_config = config_dir.join("mqtt.private.yaml");
+        std::fs::write(
+            &backend_config,
+            format!(
+                "broker_url: '{broker_url}'\nbroker_url_env:\nusername_env:\npassword_env:\nclient_id: edgehome-cli-test\nrequest_timeout_ms: 2000\nexecute_enabled: true\nqos: 0\nretain: false\n"
+            ),
+        )?;
+
+        let trace_id = dry_run_trace_id(&db_path, &config_dir, "打开客厅灯")?;
+        let execute_output = execute_trace(
+            &db_path,
+            &config_dir,
+            TraceId(trace_id.clone()),
+            true,
+            Some(&backend_config),
+        )?;
+        let captured = handle.join().expect("broker thread");
+        let bundle = load_trace_bundle(&db_path, TraceId(trace_id))?;
+        let serialized = serde_json::to_string(&execute_output)?;
+
+        assert_eq!(
+            execute_output.get("backend").and_then(Value::as_str),
+            Some("mqtt")
+        );
+        assert_eq!(
+            execute_output
+                .get("result")
+                .and_then(|result| result.get("success"))
+                .and_then(Value::as_bool),
+            Some(true)
+        );
+        assert_eq!(captured.topic, "home/living_room/light/set");
+        assert_eq!(captured.payload, json!({ "power": "on" }));
+        assert!(latest_evidence(&bundle.evidence, EvidenceKind::ExecutorResponse).is_some());
+        assert!(!serialized.contains(&broker_url));
+
+        let _ = std::fs::remove_file(db_path);
+        let _ = std::fs::remove_dir_all(config_dir);
+        Ok(())
+    }
+
+    #[test]
+    fn execute_trace_posts_miot_bridge_from_private_config() -> anyhow::Result<()> {
+        assert_bridge_execute_posts_from_private_config(
+            "miio_local",
+            "miot.living_room_light",
+            "/v1/miot/execute",
+            "miot",
+            "miio_local",
+        )
+    }
+
+    #[test]
+    fn execute_trace_posts_matter_bridge_from_private_config() -> anyhow::Result<()> {
+        assert_bridge_execute_posts_from_private_config(
+            "matter_bridge",
+            "matter.living_room_light",
+            "/v1/matter/execute",
+            "matter",
+            "matter_bridge",
+        )
+    }
+
+    fn assert_bridge_execute_posts_from_private_config(
+        registry_backend: &str,
+        route_id: &str,
+        expected_path: &str,
+        expected_protocol: &str,
+        expected_backend: &str,
+    ) -> anyhow::Result<()> {
+        let db_path = temp_db_path("edgehome-cli-bridge-execute");
+        let config_dir = temp_dir_path("edgehome-cli-bridge-config");
+        write_single_light_registry(&config_dir, registry_backend, route_id)?;
+        let token_file = config_dir.join("bridge.token");
+        std::fs::write(&token_file, "bridge-private-token")?;
+        let (base_url, handle) = spawn_http_fixture(vec![HttpFixtureResponse {
+            status: 200,
+            body: json!({
+                "ok": true,
+                "token": "leaked-bridge-token",
+                "did": "private-device-id",
+                "state": "accepted"
+            })
+            .to_string(),
+        }]);
+        let backend_config = config_dir.join(format!("{expected_protocol}.private.yaml"));
+        std::fs::write(
+            &backend_config,
+            format!(
+                "base_url: '{base_url}'\ntoken_env:\ntoken_file: {}\nrequest_timeout_ms: 2000\nexecute_enabled: true\n",
+                yaml_single_quoted(&token_file)
+            ),
+        )?;
+
+        let trace_id = dry_run_trace_id(&db_path, &config_dir, "打开客厅灯")?;
+        let execute_output = execute_trace(
+            &db_path,
+            &config_dir,
+            TraceId(trace_id.clone()),
+            true,
+            Some(&backend_config),
+        )?;
+        let requests = handle.join().expect("server thread");
+        let bundle = load_trace_bundle(&db_path, TraceId(trace_id))?;
+        let serialized = serde_json::to_string(&execute_output)?;
+
+        assert_eq!(
+            execute_output.get("backend").and_then(Value::as_str),
+            Some(expected_backend)
+        );
+        assert_eq!(
+            execute_output
+                .get("result")
+                .and_then(|result| result.get("success"))
+                .and_then(Value::as_bool),
+            Some(true)
+        );
+        assert_eq!(requests.len(), 1);
+        assert!(requests[0].starts_with(&format!("POST {expected_path} HTTP/1.1")));
+        assert!(
+            requests[0]
+                .to_ascii_lowercase()
+                .contains("authorization: bearer bridge-private-token")
+        );
+        assert!(requests[0].contains(&format!("\"protocol\":\"{expected_protocol}\"")));
+        assert!(requests[0].contains(&format!("\"route_id\":\"{route_id}\"")));
+        assert!(latest_evidence(&bundle.evidence, EvidenceKind::ExecutorResponse).is_some());
+        assert!(!serialized.contains("bridge-private-token"));
+        assert!(!serialized.contains("leaked-bridge-token"));
+        assert!(!serialized.contains("private-device-id"));
+        assert_eq!(
+            execute_output
+                .pointer("/result/raw_backend_response/bridge_response/token")
+                .and_then(Value::as_str),
+            Some("<redacted>")
+        );
+
+        let _ = std::fs::remove_file(db_path);
+        let _ = std::fs::remove_dir_all(config_dir);
         Ok(())
     }
 

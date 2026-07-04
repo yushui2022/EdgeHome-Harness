@@ -38,15 +38,16 @@ Current backend status:
 | Backend | Current state | Public claim allowed |
 | --- | --- | --- |
 | Mock | Implemented | Deterministic dry-run and regression eval baseline |
-| Home Assistant | Gateway boundary implemented and locally verified | Dry-run service payloads, opt-in REST execution, route validation, optional post-state fetch, local HTTP gateway tests |
-| MQTT | Dry-run and guarded publish implemented and locally verified | Configured topic/payload dry-run, opt-in broker publish, local MQTT broker CONNECT/PUBLISH test |
-| MIoT / Xiaomi | Bridge request adapter implemented | Verified commands can become MIoT bridge requests; real Xiaomi support requires private bridge/device validation |
-| Matter | Bridge request adapter implemented | Verified commands can become Matter controller bridge requests; real control requires private Matter bridge/controller |
+| Home Assistant | Gateway boundary implemented and locally verified | Dry-run service payloads, opt-in REST execution, route validation, optional post-state fetch, executor tests, and CLI execute test against local HTTP fixture |
+| MQTT | Dry-run and guarded publish implemented and locally verified | Configured topic/payload dry-run, opt-in broker publish, executor and CLI local MQTT broker CONNECT/PUBLISH tests |
+| MIoT / Xiaomi | Bridge request adapter implemented and locally verified | Verified commands can become MIoT bridge requests; CLI execute test posts to local bridge fixture; real Xiaomi support still requires private bridge/device validation |
+| Matter | Bridge request adapter implemented and locally verified | Verified commands can become Matter controller bridge requests; CLI execute test posts to local bridge fixture; real Matter control still requires private bridge/controller validation |
 | Bridge API contract | Implemented | Documents private MIoT/Matter bridge HTTP endpoints, response/error semantics, and URL rules |
 | Bridge JSON schemas | Implemented and drift-tested | Machine-readable MIoT request, Matter request, and bridge response schemas checked against serialized Rust requests |
 | Backend check CLI | Implemented | Read-only route/config readiness validation for Home Assistant, MQTT, MIoT bridge, and Matter bridge |
 | Execution evidence privacy | Implemented | Real backend responses are redacted/bounded before trace storage |
 | Backend URL validation | Implemented | HA and bridge URLs reject query, fragment, userinfo, non-HTTP schemes, and missing hosts |
+| Bridge token file support | Implemented | MIoT/Matter private bridge tokens can come from env vars or private token files outside the repository |
 | Local release check script | Implemented | Runs fmt, clippy, tests, eval gate, backend checks, diff check, and repository hygiene scan |
 
 Important implemented files:
@@ -219,6 +220,7 @@ No failing tests
 No stale "future target" language for implemented bridge adapters
 No claim that real execution is default-on
 ExecutorResponse evidence is redacted/summarized before trace storage
+CLI execute tests cover Mock, Home Assistant, MQTT, MIoT bridge, and Matter bridge
 No committed secrets
 ```
 

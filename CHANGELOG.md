@@ -41,6 +41,9 @@ implemented code, tests, docs, and eval evidence.
 - Local MQTT broker fixture test for the default `rumqttc` publish path.
 - MIoT and Matter bridge schema drift tests against serialized Rust request
   shapes.
+- Bridge token-file support for MIoT/Matter private bridge configs.
+- CLI execute integration tests for recorded dry-run traces across Mock, Home
+  Assistant, MQTT, MIoT bridge, and Matter bridge paths.
 
 ## 0.1.0 - 2026-07-04
 
@@ -60,7 +63,8 @@ implemented code, tests, docs, and eval evidence.
 
 ### Not Included
 
-- Production smart-home gateway support.
-- Real MIoT/Xiaomi, Matter, or MQTT adapters.
+- Universal smart-home gateway support.
+- Universal MIoT/Xiaomi or Matter device support.
+- Real Xiaomi or Matter hardware validation evidence.
 - Real-device execution enabled by default.
 - Long-running benchmark on a physical 2GB ARM board.

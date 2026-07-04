@@ -1,4 +1,8 @@
-use std::{collections::HashMap, fmt, fs, path::Path};
+use std::{
+    collections::HashMap,
+    fmt, fs,
+    path::{Path, PathBuf},
+};
 
 use edgehome_core::{
     Action, CommandParams, DeviceId, DryRunPlan, ExecutionPlan, ExecutionResult, NormalizedCommand,
@@ -24,6 +28,7 @@ const DEFAULT_MATTER_BRIDGE_TOKEN_ENV: &str = "EDGEHOME_MATTER_BRIDGE_TOKEN";
 pub struct MatterBridgeConfig {
     pub base_url: String,
     pub token_env: String,
+    pub token_file: Option<PathBuf>,
     pub request_timeout_ms: u64,
     pub execute_enabled: bool,
 }
@@ -33,6 +38,7 @@ impl Default for MatterBridgeConfig {
         Self {
             base_url: "http://127.0.0.1:9797".to_owned(),
             token_env: DEFAULT_MATTER_BRIDGE_TOKEN_ENV.to_owned(),
+            token_file: None,
             request_timeout_ms: 5_000,
             execute_enabled: false,
         }
@@ -109,7 +115,11 @@ impl MatterBridgeExecutor<ReqwestBridgePoster> {
     }
 
     pub fn from_config(config: &MatterBridgeConfig) -> ExecutorResult<Self> {
-        let secrets = BridgeSecrets::load(MATTER_BACKEND_NAME, &config.token_env)?;
+        let secrets = BridgeSecrets::load_with_file(
+            MATTER_BACKEND_NAME,
+            &config.token_env,
+            config.token_file.as_deref(),
+        )?;
         Ok(Self::new(config.clone(), secrets))
     }
 }
@@ -321,6 +331,7 @@ mod tests {
 
         assert!(!config.execute_enabled);
         assert_eq!(config.token_env, "EDGEHOME_MATTER_BRIDGE_TOKEN");
+        assert!(config.token_file.is_none());
     }
 
     #[test]

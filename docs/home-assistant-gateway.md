@@ -158,6 +158,7 @@ Relevant tests:
 ```powershell
 cargo test -p edgehome-executor home_assistant
 cargo test -p edgehome-executor dry_run_planner_translates_home_assistant
+cargo test -p edgehome-cli execute_trace_posts_home_assistant_gateway_from_private_config
 ```
 
 The Home Assistant test group includes local HTTP gateway fixtures that verify:
@@ -169,6 +170,11 @@ verify_state_after_execute=true fetches GET /api/states/<entity_id>
 post-state evidence stores a summary and redacts full attributes
 non-2xx Home Assistant response bodies are sanitized before surfacing
 ```
+
+The CLI integration test verifies the public `execute <trace_id>
+--backend-config ...` path against the same style of local HTTP fixture, so the
+gateway boundary is covered from recorded trace evidence through executor
+response storage.
 
 ## Claim Boundary
 

@@ -68,6 +68,8 @@ Check:
 - `docs/mqtt-guarded-publish.md`, `docs/miot-bridge-adapter.md`,
   `docs/matter-bridge-adapter.md`, and `docs/home-assistant-gateway.md` match
   code behavior.
+- CLI execute integration tests still cover recorded dry-run traces for Mock,
+  Home Assistant, MQTT, MIoT bridge, and Matter bridge.
 - `docs/customization.md` still says model JSON is canonical and backend
   mappings are configurable below the model.
 - `docs/waic-one-page.md` avoids production, Xiaomi, Matter, MQTT, or 2GB
@@ -89,6 +91,7 @@ Confirm no committed file contains:
 - MIoT, miIO, or MIoT bridge tokens.
 - Matter bridge tokens, fabric details, controller secrets, node IDs, or
   endpoint IDs.
+- Private token files or token-file paths that point into a real deployment.
 - Private LAN URLs.
 - Real device IDs that should not be public.
 - Local SQLite demo databases.

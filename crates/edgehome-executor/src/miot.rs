@@ -1,4 +1,8 @@
-use std::{collections::HashMap, fmt, fs, path::Path};
+use std::{
+    collections::HashMap,
+    fmt, fs,
+    path::{Path, PathBuf},
+};
 
 use edgehome_core::{
     Action, CommandParams, DeviceId, DryRunPlan, ExecutionPlan, ExecutionResult, NormalizedCommand,
@@ -25,6 +29,7 @@ const DEFAULT_MIOT_BRIDGE_TOKEN_ENV: &str = "EDGEHOME_MIOT_BRIDGE_TOKEN";
 pub struct MiotBridgeConfig {
     pub base_url: String,
     pub token_env: String,
+    pub token_file: Option<PathBuf>,
     pub request_timeout_ms: u64,
     pub execute_enabled: bool,
 }
@@ -34,6 +39,7 @@ impl Default for MiotBridgeConfig {
         Self {
             base_url: "http://127.0.0.1:8787".to_owned(),
             token_env: DEFAULT_MIOT_BRIDGE_TOKEN_ENV.to_owned(),
+            token_file: None,
             request_timeout_ms: 5_000,
             execute_enabled: false,
         }
@@ -110,7 +116,11 @@ impl MiotBridgeExecutor<ReqwestBridgePoster> {
     }
 
     pub fn from_config(config: &MiotBridgeConfig) -> ExecutorResult<Self> {
-        let secrets = BridgeSecrets::load(MIOT_BRIDGE_BACKEND, &config.token_env)?;
+        let secrets = BridgeSecrets::load_with_file(
+            MIOT_BRIDGE_BACKEND,
+            &config.token_env,
+            config.token_file.as_deref(),
+        )?;
         Ok(Self::new(config.clone(), secrets))
     }
 }
@@ -316,6 +326,7 @@ mod tests {
 
         assert!(!config.execute_enabled);
         assert_eq!(config.token_env, "EDGEHOME_MIOT_BRIDGE_TOKEN");
+        assert!(config.token_file.is_none());
     }
 
     #[test]

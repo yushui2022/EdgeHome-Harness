@@ -18,6 +18,8 @@ Implemented today:
 - MQTT dry-run payload adapter and guarded publish executor.
 - MIoT/Xiaomi bridge request adapter and opt-in bridge executor.
 - Matter controller bridge request adapter and opt-in bridge executor.
+- Local transport-level execute verification for Home Assistant, MQTT, MIoT
+  bridge, and Matter bridge.
 - Redacted and bounded executor response evidence for real backend paths.
 - 108-case mock eval gate across 12 categories.
 - Trace, replay, audit, storage, and low-memory profile documentation.
@@ -57,8 +59,8 @@ Candidate order:
 
 1. Keep Home Assistant gateway execution gated and add more service/domain
    coverage only with tests.
-2. Validate MQTT guarded publish against a local test broker with opt-in
-   integration evidence.
+2. Expand MQTT route/payload coverage only when concrete downstream schemas are
+   configured.
 3. Validate MIoT/Xiaomi through a private bridge and at least one real device
    before making device-support claims.
 4. Validate Matter through a private controller bridge before making

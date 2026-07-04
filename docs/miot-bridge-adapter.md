@@ -61,12 +61,14 @@ Example:
 ```yaml
 base_url: http://127.0.0.1:8787
 token_env: EDGEHOME_MIOT_BRIDGE_TOKEN
+token_file:
 request_timeout_ms: 5000
 execute_enabled: false
 ```
 
 Real execution remains disabled unless `execute_enabled` is explicitly changed
-in private config and the bridge token is available.
+in private config and the bridge token is available through `token_env` or a
+private `token_file` outside the repository.
 
 Successful bridge responses are recorded only after recursive sanitization.
 Token-like fields, private Xiaomi identifiers such as `did / siid / piid /
@@ -80,8 +82,9 @@ cargo run -q -p edgehome-cli -- backend check --backend miot --registry configs/
 ```
 
 The check validates route IDs, bridge config shape, execution switch, and token
-availability. It does not contact the private MIoT bridge and does not prove
-real Xiaomi device support.
+availability through either environment or token file configuration. It does
+not contact the private MIoT bridge and does not prove real Xiaomi device
+support.
 
 CLI shape:
 
@@ -146,7 +149,12 @@ Relevant tests:
 ```powershell
 cargo test -p edgehome-executor miot
 cargo test -p edgehome-executor dry_run_planner_translates_miot_bridge_payload
+cargo test -p edgehome-cli execute_trace_posts_miot_bridge_from_private_config
 ```
+
+The CLI integration test posts a previously recorded dry-run trace to a local
+MIoT bridge HTTP fixture using a private token file. It verifies the harness
+boundary and request shape, not real Xiaomi hardware behavior.
 
 ## Claim Boundary
 

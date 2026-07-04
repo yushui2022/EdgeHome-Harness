@@ -10,6 +10,10 @@ status: bridge_request_adapter
 
 base_url: http://127.0.0.1:9797
 token_env: EDGEHOME_MATTER_BRIDGE_TOKEN
+
+# Optional alternative to token_env. Keep the file outside the repository.
+token_file:
+
 request_timeout_ms: 5000
 
 # Must remain false by default. Enable only when a trusted Matter bridge is

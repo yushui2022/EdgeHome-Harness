@@ -42,11 +42,14 @@ Example:
 ```yaml
 base_url: http://127.0.0.1:9797
 token_env: EDGEHOME_MATTER_BRIDGE_TOKEN
+token_file:
 request_timeout_ms: 5000
 execute_enabled: false
 ```
 
-Real execution remains disabled unless explicitly enabled in private config.
+Real execution remains disabled unless explicitly enabled in private config and
+the bridge token is available through `token_env` or a private `token_file`
+outside the repository.
 
 Successful controller bridge responses are recorded only after recursive
 sanitization. Fabric IDs, node IDs, endpoint IDs, private URLs, token-like
@@ -60,8 +63,9 @@ cargo run -q -p edgehome-cli -- backend check --backend matter --registry config
 ```
 
 The check validates route IDs, bridge config shape, execution switch, and token
-availability. It does not contact a Matter controller bridge and does not prove
-real Matter device control.
+availability through either environment or token file configuration. It does
+not contact a Matter controller bridge and does not prove real Matter device
+control.
 
 CLI shape:
 
@@ -126,7 +130,12 @@ Relevant tests:
 ```powershell
 cargo test -p edgehome-executor matter
 cargo test -p edgehome-executor dry_run_planner_translates_matter_bridge_payload
+cargo test -p edgehome-cli execute_trace_posts_matter_bridge_from_private_config
 ```
+
+The CLI integration test posts a previously recorded dry-run trace to a local
+Matter bridge HTTP fixture using a private token file. It verifies the harness
+boundary and request shape, not real Matter hardware behavior.
 
 ## Claim Boundary
 

@@ -272,8 +272,8 @@ Example dry-run request:
 ```
 
 Real execution calls a configured bridge only when `execute_enabled = true` and
-a bridge token is available through `EDGEHOME_MIOT_BRIDGE_TOKEN` or equivalent
-private configuration.
+a bridge token is available through `EDGEHOME_MIOT_BRIDGE_TOKEN`, an equivalent
+environment variable, or a private `token_file` outside the repository.
 
 ## Matter Bridge Adapter
 
@@ -319,8 +319,9 @@ Example dry-run request:
 ```
 
 Real execution calls a configured bridge only when `execute_enabled = true` and
-a bridge token is available through `EDGEHOME_MATTER_BRIDGE_TOKEN` or
-equivalent private configuration.
+a bridge token is available through `EDGEHOME_MATTER_BRIDGE_TOKEN`, an
+equivalent environment variable, or a private `token_file` outside the
+repository.
 
 ## Minimum Tests For Any New Adapter
 

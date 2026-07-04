@@ -326,10 +326,10 @@ User Chinese command
 | Backend | Status | What works | What is not claimed |
 | --- | --- | --- | --- |
 | Mock | Implemented | Deterministic dry-run payloads and eval baseline | Real device control |
-| Home Assistant | Gateway boundary implemented | Service-call dry-run payloads; opt-in HTTP/HTTPS REST execution; route validation; optional post-state fetch | Full HA replacement or universal HA coverage |
-| MIoT / Xiaomi | Bridge request adapter implemented | Verified commands become MIoT bridge requests; execution can call a configured private bridge | Universal Xiaomi support or direct MIoT protocol ownership |
-| Matter | Bridge request adapter implemented | Verified commands become Matter controller bridge requests | Embedded full Matter controller, fabric commissioning, or universal device support |
-| MQTT | Dry-run and guarded publish implemented | Configured topic/payload translation; opt-in `rumqttc` broker publish | Universal MQTT smart-home schema or default real broker operation |
+| Home Assistant | Gateway boundary implemented and locally verified | Service-call dry-run payloads; opt-in HTTP/HTTPS REST execution; route validation; optional post-state fetch; CLI execute path tested against a local HTTP fixture | Full HA replacement or universal HA coverage |
+| MIoT / Xiaomi | Bridge request adapter implemented and locally verified | Verified commands become MIoT bridge requests; CLI execute path can call a configured private bridge with env or token-file secrets | Universal Xiaomi support, real Xiaomi hardware validation, or direct MIoT protocol ownership |
+| Matter | Bridge request adapter implemented and locally verified | Verified commands become Matter controller bridge requests; CLI execute path can call a configured private bridge with env or token-file secrets | Embedded full Matter controller, fabric commissioning, real Matter hardware validation, or universal device support |
+| MQTT | Dry-run and guarded publish implemented and locally verified | Configured topic/payload translation; opt-in `rumqttc` broker publish; CLI execute path tested against a local broker fixture | Universal MQTT smart-home schema or default real broker operation |
 
 Unsupported backend targets must fail closed. They must not silently fall back
 to mock payloads.
@@ -356,6 +356,8 @@ execution.
   Matter bridge payload adapters.
 - Guarded MQTT publish executor and bridge executors for MIoT/Matter, all
   disabled by default.
+- CLI `execute` integration tests for previously recorded dry-run traces across
+  Mock, Home Assistant, MQTT, MIoT bridge, and Matter bridge paths.
 - Home Assistant gateway boundary with route validation, token isolation, and
   optional post-state fetch after explicit execution.
 - Redacted executor response evidence so backend tokens, private IDs, oversized
@@ -490,9 +492,11 @@ The command does not parse fresh natural language. It loads the existing
 `DryRunPlan` from trace evidence, applies confirmation/risk checks, then calls
 the selected backend executor. Public example configs keep `execute_enabled:
 false`, so real execution still fails closed unless private backend config
-explicitly enables it. Executor responses are recorded as redacted evidence:
-Home Assistant post-state stores a state summary instead of full attributes, and
-bridge backend responses are recursively sanitized before trace storage.
+explicitly enables it. Private backend secrets can be supplied by environment
+variables or token files outside the repository. Executor responses are recorded
+as redacted evidence: Home Assistant post-state stores a state summary instead
+of full attributes, MQTT evidence omits broker credentials, and bridge backend
+responses are recursively sanitized before trace storage.
 
 ## Documentation
 
