@@ -61,6 +61,9 @@ pub enum ExecutorError {
     #[error("executor backend mismatch: expected `{expected}`, got `{actual}`")]
     ExecutorBackendMismatch { expected: String, actual: String },
 
+    #[error("backend adapter is not implemented: {backend}")]
+    BackendAdapterNotImplemented { backend: String },
+
     #[error("missing Home Assistant route for device `{0}`")]
     MissingHomeAssistantRoute(String),
 
@@ -104,6 +107,53 @@ pub enum ExecutorError {
 pub trait Executor {
     fn dry_run(&self, plan: &DryRunPlan) -> ExecutorResult<DryRunPlan>;
     fn execute(&self, plan: &ExecutionPlan) -> ExecutorResult<ExecutionResult>;
+}
+
+pub trait BackendAdapter {
+    fn kind(&self) -> BackendKind;
+
+    fn dry_run_payload(
+        &self,
+        device: &DeviceRecord,
+        command: &NormalizedCommand,
+        plan: &ExecutionPlan,
+    ) -> ExecutorResult<Value>;
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct MockAdapter;
+
+impl BackendAdapter for MockAdapter {
+    fn kind(&self) -> BackendKind {
+        BackendKind::Mock
+    }
+
+    fn dry_run_payload(
+        &self,
+        device: &DeviceRecord,
+        command: &NormalizedCommand,
+        _plan: &ExecutionPlan,
+    ) -> ExecutorResult<Value> {
+        Ok(mock_payload(device, command))
+    }
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct HomeAssistantAdapter;
+
+impl BackendAdapter for HomeAssistantAdapter {
+    fn kind(&self) -> BackendKind {
+        BackendKind::HomeAssistant
+    }
+
+    fn dry_run_payload(
+        &self,
+        device: &DeviceRecord,
+        command: &NormalizedCommand,
+        plan: &ExecutionPlan,
+    ) -> ExecutorResult<Value> {
+        home_assistant_payload(device, command, plan)
+    }
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -366,10 +416,13 @@ fn backend_payload(
     command: &NormalizedCommand,
     plan: &ExecutionPlan,
 ) -> ExecutorResult<Value> {
-    match device.backend {
-        BackendKind::HomeAssistant => home_assistant_payload(device, command, plan),
-        BackendKind::Mock | BackendKind::MiioLocal | BackendKind::Mqtt => {
-            Ok(mock_payload(device, command))
+    match &device.backend {
+        BackendKind::Mock => MockAdapter.dry_run_payload(device, command, plan),
+        BackendKind::HomeAssistant => HomeAssistantAdapter.dry_run_payload(device, command, plan),
+        BackendKind::MiioLocal | BackendKind::Mqtt => {
+            Err(ExecutorError::BackendAdapterNotImplemented {
+                backend: backend_name(&device.backend).to_owned(),
+            })
         }
     }
 }
@@ -455,6 +508,22 @@ mod tests {
         }
     }
 
+    fn mqtt_light_device() -> DeviceRecord {
+        DeviceRecord {
+            backend: BackendKind::Mqtt,
+            backend_entity_id: "home/hallway/light/set".to_owned(),
+            ..light_device()
+        }
+    }
+
+    fn miio_light_device() -> DeviceRecord {
+        DeviceRecord {
+            backend: BackendKind::MiioLocal,
+            backend_entity_id: "miio.local.hallway_light".to_owned(),
+            ..light_device()
+        }
+    }
+
     fn command() -> NormalizedCommand {
         NormalizedCommand {
             schema_version: CommandSchemaVersion::default(),
@@ -512,6 +581,40 @@ mod tests {
         assert_eq!(plan.payload["service"], "light.turn_on");
         assert_eq!(plan.payload["service_path"], "/api/services/light/turn_on");
         assert_eq!(plan.payload["payload"]["brightness_pct"], 30);
+    }
+
+    #[test]
+    fn dry_run_planner_rejects_unimplemented_mqtt_backend() {
+        let error = DryRunPlanner
+            .plan(
+                &TraceId("tr_test".to_owned()),
+                &command(),
+                &mqtt_light_device(),
+                PolicyDecision::Allow,
+            )
+            .expect_err("mqtt adapter is not implemented");
+
+        assert!(matches!(
+            error,
+            ExecutorError::BackendAdapterNotImplemented { backend } if backend == "mqtt"
+        ));
+    }
+
+    #[test]
+    fn dry_run_planner_rejects_unimplemented_miio_backend() {
+        let error = DryRunPlanner
+            .plan(
+                &TraceId("tr_test".to_owned()),
+                &command(),
+                &miio_light_device(),
+                PolicyDecision::Allow,
+            )
+            .expect_err("miio adapter is not implemented");
+
+        assert!(matches!(
+            error,
+            ExecutorError::BackendAdapterNotImplemented { backend } if backend == "miio_local"
+        ));
     }
 
     #[test]
