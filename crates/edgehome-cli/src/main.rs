@@ -1989,6 +1989,13 @@ mod tests {
             .expect("registry")
     }
 
+    fn temp_db_path(prefix: &str) -> PathBuf {
+        std::env::temp_dir().join(format!(
+            "{prefix}-{}.sqlite",
+            time::OffsetDateTime::now_utc().unix_timestamp_nanos()
+        ))
+    }
+
     fn unresolved_light_command() -> NormalizedCommand {
         NormalizedCommand {
             schema_version: CommandSchemaVersion::default(),
@@ -2012,6 +2019,96 @@ mod tests {
             params: CommandParams::default(),
             ..ModelCandidate::default()
         }
+    }
+
+    #[test]
+    fn execute_trace_consumes_recorded_dry_run_and_records_evidence() -> anyhow::Result<()> {
+        let db_path = temp_db_path("edgehome-cli-execute-trace");
+        let config_dir = workspace_config_dir();
+        let profile = load_profile(&config_dir, "low_memory").expect("profile");
+
+        let dry_run_output = run_harness_pipeline(
+            &db_path,
+            &config_dir,
+            &profile,
+            "打开客厅灯".to_owned(),
+            PipelineMode::DryRun,
+            true,
+        )?;
+        let trace_id = dry_run_output
+            .get("trace_id")
+            .and_then(Value::as_str)
+            .expect("trace_id")
+            .to_owned();
+
+        assert_eq!(
+            dry_run_output.get("mode").and_then(Value::as_str),
+            Some("dry_run")
+        );
+        assert!(
+            dry_run_output
+                .get("dry_run_plan")
+                .is_some_and(Value::is_object)
+        );
+        assert_eq!(
+            dry_run_output
+                .get("dry_run_plan")
+                .and_then(|plan| plan.get("backend"))
+                .and_then(Value::as_str),
+            Some("mock")
+        );
+
+        let execute_output =
+            execute_trace(&db_path, &config_dir, TraceId(trace_id.clone()), true, None)?;
+
+        assert_eq!(
+            execute_output.get("mode").and_then(Value::as_str),
+            Some("execute")
+        );
+        assert_eq!(
+            execute_output.get("backend").and_then(Value::as_str),
+            Some("mock")
+        );
+        assert_eq!(
+            execute_output
+                .get("user_confirmed")
+                .and_then(Value::as_bool),
+            Some(true)
+        );
+        assert_eq!(
+            execute_output
+                .get("result")
+                .and_then(|result| result.get("success"))
+                .and_then(Value::as_bool),
+            Some(true)
+        );
+
+        let bundle = load_trace_bundle(&db_path, TraceId(trace_id))?;
+        assert!(latest_evidence(&bundle.evidence, EvidenceKind::ExecutorResponse).is_some());
+        assert!(
+            bundle
+                .steps
+                .iter()
+                .any(|step| step.name == "real_execute" && step.status == StepStatus::Succeeded)
+        );
+        assert!(
+            bundle
+                .audit_events
+                .iter()
+                .any(|event| event.event_type == "real_execution_completed")
+        );
+        let trace_frame = build_trace_frame(&bundle);
+        assert_eq!(
+            trace_frame
+                .executor_result
+                .as_ref()
+                .and_then(|result| result.get("success"))
+                .and_then(Value::as_bool),
+            Some(true)
+        );
+
+        let _ = std::fs::remove_file(db_path);
+        Ok(())
     }
 
     #[test]
