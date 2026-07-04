@@ -474,7 +474,13 @@ fn env_value(env_var: &str) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex};
+    use std::{
+        io::{Read, Write},
+        net::TcpListener,
+        sync::{Arc, Mutex},
+        thread,
+        time::Duration,
+    };
 
     use super::*;
     use edgehome_core::{CommandParams, DeviceId};
@@ -619,5 +625,120 @@ mod tests {
         );
         let serialized = serde_json::to_string(&result).expect("serialize");
         assert!(!serialized.contains("EDGEHOME_MQTT_PASSWORD"));
+    }
+
+    #[test]
+    fn rumqttc_publisher_sends_publish_to_local_broker() {
+        let (broker_url, handle) = spawn_mqtt_broker();
+        let config = MqttConfig {
+            broker_url: Some(broker_url.clone()),
+            client_id: "edgehome-harness-test".to_owned(),
+            request_timeout_ms: 2_000,
+            ..MqttConfig::default()
+        };
+        let secrets = MqttSecrets::new(broker_url, None, None).expect("secrets");
+        let request = MqttPublishRequest {
+            topic: "home/hallway/light/set".to_owned(),
+            qos: 0,
+            retain: false,
+            payload: json!({ "power": "on" }),
+        };
+
+        RumqttcMqttPublisher
+            .publish(&config, &secrets, &request)
+            .expect("publish to local broker");
+        let captured = handle.join().expect("broker thread");
+
+        assert_eq!(captured.topic, "home/hallway/light/set");
+        assert_eq!(captured.payload, json!({ "power": "on" }));
+        assert!(!format!("{secrets:?}").contains("127.0.0.1"));
+    }
+
+    #[derive(Debug, Clone, PartialEq)]
+    struct CapturedMqttPublish {
+        topic: String,
+        payload: Value,
+    }
+
+    fn spawn_mqtt_broker() -> (String, thread::JoinHandle<CapturedMqttPublish>) {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind local mqtt broker");
+        let address = listener.local_addr().expect("local address");
+        let broker_url = format!("mqtt://{address}");
+        let handle = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().expect("accept mqtt client");
+            stream
+                .set_read_timeout(Some(Duration::from_secs(5)))
+                .expect("set read timeout");
+
+            let connect = read_mqtt_packet(&mut stream).expect("read connect");
+            assert_eq!(connect.first().map(|byte| byte >> 4), Some(1));
+            stream
+                .write_all(&[0x20, 0x02, 0x00, 0x00])
+                .expect("write connack");
+
+            loop {
+                let packet = read_mqtt_packet(&mut stream).expect("read packet");
+                if packet.first().map(|byte| byte >> 4) == Some(3) {
+                    return parse_publish_packet(&packet);
+                }
+            }
+        });
+        (broker_url, handle)
+    }
+
+    fn read_mqtt_packet(stream: &mut std::net::TcpStream) -> std::io::Result<Vec<u8>> {
+        let mut packet = Vec::new();
+        let mut first = [0_u8; 1];
+        stream.read_exact(&mut first)?;
+        packet.push(first[0]);
+
+        let mut remaining_length = 0_usize;
+        let mut multiplier = 1_usize;
+        loop {
+            let mut encoded = [0_u8; 1];
+            stream.read_exact(&mut encoded)?;
+            packet.push(encoded[0]);
+            remaining_length += usize::from(encoded[0] & 0x7f) * multiplier;
+            if encoded[0] & 0x80 == 0 {
+                break;
+            }
+            multiplier *= 128;
+        }
+
+        let mut body = vec![0_u8; remaining_length];
+        stream.read_exact(&mut body)?;
+        packet.extend_from_slice(&body);
+        Ok(packet)
+    }
+
+    fn parse_publish_packet(packet: &[u8]) -> CapturedMqttPublish {
+        let (header_len, remaining_length) = decode_remaining_length(packet);
+        let end = header_len + remaining_length;
+        let body = &packet[header_len..end];
+        let topic_len = u16::from_be_bytes([body[0], body[1]]) as usize;
+        let topic_start = 2;
+        let topic_end = topic_start + topic_len;
+        let topic = String::from_utf8(body[topic_start..topic_end].to_vec()).expect("topic utf-8");
+        let qos = (packet[0] & 0b0000_0110) >> 1;
+        let payload_start = topic_end + if qos > 0 { 2 } else { 0 };
+        let payload: Value = serde_json::from_slice(&body[payload_start..]).expect("payload json");
+
+        CapturedMqttPublish { topic, payload }
+    }
+
+    fn decode_remaining_length(packet: &[u8]) -> (usize, usize) {
+        let mut remaining_length = 0_usize;
+        let mut multiplier = 1_usize;
+        let mut index = 1_usize;
+        loop {
+            let encoded = packet[index];
+            remaining_length += usize::from(encoded & 0x7f) * multiplier;
+            index += 1;
+            if encoded & 0x80 == 0 {
+                break;
+            }
+            multiplier *= 128;
+        }
+        (index, remaining_length)
     }
 }

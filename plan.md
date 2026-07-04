@@ -39,7 +39,7 @@ Current backend status:
 | --- | --- | --- |
 | Mock | Implemented | Deterministic dry-run and regression eval baseline |
 | Home Assistant | Gateway boundary implemented and locally verified | Dry-run service payloads, opt-in REST execution, route validation, optional post-state fetch, local HTTP gateway tests |
-| MQTT | Dry-run and guarded publish implemented | Configured topic/payload dry-run and opt-in broker publish |
+| MQTT | Dry-run and guarded publish implemented and locally verified | Configured topic/payload dry-run, opt-in broker publish, local MQTT broker CONNECT/PUBLISH test |
 | MIoT / Xiaomi | Bridge request adapter implemented | Verified commands can become MIoT bridge requests; real Xiaomi support requires private bridge/device validation |
 | Matter | Bridge request adapter implemented | Verified commands can become Matter controller bridge requests; real control requires private Matter bridge/controller |
 | Bridge API contract | Implemented | Documents private MIoT/Matter bridge HTTP endpoints, response/error semantics, and URL rules |

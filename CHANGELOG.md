@@ -38,6 +38,7 @@ implemented code, tests, docs, and eval evidence.
   redacted non-success responses.
 - Local HTTP Home Assistant gateway tests for opt-in service execution,
   post-state fetch, token isolation, and sanitized non-success response bodies.
+- Local MQTT broker fixture test for the default `rumqttc` publish path.
 
 ## 0.1.0 - 2026-07-04
 

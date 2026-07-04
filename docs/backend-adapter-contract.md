@@ -119,6 +119,7 @@ Real Home Assistant execute -> disabled by default
 Home Assistant local HTTP execute -> POST service call, GET post-state, redacted evidence
 Home Assistant HTTP errors -> sanitized non-success response bodies
 MQTT real publish -> disabled by default
+MQTT rumqttc path -> local broker CONNECT and PUBLISH packet test
 MIoT bridge execute -> disabled by default
 Matter bridge execute -> disabled by default
 MIoT bridge payload -> exact golden payload

@@ -130,6 +130,12 @@ cargo test -p edgehome-executor mqtt
 cargo test -p edgehome-executor dry_run_planner_translates_mqtt
 ```
 
+The MQTT test group includes a local broker fixture that verifies the default
+`RumqttcMqttPublisher` path performs an MQTT CONNECT and sends a PUBLISH packet
+to the configured topic with the expected JSON payload. This is still a local
+transport test, not evidence that any particular home platform accepts a
+universal MQTT smart-home schema.
+
 ## Claim Boundary
 
 MQTT is a transport, not a universal smart-home schema. EdgeHome Harness
