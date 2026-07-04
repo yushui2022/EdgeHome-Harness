@@ -638,8 +638,19 @@ mod tests {
         .expect("service call");
 
         assert_eq!(service_call.service_name(), "light.turn_on");
-        assert_eq!(service_call.payload["entity_id"], "light.hallway");
-        assert_eq!(service_call.payload["brightness_pct"], 30);
+        assert_eq!(service_call.service_path(), "/api/services/light/turn_on");
+        assert_eq!(
+            service_call,
+            HomeAssistantServiceCall {
+                domain: "light".to_owned(),
+                service: "turn_on".to_owned(),
+                entity_id: "light.hallway".to_owned(),
+                payload: json!({
+                    "entity_id": "light.hallway",
+                    "brightness_pct": 30
+                }),
+            }
+        );
     }
 
     #[test]
@@ -657,7 +668,46 @@ mod tests {
             home_assistant_service_call(&execution_plan, "climate.bedroom").expect("service call");
 
         assert_eq!(service_call.service_name(), "climate.set_temperature");
-        assert_eq!(service_call.payload["temperature"], 26);
+        assert_eq!(
+            service_call,
+            HomeAssistantServiceCall {
+                domain: "climate".to_owned(),
+                service: "set_temperature".to_owned(),
+                entity_id: "climate.bedroom".to_owned(),
+                payload: json!({
+                    "entity_id": "climate.bedroom",
+                    "temperature": 26
+                }),
+            }
+        );
+    }
+
+    #[test]
+    fn translates_climate_mode_to_service_call() {
+        let mut execution_plan = plan(
+            Action::SetMode,
+            CommandParams {
+                mode: Some("cool".to_owned()),
+                ..CommandParams::default()
+            },
+        );
+        execution_plan.target = DeviceId::new("bedroom_air_conditioner").expect("device id");
+
+        let service_call =
+            home_assistant_service_call(&execution_plan, "climate.bedroom").expect("service call");
+
+        assert_eq!(
+            service_call,
+            HomeAssistantServiceCall {
+                domain: "climate".to_owned(),
+                service: "set_hvac_mode".to_owned(),
+                entity_id: "climate.bedroom".to_owned(),
+                payload: json!({
+                    "entity_id": "climate.bedroom",
+                    "hvac_mode": "cool"
+                }),
+            }
+        );
     }
 
     #[test]
@@ -711,6 +761,22 @@ mod tests {
     }
 
     #[test]
+    fn executor_missing_route_fails_closed() {
+        let config = HomeAssistantConfig::default();
+        let client = HomeAssistantClient::new(&config, None);
+        let executor = HomeAssistantExecutor::new(client, false);
+
+        let error = executor
+            .translate_plan(&plan(Action::TurnOff, CommandParams::default()))
+            .expect_err("missing route");
+
+        assert!(matches!(
+            error,
+            ExecutorError::MissingHomeAssistantRoute(device_id) if device_id == "hallway_light"
+        ));
+    }
+
+    #[test]
     fn executor_rejects_non_home_assistant_dry_run_plan() {
         let config = HomeAssistantConfig::default();
         let client = HomeAssistantClient::new(&config, None);
@@ -728,5 +794,32 @@ mod tests {
             ExecutorError::ExecutorBackendMismatch { expected, actual }
                 if expected == "home_assistant" && actual == "mock"
         ));
+    }
+
+    #[test]
+    fn executor_dry_run_does_not_require_token_or_call_real_device() {
+        let config = HomeAssistantConfig {
+            token_env: "EDGEHOME_HA_TOKEN_SHOULD_NOT_EXIST_FOR_DRY_RUN_TEST".to_owned(),
+            ..HomeAssistantConfig::default()
+        };
+        let client = HomeAssistantClient::new(&config, None);
+        let executor = HomeAssistantExecutor::new(client, false);
+        let dry_run = DryRunPlan {
+            backend: "home_assistant".to_owned(),
+            payload: json!({
+                "backend": "home_assistant",
+                "service": "light.turn_off",
+                "payload": {
+                    "entity_id": "light.hallway"
+                }
+            }),
+            plan: plan(Action::TurnOff, CommandParams::default()),
+        };
+
+        let returned = executor.dry_run(&dry_run).expect("dry-run accepted");
+        let serialized = serde_json::to_string(&returned).expect("serialize dry-run");
+
+        assert_eq!(returned, dry_run);
+        assert!(!serialized.contains("EDGEHOME_HA_TOKEN_SHOULD_NOT_EXIST_FOR_DRY_RUN_TEST"));
     }
 }

@@ -608,7 +608,7 @@ git push origin main
 
 ### M7. Adapter golden tests 和 backend contract 加固
 
-状态：Pending
+状态：Done in current milestone
 
 为什么要做：
 
@@ -630,6 +630,7 @@ Mock supported action -> exact payload
 Home Assistant light.turn_on -> exact service_call payload
 Home Assistant light brightness -> exact service_call payload
 Home Assistant climate temperature -> exact service_call payload
+Home Assistant climate mode -> exact service_call payload
 Missing Home Assistant route -> fail closed
 Invalid entity_id -> fail closed
 MQTT selected -> BackendAdapterNotImplemented
@@ -649,8 +650,12 @@ docs/backend-adapter-contract.md
 完成指标：
 
 ```text
-adapter output deterministic
+adapter output deterministic through exact JSON payload tests
 unsupported backend fail-closed tests exist
+missing Home Assistant route fails closed
+invalid Home Assistant entity_id fails closed
+dry-run does not require token or call real device
+dry-run payload serialization does not leak token/env secret
 README support matrix remains accurate
 ```
 

@@ -91,6 +91,29 @@ Infer hidden backend routes from natural language.
 Store secrets in docs, configs, or traces.
 ```
 
+## Current Test Coverage
+
+The executor crate pins the current adapter behavior with golden and
+fail-closed tests:
+
+```text
+Mock supported action -> exact dry-run payload
+Home Assistant light.turn_on -> exact dry-run payload
+Home Assistant light brightness -> exact dry-run payload
+Home Assistant climate temperature -> exact dry-run payload
+Home Assistant climate mode -> exact service-call payload
+Missing Home Assistant route -> fail closed
+Invalid Home Assistant entity_id -> fail closed
+MQTT selected -> BackendAdapterNotImplemented
+MiioLocal selected -> BackendAdapterNotImplemented
+Home Assistant dry-run -> no token required and no real service call
+Dry-run payload serialization -> no token/env secret leakage
+Real Home Assistant execute -> disabled by default
+```
+
+These tests are deliberately about adapter boundaries. They do not claim full
+Home Assistant coverage or real-device production support.
+
 ## Mock Adapter
 
 The mock adapter is the deterministic test and demo baseline.

@@ -529,6 +529,18 @@ mod tests {
         }
     }
 
+    fn ha_ac_device() -> DeviceRecord {
+        DeviceRecord {
+            device_id: DeviceId::new("bedroom_air_conditioner").expect("device id"),
+            aliases: vec!["卧室空调".to_owned()],
+            room: Room::Bedroom,
+            device_type: DeviceType::AirConditioner,
+            backend: BackendKind::HomeAssistant,
+            backend_entity_id: "climate.bedroom_ac".to_owned(),
+            risk_level: RiskLevel::Medium,
+        }
+    }
+
     fn mqtt_light_device() -> DeviceRecord {
         DeviceRecord {
             backend: BackendKind::Mqtt,
@@ -588,7 +600,32 @@ mod tests {
     }
 
     fn accepted_gated_command() -> GatedCommand {
-        gated_command(PolicyDecision::Allow, GateOutcome::Accepted, Vec::new())
+        accepted_gated_for(command(), PolicyDecision::Allow, RiskLevel::Low)
+    }
+
+    fn accepted_gated_for(
+        command: NormalizedCommand,
+        policy_decision: PolicyDecision,
+        authoritative_risk: RiskLevel,
+    ) -> GatedCommand {
+        GatedCommand {
+            evaluation: GateEvaluation {
+                trace_id: TraceId("tr_test".to_owned()),
+                policy_decision,
+                authoritative_risk,
+                device_id: command.device_id.clone(),
+                executable: false,
+                requires_confirmation: false,
+                blocking_reasons: Vec::new(),
+                gate_checks: vec![GateCheckSummary {
+                    gate_name: DryRunGate::NAME.to_owned(),
+                    outcome: GateOutcome::Accepted,
+                    reason: "dry-run gate test fixture".to_owned(),
+                    blocking: false,
+                }],
+            },
+            command,
+        }
     }
 
     fn dry_run_plan() -> DryRunPlan {
@@ -608,7 +645,28 @@ mod tests {
         assert_eq!(plan.plan.action, Action::SetBrightness);
         assert_eq!(plan.plan.params.brightness, Some(30));
         assert_eq!(plan.backend, "mock");
-        assert_eq!(plan.payload["operation"], "set_brightness");
+        assert_eq!(
+            plan.payload,
+            json!({
+                "backend": "mock",
+                "device_id": "hallway_light",
+                "backend_entity_id": "mock.light.hallway",
+                "room": "hallway",
+                "device_type": "light",
+                "action": "set_brightness",
+                "params": {
+                    "brightness": 30,
+                    "temperature": null,
+                    "mode": null,
+                    "time_after": "22:00",
+                    "raw_value": null
+                },
+                "operation": "set_brightness",
+                "condition": {
+                    "time_after": "22:00"
+                }
+            })
+        );
     }
 
     #[test]
@@ -619,10 +677,117 @@ mod tests {
             .expect("ha dry-run plan");
 
         assert_eq!(plan.backend, "home_assistant");
-        assert_eq!(plan.payload["entity_id"], "light.hallway");
-        assert_eq!(plan.payload["service"], "light.turn_on");
-        assert_eq!(plan.payload["service_path"], "/api/services/light/turn_on");
-        assert_eq!(plan.payload["payload"]["brightness_pct"], 30);
+        assert_eq!(
+            plan.payload,
+            json!({
+                "backend": "home_assistant",
+                "device_id": "hallway_light",
+                "entity_id": "light.hallway",
+                "room": "hallway",
+                "device_type": "light",
+                "action": "set_brightness",
+                "service": "light.turn_on",
+                "service_path": "/api/services/light/turn_on",
+                "payload": {
+                    "entity_id": "light.hallway",
+                    "brightness_pct": 30
+                },
+                "condition": {
+                    "time_after": "22:00"
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn dry_run_planner_translates_home_assistant_light_turn_on_golden_payload() {
+        let command = NormalizedCommand {
+            action: Action::TurnOn,
+            params: CommandParams::default(),
+            ..command()
+        };
+        let gated = accepted_gated_for(command, PolicyDecision::Allow, RiskLevel::Low);
+        let plan = DryRunPlanner
+            .plan_gated(&gated, &ha_light_device())
+            .expect("ha light dry-run plan");
+
+        assert_eq!(
+            plan.payload,
+            json!({
+                "backend": "home_assistant",
+                "device_id": "hallway_light",
+                "entity_id": "light.hallway",
+                "room": "hallway",
+                "device_type": "light",
+                "action": "turn_on",
+                "service": "light.turn_on",
+                "service_path": "/api/services/light/turn_on",
+                "payload": {
+                    "entity_id": "light.hallway"
+                },
+                "condition": {
+                    "time_after": null
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn dry_run_planner_translates_home_assistant_climate_temperature_golden_payload() {
+        let command = NormalizedCommand {
+            intent: Intent::ControlDevice,
+            room: Room::Bedroom,
+            device_id: Some(DeviceId::new("bedroom_air_conditioner").expect("device id")),
+            device_type: DeviceType::AirConditioner,
+            action: Action::SetTemperature,
+            params: CommandParams {
+                temperature: Some(24),
+                ..CommandParams::default()
+            },
+            risk: RiskLevel::Medium,
+            ..NormalizedCommand::default()
+        };
+        let gated = accepted_gated_for(
+            command,
+            PolicyDecision::RequireConfirmation,
+            RiskLevel::Medium,
+        );
+        let plan = DryRunPlanner
+            .plan_gated(&gated, &ha_ac_device())
+            .expect("ha climate dry-run plan");
+
+        assert_eq!(
+            plan.payload,
+            json!({
+                "backend": "home_assistant",
+                "device_id": "bedroom_air_conditioner",
+                "entity_id": "climate.bedroom_ac",
+                "room": "bedroom",
+                "device_type": "air_conditioner",
+                "action": "set_temperature",
+                "service": "climate.set_temperature",
+                "service_path": "/api/services/climate/set_temperature",
+                "payload": {
+                    "entity_id": "climate.bedroom_ac",
+                    "temperature": 24
+                },
+                "condition": {
+                    "time_after": null
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn dry_run_payload_does_not_contain_backend_secrets() {
+        let gated = accepted_gated_command();
+        let plan = DryRunPlanner
+            .plan_gated(&gated, &ha_light_device())
+            .expect("ha dry-run plan");
+        let serialized = serde_json::to_string(&plan).expect("serialize plan");
+
+        assert!(!serialized.contains("super-secret-token"));
+        assert!(!serialized.contains("EDGEHOME_HA_TOKEN"));
     }
 
     #[test]
