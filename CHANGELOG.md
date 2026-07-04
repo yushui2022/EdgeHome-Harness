@@ -44,6 +44,8 @@ implemented code, tests, docs, and eval evidence.
 - Bridge token-file support for MIoT/Matter private bridge configs.
 - CLI execute integration tests for recorded dry-run traces across Mock, Home
   Assistant, MQTT, MIoT bridge, and Matter bridge paths.
+- CLI execute freshness guard rejects dry-run traces older than 600 seconds and
+  records stale-trace rejection evidence before any backend call.
 
 ## 0.1.0 - 2026-07-04
 

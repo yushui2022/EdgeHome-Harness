@@ -92,8 +92,9 @@ CLI shape:
 cargo run -q -p edgehome-cli -- --db-path edgehome-demo.sqlite execute <trace_id> --confirm --backend-config private/miot.yaml
 ```
 
-The CLI executes only a previously recorded dry-run trace. Public example
-configs keep `execute_enabled: false`.
+The CLI executes only a fresh, previously recorded dry-run trace and rejects
+stale traces older than 600 seconds. Public example configs keep
+`execute_enabled: false`.
 
 ## Golden Request Shape
 
@@ -152,9 +153,9 @@ cargo test -p edgehome-executor dry_run_planner_translates_miot_bridge_payload
 cargo test -p edgehome-cli execute_trace_posts_miot_bridge_from_private_config
 ```
 
-The CLI integration test posts a previously recorded dry-run trace to a local
-MIoT bridge HTTP fixture using a private token file. It verifies the harness
-boundary and request shape, not real Xiaomi hardware behavior.
+The CLI integration test posts a fresh, previously recorded dry-run trace to a
+local MIoT bridge HTTP fixture using a private token file. It verifies the
+harness boundary and request shape, not real Xiaomi hardware behavior.
 
 ## Claim Boundary
 

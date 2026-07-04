@@ -68,8 +68,10 @@ Check:
 - `docs/mqtt-guarded-publish.md`, `docs/miot-bridge-adapter.md`,
   `docs/matter-bridge-adapter.md`, and `docs/home-assistant-gateway.md` match
   code behavior.
-- CLI execute integration tests still cover recorded dry-run traces for Mock,
-  Home Assistant, MQTT, MIoT bridge, and Matter bridge.
+- CLI execute integration tests still cover fresh recorded dry-run traces for
+  Mock, Home Assistant, MQTT, MIoT bridge, and Matter bridge.
+- CLI execute stale-trace rejection still prevents backend calls for dry-run
+  traces older than 600 seconds and records rejection evidence.
 - `docs/customization.md` still says model JSON is canonical and backend
   mappings are configurable below the model.
 - `docs/waic-one-page.md` avoids production, Xiaomi, Matter, MQTT, or 2GB

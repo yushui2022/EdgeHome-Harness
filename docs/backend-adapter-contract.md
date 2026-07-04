@@ -72,6 +72,13 @@ invalid bridge route for backend `...`
 missing bridge token for backend `...`
 ```
 
+## Explicit Execute Rules
+
+The CLI execute path accepts only a fresh `DryRunPlan` already recorded in trace
+evidence. It must not parse new natural-language input during execution, and it
+rejects dry-run traces older than 600 seconds before any backend call is made.
+Stale rejections are recorded as trace/audit evidence.
+
 ## Adapter Rules
 
 Adapters must:

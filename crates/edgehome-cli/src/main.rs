@@ -149,6 +149,8 @@ enum BackendCheckTarget {
     Matter,
 }
 
+const EXECUTE_TRACE_MAX_AGE_SECONDS: i64 = 600;
+
 impl BackendCheckTarget {
     fn parse(value: &str) -> anyhow::Result<Self> {
         match value.trim().to_ascii_lowercase().as_str() {
@@ -1291,6 +1293,40 @@ fn execute_trace(
         .context("trace has no dry-run plan to execute")?;
     let dry_run: DryRunPlan = serde_json::from_value(dry_run_ref.content.clone())
         .context("failed to parse dry-run plan evidence")?;
+    let trace_store = TraceStore::open(db_path)?;
+    let audit_sink = AuditSink::open(db_path)?;
+    let now = time::OffsetDateTime::now_utc();
+    let trace_age_seconds = trace_age_seconds(&bundle.trace, now);
+    if trace_age_seconds > EXECUTE_TRACE_MAX_AGE_SECONDS {
+        trace_store.append_step(
+            &trace_id,
+            NewCommandStep::new("real_execute_rejected", StepStatus::Rejected)
+                .with_message(format!(
+                    "dry-run trace is stale: age {trace_age_seconds}s exceeds {EXECUTE_TRACE_MAX_AGE_SECONDS}s"
+                ))
+                .with_evidence_refs(vec![dry_run_ref.id.clone()]),
+        )?;
+        audit_sink.append(
+            NewAuditEvent::new(
+                "real_execution_rejected_stale_trace",
+                "explicit execute command rejected because the dry-run trace is stale",
+                json!({
+                    "trace_id": trace_id.0.as_str(),
+                    "backend": dry_run.backend.as_str(),
+                    "target": dry_run.plan.target.0.as_str(),
+                    "trace_age_seconds": trace_age_seconds,
+                    "max_trace_age_seconds": EXECUTE_TRACE_MAX_AGE_SECONDS,
+                    "user_confirmed": user_confirmed,
+                    "success": false,
+                }),
+            )
+            .with_trace_id(trace_id.clone()),
+        )?;
+        anyhow::bail!(
+            "stale dry-run trace `{}` is {trace_age_seconds}s old; regenerate dry-run before execute",
+            trace_id.0
+        );
+    }
     let risk = latest_evidence(&bundle.evidence, EvidenceKind::NormalizedCommand)
         .and_then(|evidence| {
             serde_json::from_value::<NormalizedCommand>(evidence.content.clone()).ok()
@@ -1311,13 +1347,7 @@ fn execute_trace(
     let result = match dry_run.backend.as_str() {
         "mock" => {
             let executor = MockExecutor::new(true);
-            transaction.execute(
-                &executor,
-                &dry_run,
-                risk,
-                user_confirmed,
-                time::OffsetDateTime::now_utc(),
-            )?
+            transaction.execute(&executor, &dry_run, risk, user_confirmed, now)?
         }
         "home_assistant" => {
             let config_path =
@@ -1329,13 +1359,7 @@ fn execute_trace(
             let executor = HomeAssistantExecutor::new(client, config.execute_enabled)
                 .with_post_state_verification(config.verify_state_after_execute)
                 .with_route(device.device_id.clone(), &device.backend_entity_id)?;
-            transaction.execute(
-                &executor,
-                &dry_run,
-                risk,
-                user_confirmed,
-                time::OffsetDateTime::now_utc(),
-            )?
+            transaction.execute(&executor, &dry_run, risk, user_confirmed, now)?
         }
         "mqtt" => {
             let config_path =
@@ -1345,13 +1369,7 @@ fn execute_trace(
             let secrets = MqttSecrets::load(&config)?;
             let executor = MqttExecutor::from_config(&config, secrets)
                 .with_route(device.device_id.clone(), &device.backend_entity_id)?;
-            transaction.execute(
-                &executor,
-                &dry_run,
-                risk,
-                user_confirmed,
-                time::OffsetDateTime::now_utc(),
-            )?
+            transaction.execute(&executor, &dry_run, risk, user_confirmed, now)?
         }
         "miio_local" => {
             let config_path =
@@ -1360,13 +1378,7 @@ fn execute_trace(
                 .with_context(|| format!("failed to load `{}`", config_path.display()))?;
             let executor = MiotBridgeExecutor::from_config(&config)?
                 .with_route(device.device_id.clone(), &device.backend_entity_id)?;
-            transaction.execute(
-                &executor,
-                &dry_run,
-                risk,
-                user_confirmed,
-                time::OffsetDateTime::now_utc(),
-            )?
+            transaction.execute(&executor, &dry_run, risk, user_confirmed, now)?
         }
         "matter_bridge" => {
             let config_path =
@@ -1375,19 +1387,11 @@ fn execute_trace(
                 .with_context(|| format!("failed to load `{}`", config_path.display()))?;
             let executor = MatterBridgeExecutor::from_config(&config)?
                 .with_route(device.device_id.clone(), &device.backend_entity_id)?;
-            transaction.execute(
-                &executor,
-                &dry_run,
-                risk,
-                user_confirmed,
-                time::OffsetDateTime::now_utc(),
-            )?
+            transaction.execute(&executor, &dry_run, risk, user_confirmed, now)?
         }
         backend => anyhow::bail!("execute is not wired for backend `{backend}`"),
     };
 
-    let trace_store = TraceStore::open(db_path)?;
-    let audit_sink = AuditSink::open(db_path)?;
     let result_ref = trace_store.record_evidence(NewEvidence::new(
         EvidenceKind::ExecutorResponse,
         SourceSystem::Executor,
@@ -1408,6 +1412,8 @@ fn execute_trace(
                 "backend": dry_run.backend.as_str(),
                 "target": dry_run.plan.target.0.as_str(),
                 "user_confirmed": user_confirmed,
+                "trace_age_seconds": trace_age_seconds,
+                "max_trace_age_seconds": EXECUTE_TRACE_MAX_AGE_SECONDS,
                 "success": result.success,
             }),
         )
@@ -1420,6 +1426,8 @@ fn execute_trace(
         "backend": dry_run.backend,
         "target": dry_run.plan.target,
         "user_confirmed": user_confirmed,
+        "trace_age_seconds": trace_age_seconds,
+        "max_trace_age_seconds": EXECUTE_TRACE_MAX_AGE_SECONDS,
         "result": result,
         "evidence_refs": {
             "dry_run_plan": dry_run_ref.id,
@@ -1440,6 +1448,10 @@ struct TraceBundle {
     gate_checks: Vec<GateCheck>,
     audit_events: Vec<AuditEvent>,
     evidence: Vec<EvidenceRef>,
+}
+
+fn trace_age_seconds(trace: &CommandTrace, now: time::OffsetDateTime) -> i64 {
+    (now - trace.started_at).whole_seconds().max(0)
 }
 
 fn load_trace_bundle(db_path: &Path, trace_id: TraceId) -> anyhow::Result<TraceBundle> {
@@ -2345,6 +2357,45 @@ capabilities:
                 .and_then(|result| result.get("success"))
                 .and_then(Value::as_bool),
             Some(true)
+        );
+
+        let _ = std::fs::remove_file(db_path);
+        Ok(())
+    }
+
+    #[test]
+    fn execute_trace_rejects_stale_dry_run_trace() -> anyhow::Result<()> {
+        let db_path = temp_db_path("edgehome-cli-stale-execute-trace");
+        let config_dir = workspace_config_dir();
+        let trace_id = dry_run_trace_id(&db_path, &config_dir, "打开客厅灯")?;
+        let stale_started_at = time::OffsetDateTime::now_utc()
+            - time::Duration::seconds(EXECUTE_TRACE_MAX_AGE_SECONDS + 60);
+        let stale_started_at =
+            stale_started_at.format(&time::format_description::well_known::Rfc3339)?;
+        let trace_store = TraceStore::open(&db_path)?;
+        trace_store.connection().execute(
+            "UPDATE command_traces SET started_at = ?1 WHERE trace_id = ?2",
+            &[
+                edgehome_storage::sqlite::text(stale_started_at),
+                edgehome_storage::sqlite::text(trace_id.clone()),
+            ],
+        )?;
+
+        let error = execute_trace(&db_path, &config_dir, TraceId(trace_id.clone()), true, None)
+            .expect_err("stale trace rejected");
+        let bundle = load_trace_bundle(&db_path, TraceId(trace_id))?;
+
+        assert!(error.to_string().contains("stale dry-run trace"));
+        assert!(latest_evidence(&bundle.evidence, EvidenceKind::ExecutorResponse).is_none());
+        assert!(bundle.steps.iter().any(
+            |step| step.name == "real_execute_rejected" && step.status == StepStatus::Rejected
+        ));
+        assert!(!bundle.steps.iter().any(|step| step.name == "real_execute"));
+        assert!(
+            bundle
+                .audit_events
+                .iter()
+                .any(|event| event.event_type == "real_execution_rejected_stale_trace")
         );
 
         let _ = std::fs::remove_file(db_path);

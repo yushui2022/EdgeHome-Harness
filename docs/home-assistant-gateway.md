@@ -148,8 +148,9 @@ CLI shape:
 cargo run -q -p edgehome-cli -- --db-path edgehome-demo.sqlite execute <trace_id> --confirm --backend-config private/home_assistant.yaml
 ```
 
-The CLI executes only a previously recorded dry-run trace. It does not execute
-fresh natural-language input directly.
+The CLI executes only a fresh, previously recorded dry-run trace. It rejects
+stale traces older than 600 seconds and does not execute fresh natural-language
+input directly.
 
 ## Tests
 

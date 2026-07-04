@@ -103,8 +103,9 @@ CLI shape:
 cargo run -q -p edgehome-cli -- --db-path edgehome-demo.sqlite execute <trace_id> --confirm --backend-config private/mqtt.yaml
 ```
 
-The CLI executes only a previously recorded dry-run trace. Public example
-configs keep `execute_enabled: false`.
+The CLI executes only a fresh, previously recorded dry-run trace and rejects
+stale traces older than 600 seconds. Public example configs keep
+`execute_enabled: false`.
 
 ## Failure Behavior
 
@@ -134,7 +135,7 @@ cargo test -p edgehome-cli execute_trace_publishes_mqtt_from_private_config
 The MQTT test group includes a local broker fixture that verifies the default
 `RumqttcMqttPublisher` path performs an MQTT CONNECT and sends a PUBLISH packet
 to the configured topic with the expected JSON payload. The CLI test also
-proves `execute <trace_id> --backend-config ...` can publish a previously
+proves `execute <trace_id> --backend-config ...` can publish a fresh, previously
 recorded dry-run trace to a local broker fixture. This is still local transport
 evidence, not evidence that any particular home platform accepts a universal
 MQTT smart-home schema.
