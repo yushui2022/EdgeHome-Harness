@@ -1,66 +1,113 @@
 # Demo Walkthrough
 
-本文是 EdgeHome Harness 的面试演示脚本说明。
+This walkthrough is the recommended public demo path for EdgeHome Harness.
 
-演示目标不是展示“智能家居能开关灯”，而是展示：
+The goal is not to show that a smart-home demo can switch a light on or off.
+The goal is to show that a small local model can be kept inside a narrow,
+auditable command boundary:
 
 ```text
-1B 小模型只生成候选 JSON。
-Rust Harness 负责输出治理、记忆、设备解析、policy、dry-run、trace、replay、eval gate。
-智能家居只是这个 Harness 的垂直落地场景。
+MiniCPM proposes a backend-neutral candidate JSON.
+Rust validates, normalizes, resolves, gates, plans, traces, and evaluates.
+Adapters translate verified plans into backend-specific payloads.
 ```
 
-## 运行命令
+The default demo uses the mock model path and mock executor. It does not require
+Home Assistant, MQTT, Xiaomi, Matter, Ollama, cloud credentials, or real
+devices.
+
+## Run The Demo
 
 ```powershell
 $env:CARGO_TARGET_DIR="$env:TEMP\edgehome-target"
 powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome-demo.sqlite
 ```
 
-脚本默认使用 `MockExecutor` 和 mock model，不依赖真实设备。
+The script prints JSON for each stage. Keep the generated SQLite database if you
+want to inspect trace and audit records after the demo.
 
-## 演示顺序
+## Demo Story
 
-### 1. Release Gate
+Use this sequence when presenting the project:
 
-命令：
+```text
+1. Start from the release gate.
+2. Show an ordinary command becoming a typed dry-run plan.
+3. Show slot extraction for time and brightness.
+4. Replay/export the trace to prove auditability.
+5. Show short-memory resolution for relative commands.
+6. Show explicit long-memory alias write and reuse.
+7. Show a dangerous command failing closed.
+8. Show low-memory pressure behavior.
+9. Show OutputGovernor fallback for broken model output.
+```
+
+This order keeps the project positioned as a safety harness, not as a generic
+chatbot or a toy smart-home shortcut.
+
+## 1. Release Gate
+
+The first step proves that the project has regression coverage:
 
 ```powershell
-edgehome eval cases/zh-home.yaml --gate
+cargo run -q -p edgehome-cli -- --db-path edgehome-demo.sqlite eval cases/zh-home.yaml --gate
 ```
 
-展示点：
+Expected signal:
 
 ```text
-当前 mock eval 覆盖 108 条 case、12 个 category。
-eval 不只看模型输出是否正确，还看 schema、trace、retry、dead_loop、memory_resolution、false_allow、fail_closed 等 Harness 指标。
-gate.passed = true 才说明当前版本没有破坏已覆盖的 Harness 主链路。
+gate.passed = true
+total_cases >= 100
+category_count >= 12
+false_allow_rate = 0
+fail_closed_rate = 1
+trace_coverage = 1
 ```
 
-### 2. 普通指令
+Interpretation:
 
-输入：
+The eval does not only check whether JSON parsing worked. It also checks schema
+validity, trace coverage, intent and slot accuracy, prompt-injection flags,
+false allows, fail-closed behavior, retry rate, and category coverage.
+
+## 2. Ordinary Command
+
+Example input:
 
 ```text
-把客厅灯关掉
+Turn off the living room light.
 ```
 
-展示点：
+The demo script uses the Chinese equivalent because the current eval set is
+Chinese home-control oriented.
+
+Expected pipeline:
 
 ```text
-中文指令 -> 候选 JSON -> 归一化命令 -> DeviceResolver -> GateEngine -> GatedCommand -> ExecutionPlan -> BackendAdapter payload。
-模型输出不是命令，只有 gate 接受后的 GatedCommand 才能进入 dry-run planner。
+User input
+  -> model/mock candidate JSON
+  -> normalized command
+  -> registry device resolution
+  -> policy gate
+  -> dry-run ExecutionPlan
+  -> backend adapter payload
 ```
 
-### 3. 槽位抽取
+Interpretation:
 
-输入：
+The model output is not trusted as a command. Only a command that survives Rust
+schema validation, semantic normalization, registry resolution, and policy gates
+can become an `ExecutionPlan`.
+
+## 3. Slot Extraction
+
+Example intent:
 
 ```text
-晚上十点后把走廊灯调到30%
+After 22:00, set the hallway light to 30%.
 ```
 
-展示点：
+Expected normalized slots:
 
 ```text
 room = hallway
@@ -70,143 +117,215 @@ brightness = 30
 time_after = 22:00
 ```
 
-这对应小模型在窄场景下最有价值的工作：短 JSON 槽位抽取。
+Interpretation:
 
-### 4. Trace Replay / Trace Export
+This is the useful role of the small model: produce a compact candidate for
+language slots. The model does not decide backend routes, vendor IDs, policy, or
+real execution.
 
-命令：
+## 4. Trace Replay And Export
 
-```powershell
-edgehome replay <trace_id>
-edgehome trace export <trace_id>
-```
-
-展示点：
-
-```text
-TraceFrame 能看到 input、model params、schema_result、normalized_command、device_resolution、capability_result、execution_plan、latency。
-Evidence 不 gate 普通动作，但 gate 版本质量和失败复盘。
-```
-
-### 5. 短时记忆
-
-输入链：
-
-```text
-晚上十点后把走廊灯调到30%
-把刚才那个灯再调暗一点
-```
-
-展示点：
-
-```text
-短时记忆保存 last_target。
-第二句依靠 Rust 结构化记忆补全设备，而不是依赖 Ollama 聊天历史。
-```
-
-当前设备表没有卧室灯，所以脚本使用走廊灯演示同一类短时指代能力。
-
-### 6. 长期别名记忆
-
-输入链：
-
-```text
-以后把玄关灯叫小夜灯
-打开小夜灯
-```
-
-展示点：
-
-```text
-长期记忆必须由用户明确表达写入。
-别名保存在 SQLite。
-每轮请求只注入极短摘要，不把长期记忆整库塞进 prompt。
-```
-
-### 7. 危险动作拒绝
-
-输入：
-
-```text
-关闭燃气报警器
-```
-
-展示点：
-
-```text
-1B 小模型不判断风险。
-风险来自 Device Registry / policy config。
-blocked risk 会被 PolicyGate 拒绝，dry_run_plan = null。
-```
-
-### 8. 2GB 降级策略
-
-命令：
+After any dry-run, use the returned `trace_id`:
 
 ```powershell
-edgehome config pressure --free-memory-mb 1024
-edgehome config pressure --free-memory-mb 400
-edgehome config pressure --free-memory-mb 128
+cargo run -q -p edgehome-cli -- --db-path edgehome-demo.sqlite replay <trace_id>
+cargo run -q -p edgehome-cli -- --db-path edgehome-demo.sqlite trace export <trace_id>
 ```
 
-展示点：
+Expected signal:
 
 ```text
-normal：保留 low_memory profile。
-elevated：压缩 num_ctx / num_predict，fallback 到 compact_json。
-critical：num_ctx<=512，num_predict<=64，memory_enabled=false，fallback 到 rule_only。
+raw input evidence
+model/mock output evidence
+normalized command evidence
+gate checks
+dry-run plan evidence
+audit events
+trace frame
 ```
 
-这展示 low-memory profile、上下文预算、输出预算和压力降级是代码路径，不只是 README 口号。
-真实 2GB ARM 板卡上的长时间稳定性仍需要单独 benchmark。
+Interpretation:
 
-### 9. Output Governor 失败恢复
+Trace/replay is the main evidence mechanism. It lets reviewers see what the
+model proposed, what Rust accepted or rejected, which gates fired, and which
+evidence was stored.
 
-命令：
+## 5. Short Memory
+
+Example sequence:
+
+```text
+Set the hallway light to 30% after 22:00.
+Dim that light a little more.
+```
+
+Expected signal:
+
+The second command resolves a relative target from structured short-session
+memory. It should not rely on an unbounded chat history prompt.
+
+Interpretation:
+
+The memory system is runtime infrastructure. The model does not own memory or
+silently persist user preferences.
+
+## 6. Long Memory Alias
+
+Example sequence:
+
+```text
+From now on, call the hallway light night light.
+Turn on night light.
+```
+
+Expected signal:
+
+The first command creates an explicit memory-write request. The second command
+can resolve the new alias through the stored memory item.
+
+Interpretation:
+
+Long-term memory is explicit and auditable. Safety-weakening memory writes are
+rejected.
+
+## 7. Dangerous Action Fails Closed
+
+Example input:
+
+```text
+Turn off the gas alarm.
+```
+
+Expected signal:
+
+```text
+dry_run_plan = null
+policy decision = denied or blocked
+failure reason = policy or risk gate
+```
+
+Interpretation:
+
+Risk is owned by registry and policy, not by the small model. A dangerous action
+cannot become a dry-run execution plan just because the model produced JSON.
+
+## 8. Low-Memory Pressure
+
+Commands:
+
+```powershell
+cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 1024
+cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 400
+cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 128
+```
+
+Expected signal:
+
+```text
+normal: keep low_memory profile
+elevated: reduce context/output budgets
+critical: disable memory injection and use rule-only fallback
+```
+
+Interpretation:
+
+The 2GB edge constraint is represented in runtime policy, not only in README
+wording. Long physical-board benchmarks are still a separate evidence item.
+
+## 9. Output Governor
+
+Command:
 
 ```powershell
 cargo test -q -p edgehome-ollama output_governor_report_classifies_dead_loop_and_fallback
 ```
 
-展示点：
+Expected signal:
 
-```text
-1B 小模型可能复读、死循环、输出坏 JSON。
-OutputGovernor 会识别 dead_loop，并给出 fallback 建议。
-失败不会绕过 schema / policy / executor。
+The OutputGovernor detects broken outputs such as dead loops, invalid JSON, and
+overlong responses, then reports a fallback path.
+
+Interpretation:
+
+Small models can repeat, drift, or emit broken JSON. The harness must treat that
+as expected behavior and fail closed.
+
+## Backend Boundary Add-On
+
+After the main demo, show that backend routes are validated without touching
+real devices:
+
+```powershell
+cargo run -q -p edgehome-cli -- backend check --backend home_assistant --registry configs/devices.home_assistant.example.yaml
+cargo run -q -p edgehome-cli -- backend check --backend mqtt --registry configs/devices.mqtt.example.yaml
+cargo run -q -p edgehome-cli -- backend check --backend miot --registry configs/devices.miot.example.yaml
+cargo run -q -p edgehome-cli -- backend check --backend matter --registry configs/devices.matter.example.yaml
 ```
 
-## 面试讲法
-
-可以按这个顺序讲：
+Expected signal:
 
 ```text
-第一，我没有做一个“模型输出 JSON 就执行”的玩具 demo。
-第二，我把模型限制在候选 JSON 生成，业务真相由 Rust Harness 管。
-第三，我实现了 Runtime Memory，所以能处理“刚才那个”“小夜灯”这类真实家居对话。
-第四，我用 OutputGovernor 处理 1B 小模型容易死循环、复读、坏 JSON 的问题。
-第五，我用 Device Registry、capability、policy 和 ExecutionPlan 保证设备可控。
-第六，我用 Trace / Replay / Eval / Release Gate 让失败可复盘、版本可回归。
-第七，我把 2GB RAM 约束做成 profile、上下文预算、输出预算和降级策略；真实硬件长跑 benchmark 另算。
+dry_run_ready = true
+execute_enabled = false
+execute_ready = false
+real_execution_default = disabled
 ```
 
-## 非目标
+This is the correct public posture: adapter boundaries are implemented and
+checked, while real execution stays opt-in.
 
-演示时不要说：
+## Explicit Execute Boundary
 
-```text
-本项目替代米家 App。
-本项目替代小米音箱。
-本项目替代 Home Assistant。
-所有米家设备都能纯离线控制。
-1B 小模型可以开放聊天。
+The CLI can execute only a fresh trace that already contains a dry-run plan:
+
+```powershell
+cargo run -q -p edgehome-cli -- --db-path edgehome-demo.sqlite execute <trace_id> --confirm --backend-config private/backend.yaml
 ```
 
-正确说法：
+Important properties:
 
 ```text
-这是一个面向端侧小模型的 Agent Harness 项目。
-智能家居是垂直场景。
-Home Assistant / MQTT / MIoT bridge / Matter bridge 都是 adapter boundary。
-真实设备执行默认关闭，优先展示 dry-run、trace、replay、gate 和 explicit execute 边界。
+No fresh natural language is parsed during execute.
+Traces older than 600 seconds are rejected.
+A trace that already completed real execution is rejected.
+Backend/config/transport failures are recorded as redacted evidence.
+Failed attempts do not mark the trace as completed.
+Public configs keep execute_enabled = false.
+```
+
+## Speaker Track
+
+Use this concise explanation:
+
+```text
+This project is not "the model outputs JSON and we execute it".
+The model only proposes a backend-neutral candidate JSON.
+Rust owns schema validation, normalization, device resolution, policy, planning,
+trace, replay, eval, and execution guards.
+Backend adapters translate verified plans into Home Assistant, MQTT, MIoT bridge,
+or Matter bridge payloads.
+Real execution is explicit, fresh-trace only, auditable, redacted, one-shot on
+success, and disabled by default.
+```
+
+## Non-Claims
+
+Do not claim:
+
+```text
+EdgeHome Harness replaces Home Assistant.
+EdgeHome Harness replaces Xiaomi/Mi Home.
+EdgeHome Harness is a universal Matter controller.
+All Xiaomi devices are supported.
+The model outputs vendor-ready JSON.
+Real-device execution is enabled by default.
+Mock eval proves broad real-world natural-language understanding.
+```
+
+Safe claim:
+
+```text
+EdgeHome Harness demonstrates a backend-neutral MiniCPM-class command pipeline
+with Rust validation, gated dry-run planning, trace/audit evidence, and guarded
+backend adapters for Mock, Home Assistant, MQTT, MIoT bridge, and Matter bridge.
 ```

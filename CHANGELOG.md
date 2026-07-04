@@ -51,6 +51,8 @@ implemented code, tests, docs, and eval evidence.
 - CLI execute now records backend/config/transport failures as redacted
   executor failure evidence, a failed step, and an audit event without marking
   the trace as completed.
+- Rewrote the public demo walkthrough, Home Assistant demo guide, and docs
+  index in English with clearer claim boundaries and verification steps.
 
 ## 0.1.0 - 2026-07-04
 
