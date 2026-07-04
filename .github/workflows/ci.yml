@@ -36,3 +36,10 @@ jobs:
 
       - name: Release eval gate
         run: cargo run --locked -q -p edgehome-cli -- --db-path edgehome-ci-gate.sqlite eval cases/zh-home.yaml --gate
+
+      - name: Backend readiness checks
+        run: |
+          cargo run --locked -q -p edgehome-cli -- backend check --backend home_assistant --registry configs/devices.home_assistant.example.yaml
+          cargo run --locked -q -p edgehome-cli -- backend check --backend mqtt --registry configs/devices.mqtt.example.yaml
+          cargo run --locked -q -p edgehome-cli -- backend check --backend miot --registry configs/devices.miot.example.yaml
+          cargo run --locked -q -p edgehome-cli -- backend check --backend matter --registry configs/devices.matter.example.yaml

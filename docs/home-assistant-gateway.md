@@ -35,6 +35,9 @@ execute_enabled: false
 verify_state_after_execute: true
 ```
 
+`base_url` may use `http://` or `https://`. Query strings and fragments are
+rejected so tokens or routing data cannot be smuggled through the URL.
+
 `execute_enabled` must stay false in public examples. Enable it only in private
 local config after dry-run, gate, confirmation, rate-limit, and idempotency
 checks are in place.
@@ -123,6 +126,7 @@ invalid entity_id
 unsupported action/domain pair
 missing token during real execute
 unsupported base URL
+base URL containing query or fragment data
 non-2xx Home Assistant response
 post-state fetch failure when verification is enabled
 execute_enabled = false
@@ -153,8 +157,8 @@ Allowed public claim:
 
 ```text
 Home Assistant gateway boundary implemented with dry-run payloads, explicit
-opt-in REST execution, route validation, token isolation, and optional post-state
-fetch.
+opt-in HTTP/HTTPS REST execution, route validation, token isolation, and
+optional post-state fetch.
 ```
 
 Do not claim:

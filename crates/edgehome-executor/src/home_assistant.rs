@@ -1,14 +1,13 @@
 use std::{
     collections::HashMap,
     fmt, fs,
-    io::{Read, Write},
-    net::TcpStream,
     path::{Path, PathBuf},
     time::Duration,
 };
 
 use edgehome_core::{Action, DeviceId, DryRunPlan, ExecutionPlan, ExecutionResult, PolicyDecision};
 use edgehome_registry::{BackendKind, DeviceRecord};
+use reqwest::header::ACCEPT;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
@@ -137,9 +136,8 @@ impl HomeAssistantClient {
     pub fn fetch_state(&self, entity_id: &str) -> ExecutorResult<HomeAssistantState> {
         validate_entity_id(entity_id)?;
         let token = self.required_token()?;
-        let endpoint = HttpEndpoint::parse(&self.base_url)?;
         let response = request_json(
-            &endpoint,
+            &self.base_url,
             "GET",
             &format!("/api/states/{entity_id}"),
             None,
@@ -152,9 +150,8 @@ impl HomeAssistantClient {
 
     pub fn call_service(&self, service_call: &HomeAssistantServiceCall) -> ExecutorResult<Value> {
         let token = self.required_token()?;
-        let endpoint = HttpEndpoint::parse(&self.base_url)?;
         let response = request_json(
-            &endpoint,
+            &self.base_url,
             "POST",
             &service_call.service_path(),
             Some(&service_call.payload),
@@ -448,154 +445,69 @@ fn entity_domain(entity_id: &str) -> ExecutorResult<&str> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct HttpEndpoint {
-    host: String,
-    port: u16,
-    path_prefix: String,
-}
-
-impl HttpEndpoint {
-    fn parse(base_url: &str) -> ExecutorResult<Self> {
-        let Some(rest) = base_url.strip_prefix("http://") else {
-            return Err(ExecutorError::HomeAssistantUnsupportedBaseUrl(
-                base_url.to_owned(),
-            ));
-        };
-        let (authority, path_prefix) = rest.split_once('/').unwrap_or((rest, ""));
-        let (host, port) = if let Some((host, port)) = authority.split_once(':') {
-            let parsed_port = port
-                .parse::<u16>()
-                .map_err(|_| ExecutorError::HomeAssistantUnsupportedBaseUrl(base_url.to_owned()))?;
-            (host.to_owned(), parsed_port)
-        } else {
-            (authority.to_owned(), 80)
-        };
-
-        if host.trim().is_empty() {
-            return Err(ExecutorError::HomeAssistantUnsupportedBaseUrl(
-                base_url.to_owned(),
-            ));
-        }
-
-        Ok(Self {
-            host,
-            port,
-            path_prefix: if path_prefix.is_empty() {
-                String::new()
-            } else {
-                format!("/{}", path_prefix.trim_end_matches('/'))
-            },
-        })
-    }
-
-    fn path(&self, suffix: &str) -> String {
-        format!("{}{}", self.path_prefix, suffix)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
 struct HttpResponse {
     status: u16,
     body: String,
 }
 
 fn request_json(
-    endpoint: &HttpEndpoint,
+    base_url: &str,
     method: &str,
     suffix: &str,
     body: Option<&Value>,
     bearer_token: &str,
     timeout: Duration,
 ) -> ExecutorResult<HttpResponse> {
-    let mut stream = TcpStream::connect((endpoint.host.as_str(), endpoint.port))?;
-    stream.set_read_timeout(Some(timeout))?;
-    stream.set_write_timeout(Some(timeout))?;
-
-    let body = body.map(serde_json::to_string).transpose()?;
-    let mut request = format!(
-        "{} {} HTTP/1.1\r\nHost: {}\r\nAccept: application/json\r\nAuthorization: Bearer {}\r\nConnection: close\r\n",
-        method,
-        endpoint.path(suffix),
-        endpoint.host,
-        bearer_token,
-    );
-    if let Some(body) = body.as_ref() {
-        request.push_str(&format!(
-            "Content-Type: application/json\r\nContent-Length: {}\r\n",
-            body.len()
-        ));
+    let url = home_assistant_url(base_url, suffix)?;
+    let client = reqwest::blocking::Client::builder()
+        .timeout(timeout)
+        .build()
+        .map_err(|error| ExecutorError::HomeAssistantInvalidHttpResponse(error.to_string()))?;
+    let request = match method {
+        "GET" => client.get(url),
+        "POST" => client.post(url),
+        other => {
+            return Err(ExecutorError::HomeAssistantInvalidHttpResponse(format!(
+                "unsupported HTTP method `{other}`"
+            )));
+        }
     }
-    request.push_str("\r\n");
-    if let Some(body) = body.as_ref() {
-        request.push_str(body);
-    }
-
-    stream.write_all(request.as_bytes())?;
-    stream.flush()?;
-
-    let mut response = Vec::new();
-    stream.read_to_end(&mut response)?;
-    parse_http_response(&response)
-}
-
-fn parse_http_response(raw: &[u8]) -> ExecutorResult<HttpResponse> {
-    let response = String::from_utf8_lossy(raw);
-    let Some((head, body)) = response.split_once("\r\n\r\n") else {
-        return Err(ExecutorError::HomeAssistantInvalidHttpResponse(
-            "missing header/body separator".to_owned(),
-        ));
-    };
-    let mut lines = head.lines();
-    let status_line = lines.next().ok_or_else(|| {
-        ExecutorError::HomeAssistantInvalidHttpResponse("missing status line".to_owned())
-    })?;
-    let status = status_line
-        .split_whitespace()
-        .nth(1)
-        .ok_or_else(|| {
-            ExecutorError::HomeAssistantInvalidHttpResponse("missing status code".to_owned())
-        })?
-        .parse::<u16>()
-        .map_err(|_| {
-            ExecutorError::HomeAssistantInvalidHttpResponse("invalid status code".to_owned())
-        })?;
-
-    let chunked = lines.any(|line| {
-        let lowered = line.to_ascii_lowercase();
-        lowered.starts_with("transfer-encoding:") && lowered.contains("chunked")
-    });
-    let body = if chunked {
-        decode_chunked_body(body)?
+    .header(ACCEPT, "application/json")
+    .bearer_auth(bearer_token);
+    let request = if let Some(body) = body {
+        request.json(body)
     } else {
-        body.to_owned()
+        request
     };
+    let response = request
+        .send()
+        .map_err(|error| ExecutorError::HomeAssistantInvalidHttpResponse(error.to_string()))?;
+    let status = response.status().as_u16();
+    let body = response
+        .text()
+        .map_err(|error| ExecutorError::HomeAssistantInvalidHttpResponse(error.to_string()))?;
 
     Ok(HttpResponse { status, body })
 }
 
-fn decode_chunked_body(body: &str) -> ExecutorResult<String> {
-    let mut remaining = body;
-    let mut output = String::new();
-    loop {
-        let Some((size_hex, rest)) = remaining.split_once("\r\n") else {
-            return Err(ExecutorError::HomeAssistantInvalidHttpResponse(
-                "invalid chunk header".to_owned(),
-            ));
-        };
-        let size = usize::from_str_radix(size_hex.trim(), 16).map_err(|_| {
-            ExecutorError::HomeAssistantInvalidHttpResponse("invalid chunk size".to_owned())
-        })?;
-        if size == 0 {
-            return Ok(output);
-        }
-        if rest.len() < size + 2 {
-            return Err(ExecutorError::HomeAssistantInvalidHttpResponse(
-                "chunk shorter than declared size".to_owned(),
-            ));
-        }
-        output.push_str(&rest[..size]);
-        remaining = &rest[size + 2..];
+fn home_assistant_url(base_url: &str, suffix: &str) -> ExecutorResult<String> {
+    let base_url = base_url.trim();
+    if !(base_url.starts_with("http://") || base_url.starts_with("https://"))
+        || base_url.contains('?')
+        || base_url.contains('#')
+    {
+        return Err(ExecutorError::HomeAssistantUnsupportedBaseUrl(
+            base_url.to_owned(),
+        ));
     }
+    let url = format!(
+        "{}/{}",
+        base_url.trim_end_matches('/'),
+        suffix.trim_start_matches('/')
+    );
+    reqwest::Url::parse(&url)
+        .map_err(|_| ExecutorError::HomeAssistantUnsupportedBaseUrl(base_url.to_owned()))?;
+    Ok(url)
 }
 
 fn ensure_success(status: u16, body: String) -> ExecutorResult<String> {
@@ -883,5 +795,24 @@ mod tests {
 
         assert_eq!(returned, dry_run);
         assert!(!serialized.contains("EDGEHOME_HA_TOKEN_SHOULD_NOT_EXIST_FOR_DRY_RUN_TEST"));
+    }
+
+    #[test]
+    fn request_url_supports_https_gateway_base() {
+        let url = home_assistant_url("https://ha.example.test:8123/api", "/states/light.hallway")
+            .expect("url");
+
+        assert_eq!(url, "https://ha.example.test:8123/api/states/light.hallway");
+    }
+
+    #[test]
+    fn request_url_rejects_query_in_base_url() {
+        let error = home_assistant_url("https://ha.example.test:8123?token=leak", "/api")
+            .expect_err("query rejected");
+
+        assert!(matches!(
+            error,
+            ExecutorError::HomeAssistantUnsupportedBaseUrl(_)
+        ));
     }
 }

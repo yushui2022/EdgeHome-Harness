@@ -319,7 +319,7 @@ User Chinese command
 | Backend | Status | What works | What is not claimed |
 | --- | --- | --- | --- |
 | Mock | Implemented | Deterministic dry-run payloads and eval baseline | Real device control |
-| Home Assistant | Gateway boundary implemented | Service-call dry-run payloads; opt-in REST execution; route validation; optional post-state fetch | Full HA replacement or universal HA coverage |
+| Home Assistant | Gateway boundary implemented | Service-call dry-run payloads; opt-in HTTP/HTTPS REST execution; route validation; optional post-state fetch | Full HA replacement or universal HA coverage |
 | MIoT / Xiaomi | Bridge request adapter implemented | Verified commands become MIoT bridge requests; execution can call a configured private bridge | Universal Xiaomi support or direct MIoT protocol ownership |
 | Matter | Bridge request adapter implemented | Verified commands become Matter controller bridge requests | Embedded full Matter controller, fabric commissioning, or universal device support |
 | MQTT | Dry-run and guarded publish implemented | Configured topic/payload translation; opt-in `rumqttc` broker publish | Universal MQTT smart-home schema or default real broker operation |
