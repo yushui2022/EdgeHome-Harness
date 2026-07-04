@@ -12,7 +12,7 @@ use edgehome_eval::{
     EvalGateConfig, EvalReport, evaluate_case_output, evaluate_release_gate, load_cases,
 };
 use edgehome_executor::DryRunPlanner;
-use edgehome_gate::{GateEngine, GateEvaluationRequest};
+use edgehome_gate::{GateCommandDecision, GateEngine, GateEvaluationRequest};
 use edgehome_memory::{
     ContextAssembler, ExplicitMemoryWriteDetection, ExplicitMemoryWriteDetector,
     LongTermPreferenceStore, MemoryItem, MemoryKind, MemoryScope, MemoryWriteRequest,
@@ -400,14 +400,24 @@ fn run_harness_pipeline(
     if let Some(memory_context_ref) = memory_context_ref {
         gate_evidence_refs.push(memory_context_ref);
     }
-    let gate_evaluation = gate_engine.evaluate(
-        GateEvaluationRequest::new(trace.trace_id.clone(), normalized.clone())
-            .with_evidence_refs(gate_evidence_refs.clone())
-            .with_state_freshness(StateFreshness::Fresh)
-            .with_dry_run_ready(mode == PipelineMode::DryRun),
-    )?;
+    let gate_request = GateEvaluationRequest::new(trace.trace_id.clone(), normalized.clone())
+        .with_evidence_refs(gate_evidence_refs.clone())
+        .with_state_freshness(StateFreshness::Fresh)
+        .with_dry_run_ready(mode == PipelineMode::DryRun);
+    let (gate_evaluation, gated_command) = if mode == PipelineMode::DryRun {
+        match gate_engine.verify(gate_request)? {
+            GateCommandDecision::Accepted { gated_command } => {
+                (gated_command.evaluation.clone(), Some(gated_command))
+            }
+            GateCommandDecision::Rejected { evaluation } => (evaluation, None),
+        }
+    } else {
+        (gate_engine.evaluate(gate_request)?, None)
+    };
 
-    let gate_status = if gate_evaluation.policy_decision == PolicyDecision::Deny {
+    let gate_status = if gate_evaluation.policy_decision == PolicyDecision::Deny
+        || !gate_evaluation.blocking_reasons.is_empty()
+    {
         StepStatus::Rejected
     } else {
         StepStatus::Succeeded
@@ -419,40 +429,36 @@ fn run_harness_pipeline(
 
     let mut dry_run_plan = None;
     if mode == PipelineMode::DryRun {
-        if gate_evaluation.policy_decision == PolicyDecision::Deny
-            || !gate_evaluation.blocking_reasons.is_empty()
-        {
+        if let Some(gated_command) = gated_command.as_ref() {
+            if let Some(device_id) = gated_command.command.device_id.as_ref() {
+                let device = registry.get_device(device_id)?;
+                let planned = DryRunPlanner.plan_gated(gated_command, device)?;
+                let dry_run_ref = trace_store.record_evidence(NewEvidence::new(
+                    EvidenceKind::DryRunPlan,
+                    SourceSystem::Executor,
+                    "dry-run execution plan",
+                    serde_json::to_value(&planned)?,
+                ))?;
+                trace_store.append_step(
+                    &trace.trace_id,
+                    NewCommandStep::new("dry_run_plan", StepStatus::Succeeded).with_evidence_refs(
+                        vec![normalized_ref.id.clone(), dry_run_ref.id.clone()],
+                    ),
+                )?;
+                dry_run_plan = Some(planned);
+            } else {
+                trace_store.append_step(
+                    &trace.trace_id,
+                    NewCommandStep::new("dry_run_missing_device", StepStatus::Rejected)
+                        .with_message("dry-run planner requires a resolved device_id")
+                        .with_evidence_refs(vec![normalized_ref.id.clone()]),
+                )?;
+            }
+        } else {
             trace_store.append_step(
                 &trace.trace_id,
                 NewCommandStep::new("dry_run_rejected_by_gate", StepStatus::Rejected)
                     .with_message("dry-run planner only accepts non-denied gated commands")
-                    .with_evidence_refs(vec![normalized_ref.id.clone()]),
-            )?;
-        } else if let Some(device_id) = normalized.device_id.as_ref() {
-            let device = registry.get_device(device_id)?;
-            let planned = DryRunPlanner.plan(
-                &trace.trace_id,
-                &normalized,
-                device,
-                gate_evaluation.policy_decision.clone(),
-            )?;
-            let dry_run_ref = trace_store.record_evidence(NewEvidence::new(
-                EvidenceKind::DryRunPlan,
-                SourceSystem::Executor,
-                "dry-run execution plan",
-                serde_json::to_value(&planned)?,
-            ))?;
-            trace_store.append_step(
-                &trace.trace_id,
-                NewCommandStep::new("dry_run_plan", StepStatus::Succeeded)
-                    .with_evidence_refs(vec![normalized_ref.id.clone(), dry_run_ref.id.clone()]),
-            )?;
-            dry_run_plan = Some(planned);
-        } else {
-            trace_store.append_step(
-                &trace.trace_id,
-                NewCommandStep::new("dry_run_missing_device", StepStatus::Rejected)
-                    .with_message("dry-run planner requires a resolved device_id")
                     .with_evidence_refs(vec![normalized_ref.id.clone()]),
             )?;
         }

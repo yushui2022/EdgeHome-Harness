@@ -13,7 +13,8 @@ use edgehome_core::{
     PolicyDecision, RiskLevel,
 };
 use edgehome_gate::{
-    MemoryWriteSource, TransitionAction, TransitionContext, TransitionGate, TransitionViolation,
+    GatedCommand, MemoryWriteSource, TransitionAction, TransitionContext, TransitionGate,
+    TransitionViolation,
 };
 use edgehome_registry::{BackendKind, DeviceRecord};
 use edgehome_trace::TraceId;
@@ -36,6 +37,9 @@ pub enum ExecutorError {
 
     #[error("policy denied command")]
     PolicyDenied,
+
+    #[error("command was not accepted by the gate for dry-run planning")]
+    GateRejected,
 
     #[error("dry-run plan target `{plan_target}` does not match command target `{command_target}`")]
     TargetMismatch {
@@ -160,7 +164,24 @@ impl BackendAdapter for HomeAssistantAdapter {
 pub struct DryRunPlanner;
 
 impl DryRunPlanner {
-    pub fn plan(
+    pub fn plan_gated(
+        &self,
+        gated: &GatedCommand,
+        device: &DeviceRecord,
+    ) -> ExecutorResult<DryRunPlan> {
+        if !gated.evaluation.can_plan_dry_run() {
+            return Err(ExecutorError::GateRejected);
+        }
+
+        self.plan(
+            &gated.evaluation.trace_id,
+            &gated.command,
+            device,
+            gated.evaluation.policy_decision.clone(),
+        )
+    }
+
+    fn plan(
         &self,
         trace_id: &TraceId,
         command: &NormalizedCommand,
@@ -271,12 +292,10 @@ impl ExecutionTransaction {
 
     pub fn dry_run(
         &self,
-        trace_id: &TraceId,
-        command: &NormalizedCommand,
+        gated: &GatedCommand,
         device: &DeviceRecord,
-        policy: PolicyDecision,
     ) -> ExecutorResult<DryRunPlan> {
-        DryRunPlanner.plan(trace_id, command, device, policy)
+        DryRunPlanner.plan_gated(gated, device)
     }
 
     pub fn execute(
@@ -487,6 +506,8 @@ pub fn plan_target_id(plan: &ExecutionPlan) -> &DeviceId {
 mod tests {
     use super::*;
     use edgehome_core::{CommandParams, CommandSchemaVersion, DeviceType, Intent, Room};
+    use edgehome_gate::{DryRunGate, GateCheckSummary, GateEvaluation};
+    use edgehome_trace::GateOutcome;
 
     fn light_device() -> DeviceRecord {
         DeviceRecord {
@@ -541,14 +562,39 @@ mod tests {
         }
     }
 
+    fn gated_command(
+        policy_decision: PolicyDecision,
+        dry_run_outcome: GateOutcome,
+        blocking_reasons: Vec<String>,
+    ) -> GatedCommand {
+        GatedCommand {
+            command: command(),
+            evaluation: GateEvaluation {
+                trace_id: TraceId("tr_test".to_owned()),
+                policy_decision,
+                authoritative_risk: RiskLevel::Low,
+                device_id: Some(DeviceId::new("hallway_light").expect("device id")),
+                executable: false,
+                requires_confirmation: false,
+                blocking_reasons,
+                gate_checks: vec![GateCheckSummary {
+                    gate_name: DryRunGate::NAME.to_owned(),
+                    outcome: dry_run_outcome,
+                    reason: "dry-run gate test fixture".to_owned(),
+                    blocking: false,
+                }],
+            },
+        }
+    }
+
+    fn accepted_gated_command() -> GatedCommand {
+        gated_command(PolicyDecision::Allow, GateOutcome::Accepted, Vec::new())
+    }
+
     fn dry_run_plan() -> DryRunPlan {
+        let gated = accepted_gated_command();
         DryRunPlanner
-            .plan(
-                &TraceId("tr_test".to_owned()),
-                &command(),
-                &light_device(),
-                PolicyDecision::Allow,
-            )
+            .plan_gated(&gated, &light_device())
             .expect("dry-run plan")
     }
 
@@ -567,13 +613,9 @@ mod tests {
 
     #[test]
     fn dry_run_planner_translates_home_assistant_payload() {
+        let gated = accepted_gated_command();
         let plan = DryRunPlanner
-            .plan(
-                &TraceId("tr_test".to_owned()),
-                &command(),
-                &ha_light_device(),
-                PolicyDecision::Allow,
-            )
+            .plan_gated(&gated, &ha_light_device())
             .expect("ha dry-run plan");
 
         assert_eq!(plan.backend, "home_assistant");
@@ -585,13 +627,9 @@ mod tests {
 
     #[test]
     fn dry_run_planner_rejects_unimplemented_mqtt_backend() {
+        let gated = accepted_gated_command();
         let error = DryRunPlanner
-            .plan(
-                &TraceId("tr_test".to_owned()),
-                &command(),
-                &mqtt_light_device(),
-                PolicyDecision::Allow,
-            )
+            .plan_gated(&gated, &mqtt_light_device())
             .expect_err("mqtt adapter is not implemented");
 
         assert!(matches!(
@@ -602,13 +640,9 @@ mod tests {
 
     #[test]
     fn dry_run_planner_rejects_unimplemented_miio_backend() {
+        let gated = accepted_gated_command();
         let error = DryRunPlanner
-            .plan(
-                &TraceId("tr_test".to_owned()),
-                &command(),
-                &miio_light_device(),
-                PolicyDecision::Allow,
-            )
+            .plan_gated(&gated, &miio_light_device())
             .expect_err("miio adapter is not implemented");
 
         assert!(matches!(
@@ -618,17 +652,17 @@ mod tests {
     }
 
     #[test]
-    fn dry_run_planner_rejects_denied_policy() {
+    fn dry_run_planner_rejects_gate_rejected_command() {
+        let gated = gated_command(
+            PolicyDecision::Deny,
+            GateOutcome::Warning,
+            vec!["PolicyGate: policy denies risk level `Blocked`".to_owned()],
+        );
         let error = DryRunPlanner
-            .plan(
-                &TraceId("tr_test".to_owned()),
-                &command(),
-                &light_device(),
-                PolicyDecision::Deny,
-            )
-            .expect_err("denied policy");
+            .plan_gated(&gated, &light_device())
+            .expect_err("gate rejected command");
 
-        assert!(matches!(error, ExecutorError::PolicyDenied));
+        assert!(matches!(error, ExecutorError::GateRejected));
     }
 
     #[test]

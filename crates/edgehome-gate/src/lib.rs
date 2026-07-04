@@ -59,6 +59,29 @@ pub struct GateEvaluation {
     pub gate_checks: Vec<GateCheckSummary>,
 }
 
+impl GateEvaluation {
+    pub fn can_plan_dry_run(&self) -> bool {
+        self.policy_decision != PolicyDecision::Deny
+            && self.blocking_reasons.is_empty()
+            && self.gate_checks.iter().any(|check| {
+                check.gate_name == DryRunGate::NAME && check.outcome == GateOutcome::Accepted
+            })
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct GatedCommand {
+    pub command: NormalizedCommand,
+    pub evaluation: GateEvaluation,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "status", rename_all = "snake_case")]
+pub enum GateCommandDecision {
+    Accepted { gated_command: GatedCommand },
+    Rejected { evaluation: GateEvaluation },
+}
+
 #[derive(Debug, Clone)]
 pub struct GateEvaluationRequest {
     pub trace_id: TraceId,
@@ -357,6 +380,21 @@ impl<'a> GateEngine<'a> {
             blocking_reasons,
             gate_checks,
         })
+    }
+
+    pub fn verify(&self, request: GateEvaluationRequest) -> GateResult<GateCommandDecision> {
+        let command = request.command.clone();
+        let evaluation = self.evaluate(request)?;
+        if evaluation.can_plan_dry_run() {
+            Ok(GateCommandDecision::Accepted {
+                gated_command: GatedCommand {
+                    command,
+                    evaluation,
+                },
+            })
+        } else {
+            Ok(GateCommandDecision::Rejected { evaluation })
+        }
     }
 }
 
@@ -937,6 +975,26 @@ mod tests {
         (evaluation, trace_store)
     }
 
+    fn verify(
+        command: NormalizedCommand,
+        text: &str,
+        dry_run_ready: bool,
+    ) -> (GateCommandDecision, TraceStore) {
+        let trace_store = TraceStore::in_memory().expect("trace store");
+        let registry = load_registry();
+        let (trace_id, evidence_refs) = start_trace(&trace_store, text);
+        let engine = GateEngine::new(&trace_store, &registry);
+        let decision = engine
+            .verify(
+                GateEvaluationRequest::new(trace_id, command)
+                    .with_evidence_refs(evidence_refs)
+                    .with_state_freshness(StateFreshness::Fresh)
+                    .with_dry_run_ready(dry_run_ready),
+            )
+            .expect("gate decision");
+        (decision, trace_store)
+    }
+
     fn assert_all_gates_recorded(evaluation: &GateEvaluation, trace_store: &TraceStore) {
         let checks = trace_store
             .gate_checks_for_trace(&evaluation.trace_id)
@@ -1059,6 +1117,69 @@ mod tests {
                 .any(|check| check.gate_name == CapabilityGate::NAME
                     && check.outcome == GateOutcome::Rejected)
         );
+        assert_all_gates_recorded(&evaluation, &trace_store);
+    }
+
+    #[test]
+    fn verify_accepts_allowed_dry_run_ready_command() {
+        let command = command(
+            Some("living_room_main_light"),
+            Room::LivingRoom,
+            DeviceType::Light,
+            Action::TurnOn,
+            RiskLevel::Low,
+        );
+
+        let (decision, trace_store) = verify(command, "打开客厅灯", true);
+
+        let GateCommandDecision::Accepted { gated_command } = decision else {
+            panic!("allowed dry-run-ready command should be accepted");
+        };
+        assert!(gated_command.evaluation.can_plan_dry_run());
+        assert_eq!(
+            gated_command.command.device_id.as_ref().unwrap().0,
+            "living_room_main_light"
+        );
+        assert_all_gates_recorded(&gated_command.evaluation, &trace_store);
+    }
+
+    #[test]
+    fn verify_rejects_when_dry_run_is_not_ready() {
+        let command = command(
+            Some("living_room_main_light"),
+            Room::LivingRoom,
+            DeviceType::Light,
+            Action::TurnOn,
+            RiskLevel::Low,
+        );
+
+        let (decision, trace_store) = verify(command, "打开客厅灯", false);
+
+        let GateCommandDecision::Rejected { evaluation } = decision else {
+            panic!("command should not produce a GatedCommand before dry-run is ready");
+        };
+        assert!(!evaluation.can_plan_dry_run());
+        assert_eq!(evaluation.policy_decision, PolicyDecision::Allow);
+        assert_all_gates_recorded(&evaluation, &trace_store);
+    }
+
+    #[test]
+    fn verify_rejects_denied_command() {
+        let command = command(
+            Some("gas_alarm"),
+            Room::Kitchen,
+            DeviceType::GasDevice,
+            Action::TurnOff,
+            RiskLevel::High,
+        );
+
+        let (decision, trace_store) = verify(command, "关闭燃气报警器", true);
+
+        let GateCommandDecision::Rejected { evaluation } = decision else {
+            panic!("denied command should not produce a GatedCommand");
+        };
+        assert_eq!(evaluation.policy_decision, PolicyDecision::Deny);
+        assert!(!evaluation.can_plan_dry_run());
         assert_all_gates_recorded(&evaluation, &trace_store);
     }
 
