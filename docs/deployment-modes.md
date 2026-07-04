@@ -7,7 +7,7 @@
 ```text
 EdgeHome Harness 是 1B 端侧小模型 Harness。
 智能家居本地控制中台是产品形态。
-Home Assistant 是第一阶段真实设备 demo 后端，不是项目本体。
+Home Assistant 是第一阶段 demo backend boundary，不是项目本体。
 ```
 
 ## 总体组件
@@ -41,7 +41,7 @@ flowchart LR
 
 ## Mode A：2GB Edge Harness + HA on LAN
 
-推荐 V2 真实设备 demo 模式。
+推荐的后续真实设备 demo 模式。当前默认展示仍以 dry-run 和 payload translation 为主。
 
 ```text
 2GB 边缘设备：
@@ -51,7 +51,7 @@ flowchart LR
 
 局域网另一台机器：
   Home Assistant
-  Xiaomi / ESPHome / Matter / MQTT integrations
+  Xiaomi / ESPHome / Matter / MQTT integrations managed by Home Assistant
 ```
 
 优点：
@@ -60,7 +60,7 @@ flowchart LR
 2GB 设备压力较小
 Harness 和模型仍在本地边缘设备
 Home Assistant 已经有成熟设备生态
-适合面试 demo 展示真实设备 dry-run / execute 边界
+适合面试 demo 展示 dry-run / service-call payload / execute-disabled 边界
 ```
 
 限制：
@@ -75,8 +75,8 @@ HA token 只能由 executor 读取，不能进 prompt / audit / trace 普通字�
 适合目标：
 
 ```text
-先证明 Harness 架构
-再证明可以接真实设备后端
+先展示 Harness 架构
+再在受控条件下验证 Home Assistant 后端边界
 不把时间消耗在破解每一种厂商协议上
 ```
 
@@ -149,7 +149,7 @@ token / local key 管理复杂
 
 ## Home Assistant 接入边界
 
-M13 已实现：
+当前代码包含：
 
 ```text
 HomeAssistantConfig
@@ -161,7 +161,7 @@ HA dry-run service translation
 HA service call translation
 ```
 
-M23 验收边界：
+当前验收边界：
 
 ```text
 MockExecutor 是默认执行路径。
@@ -169,7 +169,7 @@ HomeAssistantExecutor 是 demo backend。
 真实 execute 默认关闭，需要显式 execute_enabled = true。
 HomeAssistantExecutor 会拒绝非 home_assistant backend 的 dry-run plan。
 eval / release gate 不依赖真实设备。
-MIoT / miIO / MQTT / Matter 只作为未来 backend 扩展描述。
+MIoT / miIO / MQTT / Matter 只作为未来 backend 扩展描述，不是当前支持能力。
 ```
 
 配置样例：
@@ -288,7 +288,7 @@ V2 推荐顺序：
 2. HomeAssistantExecutor dry-run 翻译
 3. HA token 私有化读取
 4. 局域网 HA state fetch
-5. 手动确认后小范围真实 execute
+5. 仅在本地实验环境中，手动确认后小范围真实 execute
 6. 记录真实 2GB 板卡 benchmark
 ```
 

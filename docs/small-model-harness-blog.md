@@ -31,7 +31,7 @@ EdgeHome Harness 是一个面向 1B 端侧小模型的 Rust Agent Harness 项目
 ```text
 在低资源边缘设备上，
 如何把一个容易输出不稳、容易复读、容易死循环的小模型，
-约束进一条真实可执行、可回放、可评测的本地控制链路。
+约束进一条可 dry-run、可回放、可评测，并能逐步接入真实后端的本地控制链路。
 ```
 
 我当前使用的模型是：
@@ -150,8 +150,9 @@ EdgeHome Harness 当前已经形成了一条完整主链路：
 -> Semantic Normalizer
 -> Device Registry
 -> Policy Gate
+-> GatedCommand
 -> Execution Planner
--> Executor Router
+-> BackendAdapter / Executor Boundary
 -> Trace Recorder
 -> Eval / Replay
 ```
@@ -326,7 +327,7 @@ Evidence 不再 gate 每一次普通用户动作，而是用于失败分析、tr
 
 它也不宣称替代米家 App、小米音箱或 Home Assistant。
 
-当前默认执行器是 MockExecutor，Home Assistant 是 demo backend。未来可以继续扩展 MQTT、Matter、MIoT、miIO 或其他本地设备协议，但 Harness 主体不和某一个设备生态绑定死。
+当前默认执行器是 MockExecutor，Home Assistant 是 demo backend boundary。未来可以继续扩展 MQTT、Matter、MIoT、miIO 或其他本地设备协议，但这些仍是未来 adapter target，不是当前已支持能力。Harness 主体不和某一个设备生态绑定死。
 
 更准确地说，当前项目是：
 
@@ -341,7 +342,7 @@ Evidence 不再 gate 每一次普通用户动作，而是用于失败分析、tr
 
 我做这个项目，不是为了证明 1B 小模型可以替代大模型。
 
-我想证明的是另一件事：
+我想验证的是另一件事：
 
 ```text
 在垂直场景里，小模型不需要无所不能。

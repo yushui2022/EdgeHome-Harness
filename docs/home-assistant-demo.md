@@ -181,7 +181,7 @@ EdgeHome Harness 可以通过 Home Assistant 接入已有智能家居设备。
 推荐顺序：
 
 ```text
-1. 先跑 eval，证明 Harness 指标
+1. 先跑 eval，展示 Harness 指标
 2. 跑 dry-run，展示 ExecutionPlan
 3. replay trace，展示 trace / policy / audit
 4. 展示 policy-configured deny 样例

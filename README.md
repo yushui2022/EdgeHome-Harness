@@ -28,7 +28,13 @@ ModelOutput != Command
 ```
 
 MiniCPM proposes a candidate JSON object. The harness decides whether that
-candidate can become an `ExecutionPlan`.
+candidate can become a `GatedCommand` and then an `ExecutionPlan`.
+
+Public shorthand:
+
+```text
+MiniCPM proposes. Rust decides. Adapters translate.
+```
 
 The model never gets direct authority over devices, backend entity IDs, tokens,
 policy, memory writes, or execution. Those responsibilities stay in deterministic
@@ -40,8 +46,8 @@ MiniCPM / MiniCPM5-1B
 + Runtime Memory
 + Output Governor
 + Device Registry
-+ Policy Gate
-+ Dry-run / ExecutionPlan boundary
++ GateEngine / GatedCommand
++ Dry-run / ExecutionPlan / BackendAdapter boundary
 + Trace / Replay / Eval / Release Gate
 ```
 
@@ -135,8 +141,10 @@ Implemented:
 - Runtime memory for short-session references and confirmed long-term aliases.
 - Device registry and capability validation.
 - Policy gate with fail-closed behavior.
+- Typed `GatedCommand` boundary before dry-run planning.
 - Dry-run execution planner.
-- Home Assistant demo backend boundary.
+- `BackendAdapter` trait with Mock and Home Assistant dry-run payload adapters.
+- Home Assistant demo backend boundary and disabled-by-default execution path.
 - SQLite-backed evidence, audit, trace, replay, and long-term memory.
 - Evaluation cases and release gate metrics.
 - Low-memory pressure policy for context/output reduction and rule-only fallback.
@@ -150,6 +158,24 @@ Not claimed:
 - Long-running benchmark on a real 2GB ARM board.
 - Proof that all smart-home natural-language inputs are understood.
 - Real-device execution enabled by default.
+
+## Evidence Snapshot
+
+Current evidence is intentionally scoped to harness behavior, mock evaluation,
+dry-run planning, and backend adapter boundaries:
+
+- 108-case mock eval gate across 12 categories.
+- `pass_rate = 1.0`, `schema_valid_rate = 1.0`, and `trace_coverage = 1.0`.
+- `false_allow_rate = 0.0` and `fail_closed_rate = 1.0`.
+- Typed `GatedCommand` boundary: `DryRunPlanner::plan_gated(...)` only consumes
+  gate-accepted commands.
+- Golden adapter tests pin exact Mock and Home Assistant dry-run payloads.
+- Missing Home Assistant routes, invalid entity IDs, MQTT, and miIO-local paths
+  fail closed in tests.
+
+This evidence does not claim broad natural-language understanding, production
+readiness, real Xiaomi / MIoT / Matter / MQTT support, or a long-running real
+2GB hardware benchmark.
 
 ## Backend Support Matrix
 
@@ -174,9 +200,9 @@ flowchart TD
     G --> H["JSON / Schema Validator"]
     H --> I["Semantic Normalizer"]
     I --> J["Device Registry"]
-    J --> K["Policy Gate"]
+    J --> K["GateEngine / GatedCommand"]
     K --> L["Dry-run ExecutionPlan"]
-    L --> M["Executor Boundary"]
+    L --> M["BackendAdapter / Executor Boundary"]
     M --> N["Trace / Replay / Eval"]
 ```
 
@@ -189,7 +215,8 @@ candidate generation is owned by the harness.
 | --- | --- | --- | --- |
 | Candidate JSON | `ModelCandidate` | MiniCPM / MockModel | Untrusted |
 | Internal command | `NormalizedCommand` | Rust Harness | Must be resolved and gated |
-| Verified plan | `ExecutionPlan` | Gate + planner | Trusted dry-run boundary |
+| Gated command | `GatedCommand` | GateEngine | Accepted internal command only |
+| Verified plan | `ExecutionPlan` | DryRunPlanner | Trusted dry-run boundary |
 | Backend payload | `DryRunPlan.payload` | Backend adapter | Backend-specific |
 
 The canonical path is:
@@ -200,6 +227,7 @@ User Chinese command
   -> Rust schema validation and semantic normalization
   -> Device registry / memory resolution
   -> Capability and policy gates
+  -> GatedCommand
   -> ExecutionPlan
   -> BackendAdapter payload
 ```
@@ -247,10 +275,12 @@ A single request goes through this shape:
 9. Device Registry resolves aliases and checks known devices.
 10. Capability Gate verifies that the device supports the requested action.
 11. Policy Gate decides allow, require confirmation, or deny.
-12. DryRunPlanner creates an ExecutionPlan if policy permits.
-13. Executor boundary remains disabled by default for real devices.
-14. Trace Recorder writes replayable evidence and audit data.
-15. Eval Gate uses traces and command results to prevent release regressions.
+12. GateEngine emits a `GatedCommand` only for accepted dry-run candidates.
+13. DryRunPlanner creates an ExecutionPlan from the accepted `GatedCommand`.
+14. BackendAdapter translates the plan into a backend-specific dry-run payload.
+15. Executor boundary remains disabled by default for real devices.
+16. Trace Recorder writes replayable evidence and audit data.
+17. Eval Gate uses traces and command results to prevent release regressions.
 ```
 
 ## Safety Model
@@ -425,7 +455,7 @@ fallback metrics.
 
 ## Home Assistant Boundary
 
-Home Assistant is supported as a demo backend boundary, not as the project
+Home Assistant is implemented as a demo backend boundary, not as the project
 itself.
 
 The model never sees:

@@ -1,8 +1,8 @@
-# QEMU 2GB 嵌入式验证与真实模型测试报告
+# QEMU 2GB 嵌入式预验证与真实模型测试报告
 
 Date: 2026-06-12
 
-本报告记录 EdgeHome Harness 在 2GB ARM64 模拟嵌入式环境中的**完整部署、真实小模型问答测试、按模块内存占比、调试方法与可达效果**。
+本报告记录 EdgeHome Harness 在 2GB ARM64 模拟嵌入式环境中的**预验证部署、真实小模型问答测试、按模块内存占比、调试方法与可达效果**。
 
 > 性质说明:这是一个**真机前的预验证环境**(QEMU TCG 软件模拟 ARM64),不是树莓派真机性能基准。所有延迟数字仅在"同一环境内做相对比较"时有效,不能当作真机 token/s。
 
@@ -10,7 +10,7 @@ Date: 2026-06-12
 
 ## 1. 验证目标
 
-证明在严格 2GB 内存约束的 ARM64 Linux 上,可以同时运行:
+预验证在严格 2GB 内存约束的 QEMU ARM64 Linux 上,可以同时运行:
 
 - **Ollama 0.30.7 (arm64) + MiniCPM5 q4 小模型**(本地推理)
 - **EdgeHome Harness(13-crate Rust 工程)**(把"模型候选输出"安全收敛为"可执行计划")
@@ -84,11 +84,11 @@ MiniCPM5 q4 blob  : 688 MB
 edgehome 二进制    : 4.9 MB
 ```
 
-**关键结论:STATE C 下 `gate.passed: true`,OOM 事件 = 0,Swap = 0。** 即模型常驻 + harness 并发运行,在 2GB 内完全可行,还剩约 930MB 余量。瓶颈是 llama-server 的 828MB,而非 harness(仅 5.7MB)。
+**关键结论:STATE C 下 `gate.passed: true`,OOM 事件 = 0,Swap = 0。** 在这次 QEMU 预验证环境中,模型常驻 + harness 并发运行可以落在 2GB 预算内,还剩约 930MB 余量。瓶颈是 llama-server 的 828MB,而非 harness(仅 5.7MB)。这不是真实 2GB ARM 板卡的长跑性能结论。
 
 ---
 
-## 5. 真实模型问答测试(决定性证据)
+## 5. 单条真实模型问答测试
 
 向真实 MiniCPM5 输入中文 IoT 指令「**把客厅灯关掉**」,经完整 Harness 流水线(guard→context→model→parser→memory→gate→dry-run),实测 `trace_id=tr_18b83f28e824a0c5_2`:
 
@@ -183,18 +183,19 @@ ps -eo rss,comm --sort=-rss | head -6
 
 ## 8. 可达效果(结论)
 
-**已证明:**
+**本次 QEMU 预验证已覆盖:**
 
-- 2GB 模拟嵌入式可**同时**承载 ollama + MiniCPM5 + Rust harness,常驻后剩 ~930MB,**OOM=0 / Swap=0**。
-- 真实模型 → Harness 全链路打通:Gate / Trace / Evidence / Policy **真实生效**。
-- `ModelOutput != Command` 被**真实劣质输出验证**:模型漏槽位 → Harness deny → 不误操作设备。
-- mock eval gate 与真实模型并发 eval 均 `passed: true`。
+- QEMU 2GB 模拟嵌入式环境可**同时**承载 ollama + MiniCPM5 + Rust harness,常驻后剩 ~930MB,**OOM=0 / Swap=0**。
+- 单条真实模型 → Harness 全链路打通:Gate / Trace / Evidence / Policy **真实生效**。
+- `ModelOutput != Command` 被单条真实劣质输出验证:模型漏槽位 → Harness deny → 不误操作设备。
+- 本次环境内的 mock eval gate 与真实模型并发 eval 均 `passed: true`。
 
 **未证明 / 需注意:**
 
 - 延迟(106s)是 TCG 模拟值,**不能当真机性能**,需真 ARM 板复测。
 - 默认 8s 超时在模拟环境不适用,只有真机才有评估意义。
 - `/usr/lib/ollama` 2.1GB 磁盘可进一步裁剪。
+- 尚未证明真实 2GB ARM 板卡上的长期稳定性、真实 token/s 或多轮负载表现。
 
 **下一步:**
 

@@ -2,7 +2,7 @@
 
 本文是 EdgeHome Harness 的面试演示脚本说明。
 
-演示目标不是证明“智能家居能开关灯”，而是证明：
+演示目标不是展示“智能家居能开关灯”，而是展示：
 
 ```text
 1B 小模型只生成候选 JSON。
@@ -32,8 +32,9 @@ edgehome eval cases/zh-home.yaml --gate
 展示点：
 
 ```text
-eval 不只看模型输出是否正确，还看 schema、trace、retry、dead_loop、memory_resolution 等 Harness 指标。
-gate.passed = true 才说明当前版本没有破坏主链路。
+当前 mock eval 覆盖 108 条 case、12 个 category。
+eval 不只看模型输出是否正确，还看 schema、trace、retry、dead_loop、memory_resolution、false_allow、fail_closed 等 Harness 指标。
+gate.passed = true 才说明当前版本没有破坏已覆盖的 Harness 主链路。
 ```
 
 ### 2. 普通指令
@@ -47,8 +48,8 @@ gate.passed = true 才说明当前版本没有破坏主链路。
 展示点：
 
 ```text
-中文指令 -> 候选 JSON -> 归一化命令 -> policy allow -> dry-run plan。
-模型输出不是命令，ExecutionPlan 才能进入执行层。
+中文指令 -> 候选 JSON -> 归一化命令 -> DeviceResolver -> GateEngine -> GatedCommand -> ExecutionPlan -> BackendAdapter payload。
+模型输出不是命令，只有 gate 接受后的 GatedCommand 才能进入 dry-run planner。
 ```
 
 ### 3. 槽位抽取
@@ -156,7 +157,8 @@ elevated：压缩 num_ctx / num_predict，fallback 到 compact_json。
 critical：num_ctx<=512，num_predict<=64，memory_enabled=false，fallback 到 rule_only。
 ```
 
-这证明 2GB RAM 约束不是 README 口号，而是可运行的策略。
+这展示 low-memory profile、上下文预算、输出预算和压力降级是代码路径，不只是 README 口号。
+真实 2GB ARM 板卡上的长时间稳定性仍需要单独 benchmark。
 
 ### 9. Output Governor 失败恢复
 
@@ -185,7 +187,7 @@ OutputGovernor 会识别 dead_loop，并给出 fallback 建议。
 第四，我用 OutputGovernor 处理 1B 小模型容易死循环、复读、坏 JSON 的问题。
 第五，我用 Device Registry、capability、policy 和 ExecutionPlan 保证设备可控。
 第六，我用 Trace / Replay / Eval / Release Gate 让失败可复盘、版本可回归。
-第七，我把 2GB RAM 约束做成 profile、上下文预算、输出预算和降级策略。
+第七，我把 2GB RAM 约束做成 profile、上下文预算、输出预算和降级策略；真实硬件长跑 benchmark 另算。
 ```
 
 ## 非目标

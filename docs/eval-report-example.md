@@ -2,7 +2,7 @@
 
 本文记录 EdgeHome Harness 的评测报告样例。
 
-评测目标不是单纯证明模型准确，而是证明 Harness 的完整链路有效：
+评测目标不是单纯看模型准确，而是验证 Harness 的完整链路：
 
 ```text
 intent 是否正确
@@ -82,6 +82,10 @@ cases/zh-home.yaml
 ## 当前通过基线
 
 一次通过的 mock + low_memory 报告应接近：
+
+注意：这是 mock + low_memory 的 Harness regression baseline。它说明当前
+parser、registry、gate、dry-run、trace、memory 和 fail-closed 路径在已覆盖场景下没有回归；
+它不是 MiniCPM 自然语言理解能力的完整 benchmark，也不证明真实设备执行能力。
 
 ```json
 {
@@ -331,5 +335,5 @@ category_coverage：当前评测矩阵覆盖了哪些 Harness 风险类别。
 ```text
 我没有只做一个“模型输出 JSON”的 demo。
 我做了 eval/replay/release gate 体系，评估 intent、slot、policy、dry-run、trace coverage、schema、dead loop、retry、input guard、false allow、fail closed 和 memory resolution。
-这样能证明 Harness 本身有效：模型错了不会进执行，不符合 policy config 的动作不会进入 executor，未知设备和 capability 越界会 fail closed，所有关键步骤都能通过 trace/replay 复盘，版本改动还要通过 gate 才能算没有回归。
+这样能说明 Harness 主链路在已覆盖场景下有效：模型错了不会进执行，不符合 policy config 的动作不会进入 executor，未知设备和 capability 越界会 fail closed，所有关键步骤都能通过 trace/replay 复盘，版本改动还要通过 gate 才能算没有回归。
 ```

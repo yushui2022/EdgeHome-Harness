@@ -669,7 +669,7 @@ git push origin main
 
 ### M8. README 和 WAIC one-page 宣传口径同步
 
-状态：Pending
+状态：Done in current milestone
 
 为什么要做：
 
@@ -691,6 +691,9 @@ README.md
 docs/demo-walkthrough.md
 docs/eval-report-example.md
 可新增 docs/waic-one-page.md
+docs/README.md
+如审计发现过强表述，可同步修正 docs/qemu-embedded-validation-report.md、docs/deployment-modes.md、docs/small-model-harness-blog.md
+docs/home-assistant-demo.md
 ```
 
 README 应突出：
@@ -748,6 +751,43 @@ Select-String -Path README.md,docs/*.md -Pattern "Xiaomi|MIoT|Matter|MQTT|produc
 ```
 
 看到这些词不一定要删，但必须确认每一句都没有过度承诺。
+
+本里程碑当前已完成的编辑方向：
+
+```text
+README.md 补充 Evidence Snapshot、GatedCommand、BackendAdapter 和 108-case gate 证据
+docs/demo-walkthrough.md 收紧 Release Gate、GatedCommand 链路和 2GB 证明口径
+docs/eval-report-example.md 明确 mock eval 是 Harness regression baseline，不是 MiniCPM NLU benchmark
+docs/waic-one-page.md 新增英文 one-page 宣传口径
+docs/README.md 加入 one-page 文档索引
+docs/qemu-embedded-validation-report.md 把 2GB 结论限定为 QEMU 预验证，不等同真实板卡长跑 benchmark
+docs/deployment-modes.md 同步 Home Assistant demo backend boundary 和 future adapter 边界
+docs/small-model-harness-blog.md 收紧真实执行和 future adapter 表述
+docs/home-assistant-demo.md 把 eval 表述从“证明”收紧为“展示 Harness 指标”
+```
+
+本里程碑验证已通过：
+
+```powershell
+cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-m8-gate.sqlite" eval cases\zh-home.yaml --gate
+git diff --check
+```
+
+关键 gate 输出：
+
+```text
+total_cases = 108
+category_count = 12
+pass_rate = 1.0
+schema_valid_rate = 1.0
+trace_coverage = 1.0
+false_allow_rate = 0.0
+fail_closed_rate = 1.0
+gate.passed = true
+```
 
 推荐提交：
 
@@ -835,6 +875,7 @@ docs/command-pipeline-contract.md
 docs/backend-adapter-contract.md
 docs/demo-walkthrough.md
 docs/eval-report-example.md
+docs/waic-one-page.md
 docs/assets/edgehome-harness-overview.jpg
 ```
 
