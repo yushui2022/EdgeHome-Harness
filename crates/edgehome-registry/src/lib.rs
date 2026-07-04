@@ -55,6 +55,19 @@ pub enum RegistryError {
 
     #[error("brightness is outside capability range: {value}")]
     BrightnessOutOfRange { value: u8 },
+
+    #[error("device target is ambiguous for room `{room}` and device type `{device_type}`")]
+    AmbiguousDeviceTarget {
+        room: String,
+        device_type: String,
+        matches: usize,
+    },
+
+    #[error("no device matches room `{room}` and device type `{device_type}`")]
+    NoDeviceMatch { room: String, device_type: String },
+
+    #[error("device resolution requires known room and device type")]
+    MissingResolutionSlots,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -122,6 +135,10 @@ impl DeviceRegistry {
         CapabilityResolver { registry: self }
     }
 
+    pub fn device_resolver(&self) -> DeviceResolver<'_> {
+        DeviceResolver { registry: self }
+    }
+
     pub fn resolve_alias(&self, alias: &str) -> RegistryResult<&DeviceRecord> {
         let normalized_alias = normalize_alias(alias);
         self.alias_index
@@ -135,6 +152,17 @@ impl DeviceRegistry {
             .get(device_id)
             .and_then(|index| self.devices.get(*index))
             .ok_or_else(|| RegistryError::UnknownDevice(device_id.0.clone()))
+    }
+
+    pub fn devices_in_room_by_type(
+        &self,
+        room: &Room,
+        device_type: &DeviceType,
+    ) -> Vec<&DeviceRecord> {
+        self.devices
+            .iter()
+            .filter(|device| device.room == *room && device.device_type == *device_type)
+            .collect()
     }
 
     pub fn validate_capability(
@@ -233,6 +261,71 @@ impl CapabilityResolver<'_> {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum DeviceResolutionSource {
+    Alias,
+    RoomTypeUniqueMatch,
+}
+
+#[derive(Debug, Clone)]
+pub struct DeviceResolution<'a> {
+    pub device: &'a DeviceRecord,
+    pub source: DeviceResolutionSource,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct DeviceResolutionInput<'a> {
+    pub candidate_alias: Option<&'a str>,
+    pub room: &'a Room,
+    pub device_type: &'a DeviceType,
+}
+
+pub struct DeviceResolver<'a> {
+    registry: &'a DeviceRegistry,
+}
+
+impl<'a> DeviceResolver<'a> {
+    pub fn resolve(
+        &self,
+        input: DeviceResolutionInput<'_>,
+    ) -> RegistryResult<DeviceResolution<'a>> {
+        if let Some(alias) = input.candidate_alias
+            && !alias.starts_with("relative:")
+        {
+            let device = self.registry.resolve_alias(alias)?;
+            ensure_device_type_matches(device, input.device_type)?;
+            return Ok(DeviceResolution {
+                device,
+                source: DeviceResolutionSource::Alias,
+            });
+        }
+
+        if input.room.is_unknown() || input.device_type.is_unknown() {
+            return Err(RegistryError::MissingResolutionSlots);
+        }
+
+        let matches = self
+            .registry
+            .devices_in_room_by_type(input.room, input.device_type);
+        match matches.as_slice() {
+            [device] => Ok(DeviceResolution {
+                device,
+                source: DeviceResolutionSource::RoomTypeUniqueMatch,
+            }),
+            [] => Err(RegistryError::NoDeviceMatch {
+                room: room_key(input.room).to_owned(),
+                device_type: device_type_key(input.device_type).to_owned(),
+            }),
+            devices => Err(RegistryError::AmbiguousDeviceTarget {
+                room: room_key(input.room).to_owned(),
+                device_type: device_type_key(input.device_type).to_owned(),
+                matches: devices.len(),
+            }),
+        }
+    }
+}
+
 pub trait DeviceStateProvider {
     fn state(&self, device_id: &DeviceId) -> Option<DeviceStateSnapshot>;
 }
@@ -303,6 +396,30 @@ fn validate_params(rule: &CapabilityRule, params: &CommandParams) -> RegistryRes
 
 fn normalize_alias(alias: &str) -> String {
     alias.split_whitespace().collect::<String>().to_lowercase()
+}
+
+fn ensure_device_type_matches(device: &DeviceRecord, expected: &DeviceType) -> RegistryResult<()> {
+    if expected.is_unknown() || device.device_type == *expected {
+        return Ok(());
+    }
+
+    Err(RegistryError::DeviceTypeMismatch {
+        device_id: device.device_id.0.clone(),
+        actual: device_type_key(&device.device_type).to_owned(),
+        expected: device_type_key(expected).to_owned(),
+    })
+}
+
+fn room_key(room: &Room) -> &'static str {
+    match room {
+        Room::LivingRoom => "living_room",
+        Room::Bedroom => "bedroom",
+        Room::Hallway => "hallway",
+        Room::Kitchen => "kitchen",
+        Room::Bathroom => "bathroom",
+        Room::Entrance => "entrance",
+        Room::Unknown => "unknown",
+    }
 }
 
 fn parse_device_type_key(value: &str) -> RegistryResult<DeviceType> {
@@ -393,6 +510,143 @@ mod tests {
         let device = registry.alias_resolver().resolve("客厅灯").expect("device");
 
         assert_eq!(device.device_id.0, "living_room_main_light");
+    }
+
+    fn registry_from(content: &str) -> DeviceRegistry {
+        DeviceRegistry::from_yaml_str(content).expect("registry")
+    }
+
+    #[test]
+    fn device_resolver_resolves_registry_alias() {
+        let registry = registry_from(
+            r#"
+devices:
+  - device_id: test_light
+    aliases: ["test light"]
+    room: living_room
+    device_type: light
+    backend: mock
+    backend_entity_id: mock.light.test
+    risk_level: low
+capabilities:
+  light:
+    - action: turn_on
+"#,
+        );
+        let resolution = registry
+            .device_resolver()
+            .resolve(DeviceResolutionInput {
+                candidate_alias: Some("test light"),
+                room: &Room::Unknown,
+                device_type: &DeviceType::Light,
+            })
+            .expect("resolution");
+
+        assert_eq!(resolution.device.device_id.0, "test_light");
+        assert_eq!(resolution.source, DeviceResolutionSource::Alias);
+    }
+
+    #[test]
+    fn device_resolver_resolves_unique_room_type_match() {
+        let registry = load_registry();
+        let resolution = registry
+            .device_resolver()
+            .resolve(DeviceResolutionInput {
+                candidate_alias: None,
+                room: &Room::Bedroom,
+                device_type: &DeviceType::AirConditioner,
+            })
+            .expect("resolution");
+
+        assert_eq!(resolution.device.device_id.0, "bedroom_air_conditioner");
+        assert_eq!(
+            resolution.source,
+            DeviceResolutionSource::RoomTypeUniqueMatch
+        );
+    }
+
+    #[test]
+    fn device_resolver_rejects_zero_room_type_matches() {
+        let registry = load_registry();
+        let error = registry
+            .device_resolver()
+            .resolve(DeviceResolutionInput {
+                candidate_alias: None,
+                room: &Room::Bathroom,
+                device_type: &DeviceType::Light,
+            })
+            .expect_err("no bathroom light");
+
+        assert!(matches!(error, RegistryError::NoDeviceMatch { .. }));
+    }
+
+    #[test]
+    fn device_resolver_rejects_ambiguous_room_type_matches() {
+        let registry = registry_from(
+            r#"
+devices:
+  - device_id: living_room_light_one
+    aliases: ["light one"]
+    room: living_room
+    device_type: light
+    backend: mock
+    backend_entity_id: mock.light.one
+    risk_level: low
+  - device_id: living_room_light_two
+    aliases: ["light two"]
+    room: living_room
+    device_type: light
+    backend: mock
+    backend_entity_id: mock.light.two
+    risk_level: low
+capabilities:
+  light:
+    - action: turn_on
+"#,
+        );
+
+        let error = registry
+            .device_resolver()
+            .resolve(DeviceResolutionInput {
+                candidate_alias: None,
+                room: &Room::LivingRoom,
+                device_type: &DeviceType::Light,
+            })
+            .expect_err("ambiguous living room light");
+
+        assert!(matches!(
+            error,
+            RegistryError::AmbiguousDeviceTarget { matches: 2, .. }
+        ));
+    }
+
+    #[test]
+    fn device_resolver_rejects_alias_type_mismatch() {
+        let registry = registry_from(
+            r#"
+devices:
+  - device_id: test_light
+    aliases: ["test light"]
+    room: living_room
+    device_type: light
+    backend: mock
+    backend_entity_id: mock.light.test
+    risk_level: low
+capabilities:
+  light:
+    - action: turn_on
+"#,
+        );
+        let error = registry
+            .device_resolver()
+            .resolve(DeviceResolutionInput {
+                candidate_alias: Some("test light"),
+                room: &Room::LivingRoom,
+                device_type: &DeviceType::AirConditioner,
+            })
+            .expect_err("type mismatch");
+
+        assert!(matches!(error, RegistryError::DeviceTypeMismatch { .. }));
     }
 
     #[test]

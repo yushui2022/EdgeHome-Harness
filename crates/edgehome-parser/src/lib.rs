@@ -6,8 +6,8 @@
 use std::collections::HashSet;
 
 use edgehome_core::{
-    Action, CommandParams, DeviceId, DeviceType, Intent, MODEL_OUTPUT_SCHEMA_VERSION,
-    ModelCandidate, NormalizedCommand, RiskLevel, Room, UserInput,
+    Action, CommandParams, DeviceType, Intent, MODEL_OUTPUT_SCHEMA_VERSION, ModelCandidate,
+    NormalizedCommand, RiskLevel, Room, UserInput,
 };
 use serde_json::Value;
 use thiserror::Error;
@@ -357,66 +357,18 @@ impl SemanticNormalizer {
         }
 
         let room = candidate.room.clone().unwrap_or_default();
-        let device_id = self.resolve_device_id(&room, &candidate.device_type, &candidate.action);
         let risk = self.risk_for(&candidate.device_type);
 
         Ok(NormalizedCommand {
             intent: candidate.intent.clone(),
             room,
-            device_id,
+            device_id: None,
             device_type: candidate.device_type.clone(),
             action: candidate.action.clone(),
             params: candidate.params.clone(),
             risk,
             ..NormalizedCommand::default()
         })
-    }
-
-    fn resolve_device_id(
-        &self,
-        room: &Room,
-        device_type: &DeviceType,
-        action: &Action,
-    ) -> Option<DeviceId> {
-        match (room, device_type, action) {
-            (
-                Room::LivingRoom,
-                DeviceType::Light,
-                Action::TurnOff
-                | Action::TurnOn
-                | Action::SetBrightness
-                | Action::IncreaseBrightness
-                | Action::DecreaseBrightness
-                | Action::SetTemperature
-                | Action::SetMode,
-            ) => DeviceId::new("living_room_main_light").ok(),
-            (
-                Room::Hallway,
-                DeviceType::Light,
-                Action::TurnOff
-                | Action::TurnOn
-                | Action::SetBrightness
-                | Action::IncreaseBrightness
-                | Action::DecreaseBrightness
-                | Action::SetTemperature
-                | Action::SetMode,
-            ) => DeviceId::new("hallway_light").ok(),
-            (
-                Room::Bedroom,
-                DeviceType::AirConditioner,
-                Action::SetTemperature | Action::TurnOn | Action::TurnOff,
-            ) => DeviceId::new("bedroom_air_conditioner").ok(),
-            (Room::Entrance, DeviceType::Lock, Action::Unlock | Action::Open) => {
-                DeviceId::new("front_door_lock").ok()
-            }
-            (Room::LivingRoom, DeviceType::Camera, Action::TurnOff | Action::TurnOn) => {
-                DeviceId::new("living_room_camera").ok()
-            }
-            (Room::Kitchen, DeviceType::GasDevice, Action::TurnOff | Action::TurnOn) => {
-                DeviceId::new("gas_alarm").ok()
-            }
-            _ => None,
-        }
     }
 
     fn risk_for(&self, device_type: &DeviceType) -> RiskLevel {
@@ -734,10 +686,11 @@ mod tests {
         let command = SemanticNormalizer.normalize(&candidate).expect("command");
 
         assert_eq!(command.room, Room::Hallway);
+        assert_eq!(command.device_id, None);
         assert_eq!(command.action, Action::SetBrightness);
         assert_eq!(command.params.brightness, Some(30));
         assert_eq!(command.params.time_after, Some("22:00".to_owned()));
-        assert!(command.can_enter_policy_gate());
+        assert!(!command.can_enter_policy_gate());
     }
 
     #[test]
@@ -746,14 +699,11 @@ mod tests {
         let candidate = RulePreParser.pre_parse(&input).expect("candidate");
         let command = SemanticNormalizer.normalize(&candidate).expect("command");
 
-        assert_eq!(
-            command.device_id,
-            Some(DeviceId::new("bedroom_air_conditioner").expect("device id"))
-        );
+        assert_eq!(command.device_id, None);
         assert_eq!(command.room, Room::Bedroom);
         assert_eq!(command.device_type, DeviceType::AirConditioner);
         assert_eq!(command.action, Action::TurnOn);
-        assert!(command.can_enter_policy_gate());
+        assert!(!command.can_enter_policy_gate());
     }
 
     #[test]
@@ -791,35 +741,20 @@ mod tests {
     #[test]
     fn dangerous_home_commands_are_standardized_for_policy_gate() {
         let cases = [
-            (
-                "打开前门门锁",
-                DeviceId::new("front_door_lock").expect("device id"),
-                DeviceType::Lock,
-                Action::Unlock,
-            ),
-            (
-                "关闭所有摄像头",
-                DeviceId::new("living_room_camera").expect("device id"),
-                DeviceType::Camera,
-                Action::TurnOff,
-            ),
-            (
-                "关闭燃气报警器",
-                DeviceId::new("gas_alarm").expect("device id"),
-                DeviceType::GasDevice,
-                Action::TurnOff,
-            ),
+            ("打开前门门锁", DeviceType::Lock, Action::Unlock),
+            ("关闭所有摄像头", DeviceType::Camera, Action::TurnOff),
+            ("关闭燃气报警器", DeviceType::GasDevice, Action::TurnOff),
         ];
 
-        for (text, expected_device_id, expected_device_type, expected_action) in cases {
+        for (text, expected_device_type, expected_action) in cases {
             let input = UserInput::new(text).expect("input");
             let candidate = RulePreParser.pre_parse(&input).expect("candidate");
             let command = SemanticNormalizer.normalize(&candidate).expect("command");
 
-            assert_eq!(command.device_id, Some(expected_device_id));
+            assert_eq!(command.device_id, None);
             assert_eq!(command.device_type, expected_device_type);
             assert_eq!(command.action, expected_action);
-            assert!(command.can_enter_policy_gate());
+            assert!(!command.can_enter_policy_gate());
         }
     }
 }

@@ -23,7 +23,9 @@ use edgehome_ollama::{
     ResourcePressurePolicy, StructuredOutputRequest,
 };
 use edgehome_parser::{InputFlag, InputGuard, RulePreParser, SemanticNormalizer};
-use edgehome_registry::{DeviceRegistry, StateFreshness};
+use edgehome_registry::{
+    DeviceRegistry, DeviceResolutionInput, DeviceResolutionSource, StateFreshness,
+};
 use edgehome_storage::sqlite::integer;
 use edgehome_storage::{EvidenceKind, EvidenceRef, EvidenceStore, NewEvidence, SourceSystem};
 use edgehome_trace::{
@@ -320,14 +322,23 @@ fn run_harness_pipeline(
     )?;
 
     let mut normalized = normalize_model_candidate(&candidate)?;
-    if profile.memory_enabled
-        && let Some((resolved, source)) =
-            resolve_alias_from_memory_or_registry(&normalized, &candidate, &long_items, &registry)?
+    if let Some((resolved, source)) =
+        resolve_device_target(&normalized, &candidate, &long_items, &registry)?
     {
+        let source_system = if source.starts_with("long_memory") {
+            SourceSystem::Memory
+        } else {
+            SourceSystem::Registry
+        };
+        let evidence_kind = if source_system == SourceSystem::Memory {
+            EvidenceKind::MemoryItem
+        } else {
+            EvidenceKind::DeviceRegistrySnapshot
+        };
         let alias_resolution = trace_store.record_evidence(NewEvidence::new(
-            EvidenceKind::MemoryItem,
-            SourceSystem::Memory,
-            "alias memory resolved command target",
+            evidence_kind,
+            source_system,
+            "device resolver resolved command target",
             json!({
                 "source": source,
                 "before": normalized.clone(),
@@ -336,7 +347,7 @@ fn run_harness_pipeline(
         ))?;
         trace_store.append_step(
             &trace.trace_id,
-            NewCommandStep::new("alias_memory_resolution", StepStatus::Succeeded)
+            NewCommandStep::new("device_resolution", StepStatus::Succeeded)
                 .with_evidence_refs(vec![alias_resolution.id.clone()]),
         )?;
         normalized = resolved;
@@ -971,7 +982,7 @@ fn memory_write_rejected(
     }))
 }
 
-fn resolve_alias_from_memory_or_registry(
+fn resolve_device_target(
     command: &NormalizedCommand,
     candidate: &ModelCandidate,
     long_items: &[MemoryItem],
@@ -981,16 +992,11 @@ fn resolve_alias_from_memory_or_registry(
         return Ok(None);
     }
 
-    let Some(alias) = candidate.device_alias.as_deref() else {
-        return Ok(None);
-    };
-    if alias.starts_with("relative:") {
-        return Ok(None);
-    }
-
-    if let Some(item) = long_items
-        .iter()
-        .find(|item| item.kind == MemoryKind::DeviceAlias && item.key == alias)
+    if let Some(alias) = candidate.device_alias.as_deref()
+        && !alias.starts_with("relative:")
+        && let Some(item) = long_items
+            .iter()
+            .find(|item| item.kind == MemoryKind::DeviceAlias && item.key == alias)
         && let Some(device_id) = item.value.get("device_id").and_then(Value::as_str)
     {
         let device_id = DeviceId::new(device_id)?;
@@ -1002,15 +1008,26 @@ fn resolve_alias_from_memory_or_registry(
         return Ok(Some((resolved, format!("long_memory:{}", item.id))));
     }
 
-    if let Ok(device) = registry.resolve_alias(alias) {
-        if command.device_type != DeviceType::Unknown && command.device_type != device.device_type {
-            return Ok(None);
-        }
-        let resolved = command_for_device(command, device);
-        return Ok(Some((resolved, "device_registry_alias".to_owned())));
+    if let Ok(resolution) = registry.device_resolver().resolve(DeviceResolutionInput {
+        candidate_alias: candidate.device_alias.as_deref(),
+        room: &command.room,
+        device_type: &command.device_type,
+    }) {
+        let resolved = command_for_device(command, resolution.device);
+        return Ok(Some((
+            resolved,
+            resolution_source_label(resolution.source).to_owned(),
+        )));
     }
 
     Ok(None)
+}
+
+fn resolution_source_label(source: DeviceResolutionSource) -> &'static str {
+    match source {
+        DeviceResolutionSource::Alias => "device_registry_alias",
+        DeviceResolutionSource::RoomTypeUniqueMatch => "device_registry_room_type",
+    }
 }
 
 fn command_for_device(
@@ -1086,4 +1103,68 @@ fn ensure_db_parent(path: &Path) -> anyhow::Result<()> {
 fn print_json(value: &impl Serialize) -> anyhow::Result<()> {
     println!("{}", serde_json::to_string_pretty(value)?);
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use edgehome_core::{Action, CommandParams, CommandSchemaVersion, Intent, RiskLevel, Room};
+
+    fn workspace_config_dir() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("..")
+            .join("configs")
+    }
+
+    fn load_registry() -> DeviceRegistry {
+        DeviceRegistry::load_from_path(workspace_config_dir().join("devices.yaml"))
+            .expect("registry")
+    }
+
+    fn unresolved_light_command() -> NormalizedCommand {
+        NormalizedCommand {
+            schema_version: CommandSchemaVersion::default(),
+            intent: Intent::ControlDevice,
+            room: Room::LivingRoom,
+            device_id: None,
+            device_type: DeviceType::Light,
+            action: Action::TurnOff,
+            params: CommandParams::default(),
+            risk: RiskLevel::Low,
+        }
+    }
+
+    fn light_candidate_without_alias() -> ModelCandidate {
+        ModelCandidate {
+            intent: Intent::ControlDevice,
+            room: Some(Room::LivingRoom),
+            device_alias: None,
+            device_type: DeviceType::Light,
+            action: Action::TurnOff,
+            params: CommandParams::default(),
+            ..ModelCandidate::default()
+        }
+    }
+
+    #[test]
+    fn device_target_resolution_uses_registry_without_memory_items() {
+        let registry = load_registry();
+        let (resolved, source) = resolve_device_target(
+            &unresolved_light_command(),
+            &light_candidate_without_alias(),
+            &[],
+            &registry,
+        )
+        .expect("resolution result")
+        .expect("resolved by registry");
+
+        assert_eq!(source, "device_registry_room_type");
+        assert_eq!(
+            resolved.device_id,
+            Some(DeviceId::new("living_room_main_light").expect("device id"))
+        );
+        assert_eq!(resolved.risk, RiskLevel::Low);
+        assert!(resolved.can_enter_policy_gate());
+    }
 }
