@@ -1,1344 +1,1742 @@
-# EdgeHome Harness V2 唯一实施计划
+# EdgeHome Harness 对外发布加固计划
 
-本文档是 EdgeHome Harness 后续实现、重构、验收和 `/goal` 模式执行的唯一规划指标。
+最后更新：2026-07-04
 
-最后更新：2026-06-10
+本文档是 EdgeHome Harness 后续实现、重构、README 更新、评测扩展、提交和对外宣传的执行计划。它的目标不是记录聊天讨论，而是在上下文压缩、换线程或长时间中断后，任何继续执行的人只要读取本文件，就能知道：
 
-## 0. 文档地位
+- 当前项目真实做到哪里。
+- 哪些能力可以宣传，哪些只能写成 future target。
+- 下一步从哪里开始改。
+- 每个阶段前后逻辑是什么。
+- 每个阶段如何验证、何时 commit。
+- 最终完成后项目应该达到什么状态。
 
-后续任何长任务、`/goal` 模式、代码实现、重构、README 更新、测试补充，都必须优先遵守本文档。
+如果本文档与代码、README 或真实验证结果冲突，必须先修正本文档，再继续实现。不要一边偏离计划，一边继续写代码。
+
+---
+
+## 0. 当前仓库快照
+
+工作区：
 
 ```text
-README.md = 项目叙事、架构解释、面试展示入口
-plan.md = 唯一执行顺序、验收标准、工程边界
-PROJECT_DRAFT_LEGACY.md = 历史草稿和素材库
-PROJECT_PLAN_LEGACY_M0_M15.md = 旧版实施计划留档
+C:\Users\xiaoy\Desktop\edge-home\EdgeHome-Harness
 ```
 
-如果实现过程中发现本文档与代码、README 或真实结果冲突，必须先修改 `plan.md`，再继续实现。
-不能一边偏离计划，一边继续写代码。
-
-### 0.1 `/goal` 模式执行契约
-
-后续进入 `/goal` 模式时，默认目标不是“自由发挥完成一个智能家居项目”，而是严格按本文档推进 EdgeHome Harness V2。
-
-每次 `/goal` 启动后必须先做 6 件事：
+远程仓库：
 
 ```text
-1. 读取本文件的“当前执行状态”。
-2. 只从标记为“下一步”的 milestone 开始。
-3. 检查 README / docs 是否与当前 milestone 冲突。
-4. 检查 git status，区分已有改动和本轮改动。
-5. 如果计划、代码、README 三者冲突，先改 plan.md 再实现。
-6. 每完成一个可验证小阶段就提交留档。
+https://github.com/yushui2022/EdgeHome-Harness.git
 ```
 
-禁止 `/goal` 模式做这些事：
+当前分支：
 
 ```text
-跳过当前 milestone 直接做可选扩展
-重新发明 M0-M25 已完成的模块
-为了展示效果绕过 schema、policy、device registry 或 executor boundary
-把未实现的米家 / MIoT / miIO / Matter 能力写成已完成
-把 Evidence-Gated Command Memory 放回在线执行主路径
-把开放聊天能力当成项目目标
-引入会破坏 2GB RAM 主线的默认重型依赖
+main
 ```
 
-如果用户后续提出新想法，处理规则是：
+当前最新提交：
 
 ```text
-先判断是否改变不变量。
-不改变不变量：追加到当前 milestone 或 M27 可选扩展。
-改变不变量：先更新本文档的架构结论，再改 README 和代码。
-无法验证的想法：只进入 docs/ 或 legacy，不进入已完成能力描述。
+c321d37 docs: internationalize README for MiniCPM harness
 ```
 
-## 1. 本次架构修正结论
-
-旧版计划把 `Evidence-Gated Command Memory` 放在了在线执行主路径里，并要求 `allow / dry_run / execute` 都具备完整证据链。
-这个设计更适合企业审批、报销、工单、合同审核等慢速强证据场景，不适合智能家居本地实时控制。
-
-EdgeHome Harness V2 的新结论是：
+当前 README 已经英文国际化，并加入项目图片：
 
 ```text
-Runtime Memory 是在线主路径。
-Trace / Replay / Eval 是工程观测闭环。
-Evidence 不再 gate 用户动作，而是 gate Harness 迭代质量。
+docs/assets/edgehome-harness-overview.jpg
 ```
 
-也就是说：
+当前工作区有未提交的质量门修复，后续第一步应先单独提交，不要和架构改动混在一起。
+
+未提交文件快照：
 
 ```text
-第一版轻量记忆系统 = 保留并强化
-证据门控记忆系统 = 从在线主路径移除
-Trace/Evidence = 用于审计回放、评测解释、失败分析、版本回归
+M .gitattributes
+M crates/edgehome-cli/src/main.rs
+M crates/edgehome-core/src/types.rs
+M crates/edgehome-eval/src/lib.rs
+M crates/edgehome-executor/src/home_assistant.rs
+M crates/edgehome-executor/src/lib.rs
+M crates/edgehome-parser/src/lib.rs
+M crates/edgehome-registry/src/lib.rs
+M crates/edgehome-trace/src/lib.rs
 ```
 
-项目主线从：
+这些修改已经通过过以下验证：
 
-```text
-Evidence-Gated Command Memory
+```powershell
+cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-quality-gate.sqlite" eval cases\zh-home.yaml --gate
+git diff --check
 ```
 
-调整为：
+下一步开始前，建议重新跑一遍轻量检查，然后提交：
 
-```text
-Latency-Bounded Edge Agent Harness
-低延迟、低内存、强约束、可回放的端侧 Agent Harness
+```powershell
+git status --short
+cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-quality-gate.sqlite" eval cases\zh-home.yaml --gate
+git diff --check
+
+git add .gitattributes crates/
+git commit -m "chore: make Rust quality gates pass"
+git push origin main
 ```
 
-更具体的工程口径是：
+这个 commit 的意义：在对外宣传和架构升级前，基础工程质量门是干净的。
+
+---
+
+## 1. 项目最终定位
+
+EdgeHome Harness 不是一个完整智能家居产品，也不是“已经支持小米 / Matter / MQTT 的万能控制平台”。
+
+它的准确定位是：
 
 ```text
-Memory for runtime.
-Evidence for debugging.
-Eval for progress.
-Policy for deterministic hard constraints.
-LLM for candidate JSON only.
+EdgeHome Harness is a Rust safety harness for MiniCPM-powered edge home command agents.
 ```
 
-## 2. 项目最终目标
-
-构建一个面向 1B 端侧小模型的 Rust Agent Harness。
-产品形态是智能家居本地控制中台，但项目价值不是替代米家 App 或小米音箱，而是展示：
+中文解释：
 
 ```text
-如何把一个容易复读、死循环、输出不稳定的 1B 本地小模型，
-约束成一个可以解析中文 IoT 指令、稳定输出结构化 JSON、
-支持短时指代、具备低内存降级、可审计回放、可评测迭代的 Agent Harness。
+EdgeHome Harness 是一个面向 MiniCPM 端侧小模型的 Rust 安全 Harness。
+它用智能家居控制作为窄场景，证明小模型输出可以被约束、验证、归一化、审计、评测，并转换成后端 payload。
 ```
 
-V2 主模型：
+对外一句话：
 
 ```text
-openbmb/minicpm5:1b
+MiniCPM proposes. Rust decides. Adapters translate.
 ```
 
-V2 主运行时：
+更完整的三层技术路线：
 
 ```text
-Ollama structured outputs
+User Chinese command
+  -> MiniCPM backend-neutral candidate JSON
+  -> Rust schema validation / normalization / registry resolution / policy gate
+  -> ExecutionPlan
+  -> BackendAdapter
+  -> Mock / Home Assistant payload
 ```
 
-V2 主语言：
+MIoT / Matter / MQTT 当前只能写成：
 
 ```text
-Rust
+future adapter targets
 ```
 
-V2 主部署约束：
+不能写成：
 
 ```text
-2GB RAM low_memory profile
+implemented
+supported
+production-ready
+works with Xiaomi / Matter / MQTT
 ```
 
-V2 主执行后端：
+---
+
+## 2. 核心不变量
+
+后续所有代码、README、docs、demo、one page 宣传都必须遵守以下不变量。
+
+### 2.1 ModelOutput != Command
+
+MiniCPM 输出永远只是候选 JSON。
 
 ```text
-MockExecutor 默认开启
-HomeAssistantExecutor 作为 demo backend
-真实设备执行默认关闭
+Model output is untrusted.
+It is never executed directly.
 ```
 
-V2 对比模型：
+模型不能决定：
 
 ```text
-Qwen 0.8B / Qwen 1B 只作为 eval 对比模型，不进入主链路。
-```
-
-## 3. 不可违反的项目不变量
-
-### 3.1 模型输出永远只是候选
-
-```text
-ModelOutput != Command
-```
-
-MiniCPM5-1B 只能生成候选 JSON。
-任何候选输出必须经过 Harness 校验，不能直接执行。
-
-必经步骤：
-
-```text
-raw output
--> output governor
--> JSON extraction
--> schema validation
--> semantic normalization
--> memory resolution
--> device registry validation
--> capability validation
--> execution plan
--> dry-run / executor
--> trace
-```
-
-### 3.2 Rust 管业务真相，Ollama 只做候选生成
-
-Ollama 不能维护业务记忆。
-不能依赖 Ollama CLI 的交互历史。
-不能把长对话塞给小模型。
-
-业务记忆必须由：
-
-```text
-Rust + SQLite + 结构化状态
-```
-
-管理。
-
-每次请求前，Rust 只给 Ollama 编译一段极短上下文摘要。
-
-### 3.3 证据系统不能阻塞低风险实时路径
-
-V2 不再要求：
-
-```text
-allow / dry_run / execute 必须同步完成完整证据链
-```
-
-改为：
-
-```text
-在线执行必须通过确定性校验。
-关键决策必须可 trace。
-失败必须可 replay。
-版本迭代必须可 eval gate。
-```
-
-### 3.4 不让小模型判断风险
-
-1B 小模型不能判断：
-
-```text
-某个动作是否高风险
-某个设备是否安全
-某条记忆是否应该降低策略
-某个真实后端是否允许执行
+真实 device_id
+Home Assistant entity_id
+MIoT did / siid / piid / aiid
+Matter node / endpoint / cluster / command id
+MQTT topic
+token
+backend URL
+真实执行开关
+风险等级
 ```
 
 这些必须来自：
 
 ```text
-设备注册表
-capability metadata
-静态 policy config
-用户明确配置
-executor 返回状态
+Rust types
+DeviceRegistry
+Capability rules
+Policy config
+Backend adapter config
+Explicit user/admin configuration
 ```
 
-如果没有真实业务依据，不要在 README 或代码里夸大“高风险智能判断”。
+### 2.2 模型输出 schema 固定，后端映射可定制
 
-### 3.5 记忆只能补全上下文，不能越权执行
-
-短时记忆可以解析：
+不要把项目宣传成：
 
 ```text
-再暗一点
-再调高一点
-把刚才那个关掉
-切换成除湿模式
-恢复刚才的设置
+让小模型输出任意厂家需要的 JSON。
 ```
 
-但记忆解析出的目标仍然必须经过：
+正确设计是：
 
 ```text
-device registry
-capability validation
-execution plan
+The model output contract is fixed and safe.
+The device registry and backend adapter mappings are customizable.
 ```
 
-长期记忆不能自动降低安全限制。
-
-### 3.6 长期记忆只能由明确表达写入
-
-允许写入：
+中文口径：
 
 ```text
-以后把玄关灯叫小夜灯
-以后睡觉模式把卧室灯调到 30%
-以后卧室空调默认 26 度
-以后门锁操作都要二次确认
+模型输出不定制，后端映射可定制。
 ```
 
-禁止写入：
+模型只输出 canonical candidate JSON，例如：
+
+```json
+{
+  "schema_version": "model_output.v1",
+  "intent": "control_device",
+  "room": "living_room",
+  "device_alias": "客厅灯",
+  "device_type": "light",
+  "action": "turn_on",
+  "params": {}
+}
+```
+
+厂家或协议 payload 由 adapter 根据 `ExecutionPlan + DeviceRegistry + AdapterProfile` 生成。
+
+### 2.3 Rust 管设备真相
+
+目标口径：
 
 ```text
-一次性设备控制
-模型猜测出的偏好
-不确定别名
-降低安全限制的偏好
-高风险自动执行偏好
+The model never decides device IDs.
+Device truth lives in the registry.
 ```
 
-### 3.7 2GB RAM 是硬约束，不是文档口号
+当前代码还没有完全做到。`SemanticNormalizer` 仍然有硬编码的 `room + device_type + action -> device_id` 映射。后续必须通过 `DeviceResolver` 改掉。
 
-V2 不能引入默认重型依赖：
+### 2.4 未实现后端必须 fail closed
+
+未实现 backend 不能落到 mock payload。
+
+当前代码问题：
+
+```rust
+BackendKind::Mock | BackendKind::MiioLocal | BackendKind::Mqtt => {
+    Ok(mock_payload(device, command))
+}
+```
+
+这会让外部读代码的人误解为 `MiioLocal` / `Mqtt` 也能工作。
+
+目标行为：
 
 ```text
-向量数据库
-本地 embedding 大模型
-长上下文历史
-多模型常驻
-复杂图数据库
+BackendKind::Mock -> MockAdapter
+BackendKind::HomeAssistant -> HomeAssistantAdapter
+BackendKind::MiioLocal -> AdapterNotImplemented
+BackendKind::Mqtt -> AdapterNotImplemented
+Matter -> future target in docs unless code enum and fail-closed tests are added
 ```
 
-默认策略：
+对外口径：
 
 ```text
-短时记忆最多 3 轮
-长期偏好最多注入 3 条
-记忆摘要 300-500 中文字符以内
-低内存时禁用长期记忆注入
-输出长度和重试次数都有上限
+Unimplemented backends fail closed instead of pretending to work.
 ```
 
-### 3.8 真实设备执行默认关闭
+### 2.5 真实执行默认关闭
 
 默认只允许：
 
 ```text
 dry-run
-mock execution
-eval replay
-```
-
-Home Assistant 可以作为 demo backend，但不能在 README 里声称已经完整本地适配所有米家设备。
-米家、MIoT、miIO、Matter、MQTT 都只能按真实实现程度描述。
-
-## 4. V2 总体架构
-
-### 4.1 单次请求主链路
-
-```mermaid
-flowchart TD
-    A["用户输入"] --> B["Input Guard<br/>长度限制 / 基础过滤"]
-    B --> C["Rule Pre-Parser<br/>高确定性规则解析"]
-    C --> D["Memory Manager<br/>短时状态 / 相关偏好"]
-    D --> E["Context Compiler<br/>编译极短上下文"]
-    E --> F["Ollama MiniCPM5-1B<br/>Structured Outputs"]
-    F --> G["Output Governor<br/>超时 / 截断 / 复读检测 / 重试"]
-    G --> H["JSON Parser<br/>提取 / 清洗 / schema 校验"]
-    H --> I["Semantic Normalizer<br/>动作 / 房间 / 设备 / 数值归一"]
-    I --> J["Device Registry<br/>设备存在 / capability / 状态"]
-    J --> K["Execution Planner<br/>生成 ExecutionPlan"]
-    K --> L["Executor Router<br/>Mock / HA / future backends"]
-    L --> M["Trace Recorder<br/>审计 / 回放 / 评测"]
-    M --> N["Memory Writer<br/>短时更新 / 明确长期写入"]
-```
-
-### 4.2 Trace/Eval 离线闭环
-
-```mermaid
-flowchart LR
-    A["Trace Records"] --> B["Replay"]
-    B --> C["Eval Metrics"]
-    C --> D["Failure Analysis"]
-    D --> E["Prompt / Parser / Params Fix"]
-    E --> F["Regression Gate"]
-    F --> A
-```
-
-这条闭环不阻塞普通实时执行。
-它用于解释和证明 Harness 变得更稳定。
-
-### 4.3 记忆系统边界
-
-```mermaid
-flowchart TD
-    A["User Input"] --> B["Anchor Extractor"]
-    B --> C["Short Session State"]
-    B --> D["SQLite Long Memory"]
-    C --> E["Memory Snapshot"]
-    D --> E
-    E --> F["Context Compiler"]
-    F --> G["Short Prompt Context"]
-    G --> H["Ollama"]
-    H --> I["Candidate JSON"]
-    I --> J["Validated ExecutionPlan"]
-    J --> K["Short Memory Update"]
-    J --> L["Explicit Long Memory Write"]
-```
-
-核心原则：
-
-```text
-模型不拥有记忆。
-模型只看到短摘要。
-长期记忆不常驻上下文。
-审计失败记录不默认注入 prompt。
-```
-
-## 5. 当前已完成基线
-
-M0-M15 已经完成过一版。
-后续 `/goal` 不应该无意义重做 M0-M15。
-除非测试失败或架构重构需要，否则 M0-M15 只作为基线验收。
-
-当前已具备的模块基线：
-
-```text
-edgehome-core
-edgehome-config
-edgehome-storage
-edgehome-trace
-edgehome-parser
-edgehome-registry
-edgehome-gate
-edgehome-memory
-edgehome-ollama
-edgehome-executor
-edgehome-eval
-edgehome-cli
-```
-
-当前已验证能力：
-
-```text
-中文智能家居指令解析
-规则 parser
-短时相对指令解析
-MockExecutor
-HomeAssistantExecutor demo
-eval / replay / trace show
-2GB low_memory 文档
-MiniCPM5/Ollama 参数文档
-```
-
-V2 的任务不是推倒重来，而是在已完成基线上做架构修正和能力升级。
-
-## 6. 后续执行总顺序
-
-后续必须按下面顺序推进：
-
-```text
-M16 架构叙事修正
-M17 轻量 Runtime Memory v2
-M18 Context Compiler 与低内存注入策略
-M19 Output Governor v2
-M20 TraceFrame 与 Evidence-Backed Replay
-M21 Eval Case Matrix 与模型参数评测
-M22 Release Gate
-M23 Executor Boundary 与设备后端边界
-M24 2GB Profile 验证与降级策略
-M25 面试 Demo Walkthrough
-M26 README / docs 最终同步
-M27 可选扩展
-```
-
-每个里程碑必须遵守：
-
-```text
-先改计划或文档定位，再改代码。
-先补测试，再声称能力。
-先 Mock / dry-run，再真实 executor。
-先 MiniCPM5 主链路，再 Qwen 对比。
-每完成一个稳定小阶段就 commit。
-```
-
-### 6.1 当前执行状态
-
-截至 2026-06-10，V2 已经完成 M16-M26，README、docs、demo、eval gate 和 low_memory 验收命令已经同步。
-后续 `/goal` 模式必须从这个状态继续，不要回头重做已经验收并提交的里程碑。
-
-```text
-M16 架构叙事修正 = 已完成
-M17 轻量 Runtime Memory v2 / alias flow = 已完成
-M18 Context Compiler 与低内存注入策略 = 已完成
-M19 Output Governor telemetry = 已完成
-M20 TraceFrame 与 Evidence-Backed Replay = 已完成
-M21 Eval Case Matrix 与模型参数评测 = 已完成
-M22 Release Gate = 已完成
-M23 Executor Boundary 与设备后端边界 = 已完成
-M24 2GB Profile 验证与降级策略 = 已完成
-M25 面试 Demo Walkthrough = 已完成并已提交
-M26 README / docs 最终同步 = 已完成
-M27 可选扩展 = 待开始，需用户明确指定
-```
-
-M26 完成后，下一轮 `/goal` 的默认入口是：
-
-```text
-M27 可选扩展，或围绕 README / demo / eval 的小范围修正
-```
-
-M27 仍然是可选扩展。
-除非用户明确指定，否则不要自动开始 MIoT、MQTT、Web dashboard、daemon mode 或 trace 可视化。
-
-## 7. M16 架构叙事修正
-
-### 目标
-
-把项目叙事从旧的：
-
-```text
-Evidence-Gated Command Memory
-```
-
-修正为：
-
-```text
-Latency-Bounded Edge Agent Harness
-Runtime Memory + Trace Replay Eval
-```
-
-### 必须修改
-
-```text
-README.md
-docs/model-parameters.md
-docs/eval-report-example.md
-docs/2gb-profile.md
-必要时新增 docs/architecture-v2.md
-```
-
-### 必须删除或降级的表述
-
-```text
-allow / execute 必须有完整证据链
-Evidence-Gated Command Memory 是在线主路径
-模型或 Harness 能智能判断高风险
-证据门控负责普通智能家居动作执行许可
-```
-
-### 必须新增的表述
-
-```text
-Runtime Memory 是在线主路径
-Trace / Replay / Eval 是工程观测闭环
-Evidence 用于失败分析、评测解释、版本回归、记忆来源
-低风险实时路径不被完整证据链阻塞
-小模型只生成候选 JSON
-```
-
-### 验收标准
-
-```text
-README 第一屏定位不再出现 Evidence-Gated Command Memory 作为核心公式
-架构图体现 Runtime Memory 与 Trace/Eval 分离
-plan.md 与 README 不冲突
-旧版内容已在 legacy 文件中留档
-```
-
-### 禁止跑偏
-
-```text
-不要把 README 写成智能家居产品营销页
-不要夸大米家本地控制能力
-不要把证据门控换个名字继续放回在线主路径
-```
-
-## 8. M17 轻量 Runtime Memory v2
-
-### 目标
-
-把第一版轻量记忆系统升级为正式主路径。
-记忆由 Rust 管，SQLite 存，Ollama 只看短摘要。
-
-### 必须支持的记忆类型
-
-```text
-ShortSessionState
-LongPreferenceMemory
-AliasMemory
-SceneMemory
-SafetyPreference
-FailureAuditMemory
-```
-
-注意：
-
-```text
-FailureAuditMemory 不默认注入 prompt。
-它只用于评测、分析和调优。
-```
-
-### ShortSessionState 目标结构
-
-```json
-{
-  "last_target": {
-    "room": "living_room",
-    "device_type": "light",
-    "device_id": "living_room_main_light"
-  },
-  "last_action": "set_brightness",
-  "last_value": 70
-}
-```
-
-### 长期记忆写入规则
-
-只有明确表达才写入长期记忆。
-
-触发模式：
-
-```text
-以后...
-默认...
-记住...
-把 A 叫做 B
-睡觉模式...
-```
-
-不写入：
-
-```text
-一次性控制
-模型推断偏好
-模糊表达
-降低安全限制
-```
-
-### 必须补充的测试
-
-```text
-再暗一点 -> 解析 last_target
-把刚才那个关掉 -> 解析 last_target
-以后把玄关灯叫小夜灯 -> 写入 alias memory
-打开小夜灯 -> 使用 alias memory
-一次性打开卧室灯 -> 不写长期记忆
-以后门锁都自动打开 -> 拒绝写入降低安全的长期记忆
-```
-
-### 验收标准
-
-```text
-短时记忆最多 3 轮
-长期偏好最多注入 3 条
-低内存模式可禁用长期注入
-记忆写入必须带 source_trace_id 或 source_event_id
-模型不接触 SQLite 原始内容
-```
-
-## 9. M18 Context Compiler 与低内存注入策略
-
-### 目标
-
-实现一个明确的上下文编译器，把结构化记忆压缩成短摘要。
-这段摘要每次请求临时生成，不能无限增长。
-
-### 输入
-
-```text
-当前用户输入
-ShortSessionState
-相关 LongPreferenceMemory
-相关 AliasMemory
-设备候选摘要
-low_memory profile
-```
-
-### 输出
-
-```text
-MemoryContextBlock
-```
-
-示例：
-
-```text
-当前会话摘要：
-- 上一次目标设备：living_room_main_light
-- 上一次动作：set_brightness
-- 上一次亮度：70
-
-相关偏好：
-- 卧室空调默认温度：26
-- 小夜灯 = hallway_light
-```
-
-### 预算
-
-默认：
-
-```text
-300-500 中文字符
-最多 3 条长期偏好
-最多 1 个 last_target
-最多 1 个 last_action
-```
-
-低内存：
-
-```text
-禁用长期偏好注入
-只保留 last_target
-必要时完全关闭记忆注入
-```
-
-### 验收标准
-
-```text
-ContextCompiler 有单元测试
-超过预算会裁剪
-裁剪结果稳定可预测
-低内存 profile 会改变注入策略
-README 文档解释为什么不使用长历史
-```
-
-## 10. M19 Output Governor v2
-
-### 目标
-
-针对 1B 小模型的死循环、复读、超长输出、解释文本混入，建立可观测、可重试、可降级的输出治理层。
-
-### 必须实现或确认
-
-```text
-num_predict 上限
-请求超时
-最大重试次数
-重复片段检测
-JSON 提取失败分类
-schema 失败分类
-fallback reason
-```
-
-### 重试策略
-
-第一次：
-
-```text
-正常 structured output prompt
-```
-
-第二次：
-
-```text
-更短 prompt
-更低温度
-更严格 JSON only 指令
-```
-
-最终失败：
-
-```text
-返回 need_clarification 或 parse_failed
-写入 trace
-不能编造命令执行
-```
-
-### 必须记录的指标
-
-```text
-attempt_count
-raw_output_length
-json_extract_status
-schema_status
-repeat_detected
-timeout
-fallback_used
-latency_ms
-```
-
-### 验收标准
-
-```text
-死循环样本不会卡死 CLI
-失败能落 trace
-重试次数有硬上限
-eval report 能看到 retry_rate 和 failure_reason
-```
-
-## 11. M20 TraceFrame 与 Evidence-Backed Replay
-
-### 目标
-
-把旧 Evidence Store 从在线门控角色调整为 TraceFrame。
-TraceFrame 用于复盘、评测解释、失败分析、模型参数比较。
-
-### TraceFrame 必须包含
-
-```text
-trace_id
-timestamp
-input_text
-model_name
-model_params
-runtime_profile
-memory_snapshot_summary
-prompt_hash
-raw_model_output
-cleaned_json
-schema_result
-normalized_command
-device_resolution
-capability_result
-execution_plan
-executor_result
-failure_reason
-latency_ms
-memory_pressure
-retry_count
-```
-
-### 不再要求
-
-```text
-普通 allow / dry-run / execute 同步等待完整证据链
-```
-
-### 必须支持
-
-```text
-trace show
-trace export
-replay trace
-eval from traces
-failure classification
-```
-
-### 验收标准
-
-```text
-任意失败 case 可以通过 trace_id 复盘
-trace 中能看到模型原始输出和 Harness 处理结果
-trace 不泄露 token、设备密钥、真实后端凭据
-```
-
-## 12. M21 Eval Case Matrix 与模型参数评测
-
-### 目标
-
-建立面向 1B 小模型 Harness 的评测矩阵。
-评测重点不是开放聊天质量，而是智能家居窄场景的结构化稳定性。
-
-### 必须覆盖的 case 类型
-
-```text
-intent classification
-slot extraction
-relative command
-alias memory
-scene preference
-invalid JSON recovery
-dead loop recovery
-unknown device
-unsupported capability
-low_memory degradation
-HomeAssistant dry-run planning
-```
-
-### 必须输出的指标
-
-```text
-intent_accuracy
-slot_accuracy
-schema_valid_rate
-retry_rate
-fallback_rate
-dead_loop_rate
-trace_coverage
-memory_resolution_accuracy
-latency_avg_ms
-latency_p95_ms
-low_memory_degrade_count
-```
-
-### 模型参数比较
-
-至少支持比较：
-
-```text
-MiniCPM5-1B stable profile
-MiniCPM5-1B faster profile
-Qwen 0.8B comparison profile
-```
-
-注意：
-
-```text
-Qwen 对比只用于说明小模型差异和 Harness 价值。
-不能把 Qwen 作为 V2 主链路。
-```
-
-### 验收标准
-
-```text
-cases/zh-home.yaml 扩展到覆盖多轮、别名、失败恢复
-eval report 可导出 JSON 或 Markdown
-README 有一组可复现指标示例
-指标必须来自本地实际 eval，不能编造
-```
-
-## 13. M22 Release Gate
-
-### 目标
-
-把证据系统真正用在工程质量门禁上。
-不是 gate 用户执行，而是 gate 项目迭代。
-
-### CLI 目标
-
-已实现：
-
-```text
-edgehome eval cases/zh-home.yaml --gate
-```
-
-`edgehome replay --gate traces/*.jsonl` 保留为后续扩展，不属于 M22 必须完成项。
-
-### 默认 gate 标准
-
-```text
-total_cases >= 1
-pass_rate >= 1.0
-schema_valid_rate = 1.0
-dead_loop_rate = 0.0
-trace_coverage = 1.0
-intent_accuracy >= 0.95
-slot_accuracy >= 0.90
-retry_rate <= 0.30
-```
-
-低内存 profile gate：
-
-```text
-不会 panic
-不会无限重试
-不会无限上下文增长
-可以禁用长期记忆注入
-```
-
-### 验收标准
-
-```text
-gate 失败时 CLI exit code 非 0
-gate 报告说明失败 case
-README 解释 Evidence-Gated Release 的意义
-```
-
-## 14. M23 Executor Boundary 与设备后端边界
-
-### 目标
-
-保持执行层清晰，避免项目变成“假装全量米家控制”的产品。
-
-### 必须明确
-
-```text
-MockExecutor 是默认执行路径
-HomeAssistantExecutor 是 demo backend
-真实设备执行默认关闭
-未来可扩展 MIoT / miIO / MQTT / Matter
-```
-
-### Executor 只能接受
-
-```text
-ExecutionPlan
-```
-
-禁止接受：
-
-```text
-用户原始输入
-模型原始输出
-未经 schema 校验的 JSON
-未经设备注册表确认的 command
-```
-
-### 验收标准
-
-```text
-README 不夸大米家适配
-docs/deployment-modes.md 说明 HA demo 边界
-真实执行需要显式配置开关
-eval 不依赖真实设备
-HomeAssistantExecutor 拒绝非 home_assistant backend 的 dry-run plan
-```
-
-## 15. M24 2GB Profile 验证与降级策略
-
-### 目标
-
-把 2GB RAM 约束从文档叙事变成实际策略。
-
-### 必须确认
-
-```text
-low_memory profile 配置
-num_ctx 限制
-num_predict 限制
-memory context budget
-retry limit
-long memory injection disable
-trace write 不阻塞主路径过久
-```
-
-### 降级策略
-
-```text
-内存压力正常：短时记忆 + 少量长期偏好
-内存压力中等：短时记忆 + 禁用长期偏好
-内存压力高：只保留 last_target
-内存压力严重：关闭记忆注入，单轮解析
-```
-
-### 验收标准
-
-```text
-docs/2gb-profile.md 与代码配置一致
-eval 能指定 low_memory profile
-低内存模式下不会无限膨胀上下文
-config pressure 能展示 normal / elevated / critical 三档降级决策
-```
-
-## 16. M25 面试 Demo Walkthrough
-
-### 目标
-
-形成一套可以给面试官演示的命令脚本和叙事路径。
-
-### 必须包含的 demo
-
-```text
-1. 普通指令：把客厅灯关掉
-2. 槽位抽取：晚上十点后把走廊灯调到 30%
-3. trace replay：复盘并导出一次 dry-run trace
-4. 短时记忆：先设置走廊灯，再用“把刚才那个灯再调暗一点”验证 last_target
-5. 长期别名：以后把玄关灯叫小夜灯，打开小夜灯
-6. 危险动作拒绝：关闭燃气报警器
-7. 低内存降级：normal / elevated / critical 三档决策
-8. 小模型失败恢复：坏 JSON / 死循环 / retry / fallback
-9. eval gate：展示版本是否通过
-```
-
-注意：
-
-```text
-当前 configs/devices.yaml 没有卧室灯。
-M25 demo 不应该使用“把卧室灯调到 70%”作为默认脚本。
-短时记忆演示使用走廊灯，是为了避免 demo 依赖不存在设备。
-```
-
-### 当前 M25 产物
-
-```text
-scripts/demo.ps1
-docs/demo-walkthrough.md
-README.md 快速演示入口
-```
-
-脚本必须默认使用：
-
-```text
-MockExecutor
-mock model / dry-run path
-独立 DatabasePath
+mock payload
+eval
+trace/replay
+Home Assistant demo boundary
 ```
 
 不能默认依赖：
 
 ```text
-真实 Home Assistant
-真实米家设备
+真实小米设备
+真实 Home Assistant 实例
+真实 Matter controller
+真实 MQTT broker
 局域网 token
-Ollama 长对话历史
+云端账号
 ```
 
-### M25 收尾顺序
+### 2.6 不夸大 2GB / WAIC / 官方宣传能力
+
+除非有实际验证数据，否则不要写：
 
 ```text
-1. 运行 scripts/demo.ps1，确认 9 个步骤全部通过。
-2. 确认 docs/demo-walkthrough.md 与脚本步骤一致。
-3. 确认 README 有 demo 入口。
-4. 更新 plan.md 当前状态。
-5. git add README.md scripts/demo.ps1 docs/demo-walkthrough.md plan.md
-6. git commit
-7. git push
+Runs in 2GB RAM
+Production-ready
+Supports Xiaomi
+Supports Matter
+Supports MQTT
+Works with all smart-home devices
 ```
 
-### M25 验收命令
-
-```powershell
-$env:CARGO_TARGET_DIR="$env:TEMP\edgehome-target"
-powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome-m25-demo-final.sqlite
-cargo run -q -p edgehome-cli -- --profile low_memory --db-path edgehome-m25-gate.sqlite eval cases/zh-home.yaml --gate
-```
-
-### M25 验收标准
+可以写：
 
 ```text
-scripts/demo.ps1 可运行
-docs/demo-walkthrough.md 解释每一步
-README 有快速复现命令
-release gate 通过
-短时记忆能解析 last_target
-长期别名能写入并解析
-低内存 pressure 能展示 normal / elevated / critical
-OutputGovernor dead-loop fallback 测试通过
+Designed with low-memory edge constraints in mind
+Mock and eval paths are reproducible
+Home Assistant adapter is a demo backend boundary
+MIoT / Matter / MQTT are explicit future adapter targets
 ```
 
-### Demo 原则
+---
+
+## 3. 当前代码现实
+
+### 3.1 Layer 1: Model Candidate JSON
+
+状态：基本成立。
+
+相关代码：
 
 ```text
-优先 dry-run
-不依赖真实设备
-输出必须稳定
-每个 demo 都能说明一个 Harness 能力
+crates/edgehome-core/src/types.rs
+  ModelCandidate
+
+crates/edgehome-ollama/src/lib.rs
+  generate_candidate
+  OutputGovernor
 ```
 
-## 17. M26 README / docs 最终同步
+当前 `ModelCandidate` 字段：
+
+```text
+schema_version
+intent
+room
+device_alias
+device_type
+action
+params
+```
+
+判断：
+
+```text
+这层适合作为 MiniCPM 的固定 canonical output contract。
+不要让 MiniCPM 直接输出 Home Assistant / MIoT / MQTT / Matter payload。
+```
+
+### 3.2 Layer 2: NormalizedCommand / ExecutionPlan / Gate
+
+状态：主体成立，但 device resolution 边界还不够干净。
+
+相关代码：
+
+```text
+crates/edgehome-core/src/types.rs
+  NormalizedCommand
+  ExecutionPlan
+  DryRunPlan
+
+crates/edgehome-gate/src/lib.rs
+  GateEngine
+
+crates/edgehome-registry/src/lib.rs
+  DeviceRegistry
+  capability validation
+```
+
+当前问题：
+
+```text
+SemanticNormalizer 仍然会硬编码 device_id。
+alias/registry resolution 目前和 memory_enabled 绑定在 CLI pipeline 中。
+DryRunPlanner 仍接收 NormalizedCommand + PolicyDecision，类型系统没有强制只能接收 gated command。
+```
+
+目标：
+
+```text
+SemanticNormalizer 只做语义归一化。
+DeviceResolver 从 registry/memory 解析真实设备。
+GateEngine 之后可选引入 GatedCommand / VerifiedCommand。
+ExecutionPlan 只从通过 gate 的命令生成。
+```
+
+### 3.3 Layer 3: Backend Adapter Payload
+
+状态：部分成立。
+
+当前已实现：
+
+```text
+Mock payload
+Home Assistant demo payload
+```
+
+当前未实现：
+
+```text
+MIoT adapter
+Matter adapter
+MQTT adapter
+完整多后端 adapter contract
+真实小米 payload 映射
+```
+
+当前最危险问题：
+
+```text
+MiioLocal / Mqtt fallback to mock_payload
+```
+
+第一优先级必须改成 fail closed。
+
+---
+
+## 4. 厂家 / 协议 JSON 判断
+
+不同智能家居后端的 JSON 或 payload 格式不一样，不应该让 MiniCPM 直接学习和输出这些格式。
+
+### 4.1 Home Assistant
+
+Home Assistant 是 service-call 模型。常见控制方式是：
+
+```text
+POST /api/services/<domain>/<service>
+service_data.entity_id = ...
+```
+
+示意 payload：
+
+```json
+{
+  "backend": "home_assistant",
+  "service": "light.turn_on",
+  "entity_id": "light.living_room",
+  "service_data": {
+    "entity_id": "light.living_room"
+  }
+}
+```
+
+### 4.2 MIoT / Xiaomi
+
+MIoT 常见是 spec/action/property 结构，涉及：
+
+```text
+did
+siid
+piid
+aiid
+value / in
+```
+
+示意 payload：
+
+```json
+{
+  "backend": "miot",
+  "method": "set_properties",
+  "params": [
+    {
+      "did": "xxx",
+      "siid": 2,
+      "piid": 6,
+      "value": 26
+    }
+  ]
+}
+```
+
+这不能由模型直接生成，必须由 adapter 根据设备配置和 spec mapping 生成。
+
+### 4.3 Matter
+
+Matter 不是简单 JSON 标准，而是互操作协议和数据模型，涉及：
+
+```text
+node
+endpoint
+cluster
+attribute
+command
+```
+
+如果未来做 Matter adapter，也应该由 adapter profile 映射：
+
+```text
+ExecutionPlan -> Matter command route
+```
+
+不要让 MiniCPM 直接输出 Matter node/endpoint/cluster。
+
+### 4.4 MQTT
+
+MQTT 是 publish/subscribe 协议，不规定智能家居 payload 格式。
+
+真正要配置的是：
+
+```text
+topic
+QoS
+retain
+payload template
+```
+
+示意 payload：
+
+```json
+{
+  "backend": "mqtt",
+  "topic": "home/living_room/light/set",
+  "payload": {
+    "power": "on"
+  }
+}
+```
+
+这也应该由 adapter profile 生成，不应该由 MiniCPM 直接输出。
+
+---
+
+## 5. Customization Contract
+
+这是当前计划必须新增的重点。否则外部会继续问：
+
+```text
+我接小米怎么办？
+我接 MQTT 怎么办？
+我新增一个设备怎么办？
+你这个 JSON 到底是谁的格式？
+```
+
+### 5.1 用户可以定制什么
+
+用户可以在配置层定制：
+
+```text
+device_id
+aliases
+room
+device_type
+risk_level
+capability rules
+backend kind
+backend_entity_id
+adapter route / payload mapping
+```
+
+### 5.2 用户不应该定制什么
+
+用户不应该把 MiniCPM 改成直接输出：
+
+```text
+Home Assistant entity_id
+MIoT did / siid / piid / aiid
+Matter node / endpoint / cluster
+MQTT topic
+token
+backend URL
+vendor API payload
+```
+
+### 5.3 新增已有类型设备
+
+如果新增的是已有 enum 支持的房间、设备类型、动作和 backend，例如再加一个空调，理想情况下只需要改 registry YAML：
+
+```yaml
+devices:
+  - device_id: living_room_air_conditioner
+    aliases: ["客厅空调", "客厅冷气"]
+    room: living_room
+    device_type: air_conditioner
+    backend: home_assistant
+    backend_entity_id: climate.living_room_ac
+    risk_level: medium
+```
+
+并确认 capability 已存在：
+
+```yaml
+capabilities:
+  air_conditioner:
+    - action: turn_on
+    - action: turn_off
+    - action: set_temperature
+      min: 16
+      max: 30
+      unit: celsius
+    - action: set_mode
+```
+
+当前限制：
+
+```text
+Room / DeviceType / Action 都是 Rust enum。
+已有类型可以主要改 YAML。
+新增全新房间、设备类型或动作目前仍需要改 Rust 代码。
+```
+
+### 5.4 新增全新设备类型
+
+例如新增 humidifier，加湿器。
+
+短期安全方案：
+
+```text
+1. 在 DeviceType enum 中增加 Humidifier。
+2. 如有需要，在 Action enum 中增加 SetHumidity。
+3. 在 configs/devices.yaml 的 capabilities 中增加 humidifier 能力。
+4. 更新 parser / normalizer / prompt schema / eval case。
+5. 更新 adapter payload mapping。
+6. 增加测试和 eval case。
+```
+
+长期可选方案：
+
+```text
+把 DeviceType / Action 从固定 enum 逐步迁移为 registry-defined catalog。
+```
+
+但长期方案改动较大，会降低一部分 Rust enum 类型安全，必须由 registry validation 补回来。当前阶段不优先做。
+
+### 5.5 新增后端 payload 格式
+
+不要改模型 schema。
+
+应该新增：
+
+```text
+BackendAdapter implementation
+AdapterProfile config
+Golden tests
+README support matrix entry
+fail-closed behavior for missing mapping
+```
+
+示意结构：
+
+```text
+ModelCandidate
+  -> NormalizedCommand
+  -> DeviceResolver
+  -> GateEngine
+  -> ExecutionPlan
+  -> BackendAdapter + AdapterProfile
+  -> Backend-specific payload
+```
+
+---
+
+## 6. 目标架构
+
+目标架构图：
+
+```mermaid
+flowchart TD
+    A["User Chinese command"] --> B["MiniCPM candidate JSON"]
+    B --> C["OutputGovernor + SchemaValidator"]
+    C --> D["ModelCandidate<br/>backend-neutral"]
+    D --> E["SemanticNormalizer<br/>semantic slots only"]
+    E --> F["DeviceResolver<br/>registry + memory"]
+    F --> G["NormalizedCommand<br/>resolved target"]
+    G --> H["GateEngine<br/>policy + capability"]
+    H --> I["ExecutionPlan<br/>gated dry-run boundary"]
+    I --> J["BackendAdapter"]
+    J --> K["Mock payload"]
+    J --> L["Home Assistant payload"]
+    J --> M["Future MIoT adapter"]
+    J --> N["Future Matter adapter"]
+    J --> O["Future MQTT adapter"]
+```
+
+层级定义：
+
+| Layer | Type | Owner | Trust Level | Status |
+| --- | --- | --- | --- | --- |
+| Candidate JSON | `ModelCandidate` | MiniCPM / MockModel | Untrusted | Implemented |
+| Internal command | `NormalizedCommand` | Rust Harness | Needs resolution + gate | Mostly implemented |
+| Verified plan | `ExecutionPlan` | Gate + Planner | Trusted dry-run boundary | Implemented, type-gating can improve |
+| Backend payload | `DryRunPlan.payload` | BackendAdapter | Backend-specific | Mock + HA demo only |
+
+---
+
+## 7. 执行总顺序
+
+后续从本文件继续时，按下面顺序推进。
+
+不要跳过 M0。
+不要把多个大阶段塞进一个 commit。
+不要先写 README 夸口，再补代码。
+
+```text
+M0  当前质量门修复提交
+M1  BackendAdapter trait + unsupported backend fail closed
+M2  主链路命名修正 + README/docs 边界
+M3  Customization Contract 文档和示例配置
+M4  DeviceResolver：设备真相从 Normalizer 移到 Registry
+M5  GatedCommand / VerifiedCommand 类型边界
+M6  Eval case 扩展和 adapter golden tests
+M7  README / WAIC one-page 口径最终同步
+M8  可选扩展：真实 MIoT / MQTT / Matter adapter
+```
+
+commit 节奏：
+
+```text
+每完成一个 milestone，必须 commit。
+每完成一组可运行测试，应该 commit。
+文档边界和代码行为必须在同一个 milestone 内对齐。
+如果一个 milestone 超过半天或改动超过 8-10 个文件，应拆成更小 commit。
+```
+
+---
+
+## 8. M0：提交当前质量门修复
 
 ### 目标
 
-把 README 写成面试项目说明书，而不是零散笔记。
-M26 是 V2 主线完成前的最终一致性关口，不引入新核心功能。
+把已经完成的 fmt / clippy / test / eval gate 修复单独提交，作为后续架构重构的干净基线。
 
-M26 的判断标准不是“README 更长”，而是：
+### 前置状态
 
-```text
-面试官只看 README，就能理解这是 Agent Harness 工程。
-开发者只看 plan.md，就能知道后续怎么验收和维护。
-任何 README 中声称的能力，都能在代码、docs、demo 或 eval 中找到来源。
-```
-
-### README 必须回答
+当前有未提交修改：
 
 ```text
-这个项目是什么
-为什么 1B 小模型需要 Harness
-为什么 Ollama JSON 约束不够
-Runtime Memory 怎么工作
-Output Governor 怎么处理死循环
-Trace/Replay/Eval 怎么形成工程闭环
-2GB RAM 下如何降级
-智能家居只是产品形态，不是项目全部
-真实设备执行边界在哪里
+.gitattributes
+crates/edgehome-cli/src/main.rs
+crates/edgehome-core/src/types.rs
+crates/edgehome-eval/src/lib.rs
+crates/edgehome-executor/src/home_assistant.rs
+crates/edgehome-executor/src/lib.rs
+crates/edgehome-parser/src/lib.rs
+crates/edgehome-registry/src/lib.rs
+crates/edgehome-trace/src/lib.rs
 ```
 
-### README 推荐结构
+这些修改已知用于：
 
 ```text
-1. 一句话定位
-2. 为什么这是 Harness 项目，不是智能家居玩具
-3. Ollama structured outputs 与 Harness 的职责边界
-4. 总体架构图
-5. 单次请求主链路
-6. Runtime Memory
-7. Output Governor
-8. Device Registry / Policy / ExecutionPlan
-9. Trace / Replay / Eval / Release Gate
-10. 2GB RAM Profile
-11. Demo Walkthrough
-12. 部署模式与真实设备边界
-13. 当前已实现能力
-14. 未实现 / 非目标
-15. 面试讲法
+修复 cargo fmt --all --check
+修复 clippy -D warnings
+修复 full test suite
+修复 trace gate check ordering
+添加 .gitattributes 中 Rust LF 行尾规则
 ```
 
-### README 必须包含的图
-
-```text
-总体架构图
-单次请求链路图
-记忆系统图
-Trace/Eval 闭环图
-Executor 边界图
-```
-
-图形要求：
-
-```text
-总体分层图不能过长。
-复杂链路拆成多张图。
-一张图只表达一个问题。
-README 中的图负责建立直觉，细节放 docs。
-```
-
-### 必须同步检查的文档
-
-```text
-README.md
-plan.md
-docs/architecture-v2.md
-docs/model-parameters.md
-docs/2gb-profile.md
-docs/deployment-modes.md
-docs/home-assistant-demo.md
-docs/eval-report-example.md
-docs/demo-walkthrough.md
-cases/README.md
-configs/README.md
-```
-
-### 必须保留的架构口径
-
-```text
-Runtime Memory 是在线主路径。
-Trace / Replay / Eval 是工程观测闭环。
-Evidence 不 gate 用户动作，而是 gate Harness 迭代质量。
-Policy 只做确定性约束，不把风险判断交给 1B 小模型。
-LLM 只生成候选 JSON，不能直接执行。
-Executor 只接受 ExecutionPlan。
-真实设备执行默认关闭。
-```
-
-### 必须核对的已实现能力
-
-M26 只能把下面这些写成“已实现”：
-
-```text
-Rust workspace 与多 crate 分层
-中文 IoT 指令 parser / normalizer
-Ollama structured output 适配层
-OutputGovernor 的输出治理与 dead-loop fallback 测试
-Runtime Memory 的短时状态、长期别名、ContextCompiler 预算
-SQLite 持久化
-Device Registry / capability 校验
-PolicyGate 确定性拒绝 blocked action
-MockExecutor 默认执行路径
-HomeAssistantExecutor demo backend 边界测试
-TraceFrame / replay / trace export
-Eval report 与 --gate release gate
-low_memory profile 与 pressure decision CLI
-scripts/demo.ps1 面试演示脚本
-```
-
-下面只能写成“后续可选”，不能写成已实现：
-
-```text
-全量米家本地控制
-MIoT / miIO / Matter / MQTT 完整 adapter
-真实 2GB ARM 板长期压测数据
-Web dashboard
-HTTP daemon mode
-多模型自动路由
-向量数据库记忆
-开放聊天助手
-语音唤醒 / ASR / TTS
-```
-
-### 禁止
-
-```text
-不要把 README 写成营销页
-不要堆砌空泛 AI 概念
-不要再把 Evidence-Gated Command Memory 放在核心公式
-不要声称已经完整适配所有米家设备
-```
-
-### M26 执行顺序
-
-必须按顺序执行：
-
-```text
-1. 读 README.md、plan.md、docs/*.md，列出冲突点。
-2. 对照代码和 demo，删除或降级所有过度声明。
-3. 把 README 重排成面试项目说明书。
-4. 把长图拆短，避免总体分层图过长。
-5. 同步 docs 中的架构口径。
-6. 确认 demo 命令、eval gate 命令、pressure 命令仍然可运行。
-7. 更新 plan.md 状态，把 M26 标记为已完成。
-8. 运行完整验证命令。
-9. commit。
-10. push。
-```
-
-### M26 验收命令
+### 执行命令
 
 ```powershell
-$env:CARGO_TARGET_DIR="$env:TEMP\edgehome-target"
+git status --short
 cargo fmt --all --check
-cargo check
-cargo test
-powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome-m26-demo.sqlite
-cargo run -q -p edgehome-cli -- --profile low_memory --db-path edgehome-m26-gate.sqlite eval cases/zh-home.yaml --gate
-cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 1024
-cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 400
-cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 128
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-quality-gate.sqlite" eval cases\zh-home.yaml --gate
+git diff --check
+
+git add .gitattributes crates/
+git commit -m "chore: make Rust quality gates pass"
+git push origin main
 ```
 
 ### 验收标准
 
 ```text
-README 与 plan.md 一致
-docs 与 README 不互相冲突
-README 中的命令可运行
-README 中的指标有来源
-README 不含未实现能力的完成态描述
-docs/demo-walkthrough.md 与 scripts/demo.ps1 步骤一致
-git status 只包含本轮应提交文件
+fmt 通过
+clippy -D warnings 通过
+test 通过
+eval --gate 通过
+git diff --check 通过
+commit 已推送
 ```
 
-## 18. M27 可选扩展
-
-以下内容可以作为后续加分项，但不能阻塞 V2 主线。
+### 完成后进入
 
 ```text
-Qwen 0.8B / 1B 更完整对比
-MIoT / miIO local adapter
-MQTT / Matter backend
+M1 BackendAdapter trait + unsupported backend fail closed
+```
+
+---
+
+## 9. M1：BackendAdapter trait + fail closed
+
+### 为什么先做 M1
+
+这是当前项目最容易被外部质疑的 Layer 3 问题。
+
+如果 enum 里有 `MiioLocal` / `Mqtt`，但实际 fallback 到 `mock_payload`，别人会认为项目在假装支持未实现后端。
+
+M1 的目标是让代码行为和宣传边界一致：
+
+```text
+Implemented backends generate payload.
+Unimplemented backends fail closed.
+```
+
+### 修改范围
+
+主要文件：
+
+```text
+crates/edgehome-executor/src/lib.rs
+crates/edgehome-executor/src/home_assistant.rs
+crates/edgehome-registry/src/lib.rs
+```
+
+测试可能涉及：
+
+```text
+crates/edgehome-executor/src/lib.rs tests
+```
+
+### 实现要求
+
+在 `edgehome-executor` 中新增 trait：
+
+```rust
+pub trait BackendAdapter {
+    fn kind(&self) -> BackendKind;
+
+    fn dry_run_payload(
+        &self,
+        device: &DeviceRecord,
+        command: &NormalizedCommand,
+        plan: &ExecutionPlan,
+    ) -> ExecutorResult<Value>;
+}
+```
+
+新增：
+
+```text
+MockAdapter
+HomeAssistantAdapter
+```
+
+新增 executor error：
+
+```rust
+BackendAdapterNotImplemented { backend: String }
+```
+
+或者等价错误类型：
+
+```text
+backend adapter is not implemented: mqtt
+backend adapter is not implemented: miio_local
+```
+
+`backend_payload` 目标行为：
+
+```text
+BackendKind::Mock -> MockAdapter
+BackendKind::HomeAssistant -> HomeAssistantAdapter
+BackendKind::MiioLocal -> Err(BackendAdapterNotImplemented)
+BackendKind::Mqtt -> Err(BackendAdapterNotImplemented)
+```
+
+不要在 M1 中强行新增 Matter enum。
+Matter 先留在 README future target。
+
+### 必须增加的测试
+
+```text
+Mock backend dry-run returns mock payload
+Home Assistant backend dry-run returns HA service payload
+MiioLocal backend dry-run returns AdapterNotImplemented
+Mqtt backend dry-run returns AdapterNotImplemented
+```
+
+### 验收命令
+
+```powershell
+cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-m1-gate.sqlite" eval cases\zh-home.yaml --gate
+git diff --check
+```
+
+### Commit
+
+```powershell
+git add crates/edgehome-executor crates/edgehome-registry
+git commit -m "feat: make backend adapters explicit"
+git push origin main
+```
+
+### 完成后可以宣传
+
+```text
+Backend adapters are explicit.
+Unimplemented backends fail closed instead of falling back to mock payloads.
+```
+
+### 完成后进入
+
+```text
+M2 主链路命名修正 + README/docs 边界
+```
+
+---
+
+## 10. M2：主链路命名修正 + README/docs 边界
+
+### 为什么做 M2
+
+当前函数名会误导读者认为主 pipeline 是 mock-only。
+
+当前问题：
+
+```text
+run_mock_pipeline(...)
+normalize_mock_candidate(...)
+```
+
+但实际 `use_mock == false` 时会走 Ollama / MiniCPM candidate path。
+
+### 修改范围
+
+主要文件：
+
+```text
+crates/edgehome-cli/src/main.rs
+README.md
+docs/
+```
+
+### 代码修改
+
+重命名：
+
+```text
+run_mock_pipeline -> run_harness_pipeline
+normalize_mock_candidate -> normalize_model_candidate
+```
+
+更新所有调用点和相关测试。
+
+### README 必须新增或修正
+
+新增 `Command Pipeline Contract`：
+
+| Layer | Type | Owner | Trust Level |
+| --- | --- | --- | --- |
+| Candidate JSON | `ModelCandidate` | MiniCPM / MockModel | Untrusted |
+| Internal command | `NormalizedCommand` | Rust Harness | Needs gate |
+| Verified plan | `ExecutionPlan` | Gate + Planner | Trusted dry-run boundary |
+| Backend payload | `DryRunPlan.payload` | BackendAdapter | Backend-specific |
+
+新增 `Backend Support Matrix`：
+
+| Backend | Status | What works | What is not claimed |
+| --- | --- | --- | --- |
+| Mock | Implemented | Deterministic dry-run payloads, eval baseline | Real device control |
+| Home Assistant | Demo adapter implemented | Service-call translation, execute disabled by default | Production deployment |
+| MIoT / Xiaomi | Future adapter target | Not implemented | No Xiaomi device support yet |
+| Matter | Future adapter target | Not implemented | No Matter controller yet |
+| MQTT | Future adapter target | Not implemented | No topic/payload compatibility yet |
+
+新增 `Command Boundary`：
+
+```text
+MiniCPM never emits vendor payloads.
+
+It does not generate:
+- Home Assistant entity_id
+- MIoT did / siid / piid / aiid
+- Matter node_id / endpoint_id / cluster
+- MQTT topic
+- tokens or backend URLs
+
+Those fields live in registry and backend adapter configuration.
+```
+
+### 验收命令
+
+```powershell
+cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-m2-gate.sqlite" eval cases\zh-home.yaml --gate
+git diff --check
+```
+
+### Commit
+
+```powershell
+git add crates/edgehome-cli README.md docs/
+git commit -m "docs: clarify command and backend boundaries"
+git push origin main
+```
+
+### 完成后可以宣传
+
+```text
+MiniCPM emits backend-neutral candidate JSON.
+Rust validates it into an ExecutionPlan.
+Backend adapters translate verified plans into backend-specific payloads.
+```
+
+### 完成后进入
+
+```text
+M3 Customization Contract 文档和示例配置
+```
+
+---
+
+## 11. M3：Customization Contract 文档和示例配置
+
+### 为什么做 M3
+
+用户和外部评审会问：
+
+```text
+不同厂家的 JSON 是不是一样？
+如果我要接自己的设备怎么办？
+如果我要新增空调怎么办？
+如果我要接 MQTT 怎么办？
+```
+
+M3 要把答案写清楚：
+
+```text
+模型输出固定。
+设备和后端映射可配置。
+新后端通过 adapter 扩展。
+```
+
+### 修改范围
+
+建议新增：
+
+```text
+docs/customization.md
+docs/backend-adapter-contract.md
+docs/command-pipeline-contract.md
+configs/devices.home_assistant.example.yaml
+configs/adapters/mqtt.example.yaml
+configs/adapters/miot.example.yaml
+```
+
+如果暂时不实现 adapter profile parser，`configs/adapters/*.example.yaml` 必须明确标注：
+
+```text
+example design only / future adapter profile
+```
+
+不要让示例看起来像已经可运行。
+
+### docs/customization.md 必须回答
+
+```text
+1. 模型输出 schema 为什么固定。
+2. 用户可以通过 devices.yaml 定制哪些字段。
+3. 已有设备类型如何新增设备。
+4. 新设备类型为什么当前需要 Rust enum 和测试。
+5. 新 backend payload 为什么应该通过 adapter，而不是 prompt。
+6. Home Assistant / MIoT / Matter / MQTT 的边界区别。
+7. 未实现 adapter 如何 fail closed。
+```
+
+### configs/devices.home_assistant.example.yaml 示例
+
+应该展示同一个 internal command 如何映射到 HA entity：
+
+```yaml
+devices:
+  - device_id: living_room_main_light
+    aliases: ["客厅灯", "客厅主灯"]
+    room: living_room
+    device_type: light
+    backend: home_assistant
+    backend_entity_id: light.living_room
+    risk_level: low
+
+capabilities:
+  light:
+    - action: turn_on
+    - action: turn_off
+    - action: set_brightness
+      min: 0
+      max: 100
+      unit: percent
+```
+
+### Adapter profile 文档示意
+
+未来 MQTT adapter profile 可以长这样：
+
+```yaml
+backend: mqtt
+routes:
+  - device_id: living_room_main_light
+    action: turn_on
+    topic: home/living_room/light/set
+    payload:
+      power: "on"
+```
+
+未来 MIoT adapter profile 可以长这样：
+
+```yaml
+backend: miot
+routes:
+  - device_id: bedroom_air_conditioner
+    action: set_temperature
+    method: set_properties
+    did: "${MIOT_BEDROOM_AC_DID}"
+    siid: 2
+    piid: 6
+```
+
+这些只是未来 adapter profile 示例，不代表 M3 已经实现真实 adapter。
+
+### 验收标准
+
+```text
+README 有 Customization Model 小节。
+docs/customization.md 能解释“模型输出固定，后端映射可定制”。
+示例配置不含 token / 密钥。
+示例配置不会暗示 MIoT / MQTT 已实现。
+```
+
+### 验收命令
+
+文档阶段至少运行：
+
+```powershell
+cargo fmt --all --check
+cargo test --workspace
+cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-m3-gate.sqlite" eval cases\zh-home.yaml --gate
+git diff --check
+```
+
+### Commit
+
+```powershell
+git add README.md docs/ configs/
+git commit -m "docs: define customization contract"
+git push origin main
+```
+
+### 完成后可以宣传
+
+```text
+Users customize device registries and backend adapter mappings.
+The model output contract remains backend-neutral and validator-controlled.
+```
+
+### 完成后进入
+
+```text
+M4 DeviceResolver
+```
+
+---
+
+## 12. M4：DeviceResolver
+
+### 为什么做 M4
+
+当前 `SemanticNormalizer` 里硬编码了部分设备选择规则，例如：
+
+```text
+living_room + light -> living_room_main_light
+hallway + light -> hallway_light
+bedroom + air_conditioner -> bedroom_air_conditioner
+```
+
+这会削弱：
+
+```text
+Device truth lives in the registry.
+```
+
+M4 的目标是把设备真相从 parser/normalizer 移到 registry/resolver。
+
+### 修改范围
+
+主要文件：
+
+```text
+crates/edgehome-parser/src/lib.rs
+crates/edgehome-registry/src/lib.rs
+crates/edgehome-cli/src/main.rs
+```
+
+可以新增：
+
+```text
+crates/edgehome-registry/src/resolver.rs
+```
+
+如果 crate 模块拆分成本太高，可以先放在 `edgehome-registry/src/lib.rs`，后续再拆。
+
+### 目标职责
+
+`SemanticNormalizer`：
+
+```text
+ModelCandidate -> NormalizedCommand
+只处理 intent / room / device_type / action / params / risk fallback
+不决定真实 device_id
+```
+
+`DeviceResolver`：
+
+```text
+NormalizedCommand + ModelCandidate + DeviceRegistry + Memory -> resolved NormalizedCommand
+```
+
+### 建议类型
+
+```rust
+pub struct DeviceResolver<'a> {
+    registry: &'a DeviceRegistry,
+}
+
+pub struct DeviceResolutionInput<'a> {
+    pub candidate_alias: Option<&'a str>,
+    pub room: &'a Room,
+    pub device_type: &'a DeviceType,
+}
+
+pub enum DeviceResolutionSource {
+    Alias,
+    RoomTypeUniqueMatch,
+    LongTermMemory,
+}
+
+pub struct DeviceResolution {
+    pub device: DeviceRecord,
+    pub source: DeviceResolutionSource,
+}
+```
+
+### 解析规则
+
+第一版只做确定性规则，不做复杂 NLU：
+
+```text
+1. 如果 candidate.device_alias 存在且不是 relative:*，先查 long memory alias。
+2. 再查 registry.resolve_alias(alias)。
+3. 如果 alias 不存在，按 room + device_type 查找唯一设备。
+4. 匹配 0 个 -> fail closed。
+5. 匹配多个 -> ambiguous target，fail closed 或 require clarification。
+6. relative:* 交给 ShortSessionMemory。
+```
+
+为支持第 3 点，`DeviceRegistry` 增加：
+
+```rust
+pub fn devices_in_room_by_type(
+    &self,
+    room: &Room,
+    device_type: &DeviceType,
+) -> Vec<&DeviceRecord>
+```
+
+### CLI pipeline 修正
+
+当前 `resolve_alias_from_memory_or_registry` 被 `profile.memory_enabled` 包住。
+
+目标：
+
+```text
+Registry-based device resolution must not depend on memory_enabled.
+Long-memory alias resolution may depend on memory_enabled.
+Short-memory relative resolution may depend on memory_enabled.
+```
+
+也就是说：
+
+```text
+memory off 仍然应该能通过 registry alias / room+type resolve device。
+```
+
+### 必须增加的测试
+
+```text
+Alias resolves through registry when memory is disabled
+room + device_type unique match resolves device
+room + device_type zero match rejects
+room + device_type multiple match rejects as ambiguous
+relative:* remains handled by short memory
+SemanticNormalizer no longer hardcodes living_room_main_light
+```
+
+### 验收命令
+
+```powershell
+cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-m4-gate.sqlite" eval cases\zh-home.yaml --gate
+git diff --check
+```
+
+### Commit
+
+```powershell
+git add crates/edgehome-parser crates/edgehome-registry crates/edgehome-cli
+git commit -m "feat: resolve devices through registry"
+git push origin main
+```
+
+### 完成后可以宣传
+
+```text
+The model never decides device IDs.
+Device truth lives in the registry.
+```
+
+### 完成后进入
+
+```text
+M5 GatedCommand / VerifiedCommand
+```
+
+---
+
+## 13. M5：GatedCommand / VerifiedCommand 类型边界
+
+### 为什么做 M5
+
+当前 CLI 已经先跑 GateEngine，再生成 dry-run plan。
+
+但类型系统还没有强制：
+
+```text
+只有通过 gate 的 command 才能进入 planner。
+```
+
+M5 是安全边界增强，不是第一优先级，但做完后项目工程感更强。
+
+### 设计选择
+
+为了避免 `edgehome-core` 依赖 `edgehome-gate`，建议把类型放在 `edgehome-gate`：
+
+```rust
+pub struct GatedCommand {
+    pub command: NormalizedCommand,
+    pub evaluation: GateEvaluation,
+}
+```
+
+或者先做轻量方法：
+
+```rust
+impl GateEvaluation {
+    pub fn can_plan_dry_run(&self) -> bool {
+        self.policy_decision != PolicyDecision::Deny
+            && self.blocking_reasons.is_empty()
+    }
+}
+```
+
+再逐步把 `DryRunPlanner.plan(...)` 改成接收 `GatedCommand`。
+
+### 推荐分两步
+
+M5a：
+
+```text
+新增 GateEvaluation::can_plan_dry_run()
+替换 CLI 里散落的 gate 判断
+增加测试
+```
+
+M5b：
+
+```text
+新增 GatedCommand
+GateEngine::verify(...) 返回 Accepted / Rejected
+DryRunPlanner 接收 gated command
+```
+
+如果 M5b 改动太大，可以单独 commit。
+
+### 验收标准
+
+```text
+被 Deny 的 command 不能进入 dry-run planner。
+有 blocking_reasons 的 command 不能进入 dry-run planner。
+测试覆盖 accepted / rejected。
+README 不把这一步夸大成真实执行安全认证。
+```
+
+### 验收命令
+
+```powershell
+cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-m5-gate.sqlite" eval cases\zh-home.yaml --gate
+git diff --check
+```
+
+### Commit
+
+```powershell
+git add crates/edgehome-gate crates/edgehome-executor crates/edgehome-cli crates/edgehome-core
+git commit -m "feat: type gate dry-run planning"
+git push origin main
+```
+
+### 完成后可以宣传
+
+```text
+Execution planning is gated after deterministic policy evaluation.
+```
+
+不要写成：
+
+```text
+Formally verified safety
+Production-grade authorization
+```
+
+### 完成后进入
+
+```text
+M6 Eval case 扩展和 adapter golden tests
+```
+
+---
+
+## 14. M6：Eval case 扩展和 adapter golden tests
+
+### 为什么做 M6
+
+对外宣传时，光讲架构不够。
+
+项目需要用 eval 和 golden tests 证明：
+
+```text
+MiniCPM candidate JSON 可被稳定约束。
+Rust Harness 能拒绝坏输出和危险/不支持命令。
+Backend adapters 生成可预期 payload。
+未实现 backend fail closed。
+```
+
+### eval case 阶段目标
+
+不要一口气为了数字堆 100 条。
+
+推荐：
+
+```text
+当前 -> 30 条 -> 50 条 -> 100 条
+```
+
+每一步都必须有分类和指标，不要只是复制同义句。
+
+### case 分类
+
+至少覆盖：
+
+```text
+normal_control
+slot_extraction
+synonym_control
+polite_expression
+relative_command
+alias_resolution
+ambiguous_target
+unknown_device
+unsupported_capability
+blocked_risk
+malformed_json
+schema_violation
+backend_access
+unsupported_backend
+adapter_payload
+memory_write_allowed
+memory_write_rejected
+```
+
+### adapter golden tests
+
+Mock：
+
+```text
+ExecutionPlan light turn_on
+-> backend = mock
+-> operation = set_power_on
+```
+
+Home Assistant：
+
+```text
+ExecutionPlan light turn_on
+-> service = light.turn_on
+-> entity_id = light.hallway
+```
+
+Unsupported backend：
+
+```text
+BackendKind::Mqtt
+-> BackendAdapterNotImplemented
+```
+
+### 指标
+
+eval report 至少应能看：
+
+```text
+total_cases
+pass_rate
+schema_valid_rate
+intent_accuracy
+slot_accuracy
+gate_reject_accuracy
+adapter_payload_accuracy
+unsupported_backend_reject_rate
+trace_coverage
+retry_rate
+fallback_rate
+```
+
+### 验收命令
+
+```powershell
+cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-m6-gate.sqlite" eval cases\zh-home.yaml --gate
+git diff --check
+```
+
+### Commit
+
+```powershell
+git add cases/ crates/ README.md docs/
+git commit -m "test: expand command eval coverage"
+git push origin main
+```
+
+### 完成后可以宣传
+
+```text
+The harness is evaluated on a reproducible command-case suite covering schema validity, policy rejection, memory resolution, and adapter payload generation.
+```
+
+如果没有真实 MiniCPM 跑出来的指标，不要写：
+
+```text
+MiniCPM achieves X% accuracy
+```
+
+### 完成后进入
+
+```text
+M7 README / WAIC one-page 口径最终同步
+```
+
+---
+
+## 15. M7：README / WAIC one-page 口径最终同步
+
+### 目标
+
+把代码、README、docs、eval 和对外宣传口径统一。
+
+M7 不应该引入大功能。
+它是发布前一致性关口。
+
+### README 应该表达
+
+```text
+EdgeHome Harness implements a three-layer command architecture:
+
+1. MiniCPM emits backend-neutral candidate JSON.
+2. Rust validates it into a gated ExecutionPlan.
+3. Backend adapters translate the verified plan into Mock or Home Assistant payloads, with MIoT / Matter / MQTT reserved as explicit future adapter targets.
+
+Unimplemented backends fail closed.
+The model never emits vendor-specific IDs, tokens, topics, or API payloads.
+```
+
+中文备用口径：
+
+```text
+EdgeHome Harness 实现三层命令架构：
+
+1. MiniCPM 输出后端无关的候选 JSON。
+2. Rust 验证并生成通过门禁的 ExecutionPlan。
+3. Backend adapter 把验证后的计划转换成 Mock 或 Home Assistant payload；MIoT / Matter / MQTT 是明确的未来 adapter 目标。
+
+未实现后端默认 fail closed。
+模型永远不输出厂商设备 ID、token、topic 或 API payload。
+```
+
+### README 不应该表达
+
+```text
+完整支持小米
+完整支持 Matter
+完整支持 MQTT
+生产级智能家居网关
+2GB 真实设备长期压测已完成
+让 MiniCPM 输出任何厂家 JSON
+真实执行默认开启
+```
+
+### WAIC one-page 推荐卖点
+
+```text
+MiniCPM on edge devices needs a safety harness, not just a prompt.
+ModelOutput != Command.
+Canonical JSON contract.
+Rust validation and policy gate.
+Backend-neutral ExecutionPlan.
+Explicit backend adapters.
+Unimplemented backends fail closed.
+Trace/eval loop for reproducible improvement.
+```
+
+### 发布前检查表
+
+```text
+README support matrix 与代码一致。
+README command boundary 与代码一致。
+docs/customization.md 解释新增设备和后端映射。
+所有 future target 都写成 future target。
+eval 命令可运行。
+默认路径不依赖真实设备。
+没有 token / 密钥 / 本地私有地址被提交。
+```
+
+### 验收命令
+
+```powershell
+cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-m7-gate.sqlite" eval cases\zh-home.yaml --gate
+git diff --check
+git status --short
+```
+
+### Commit
+
+```powershell
+git add README.md docs/ plan.md
+git commit -m "docs: align public architecture narrative"
+git push origin main
+```
+
+### 完成后目标
+
+项目对外观感应该从：
+
+```text
+一个智能家居 mock demo
+```
+
+升级为：
+
+```text
+一个围绕 MiniCPM 小模型输出约束、Rust 验证、设备注册表、policy gate 和 backend adapter 的边缘 Agent Harness。
+```
+
+---
+
+## 16. M8：可选扩展
+
+M8 只能在 M0-M7 完成后开始。
+
+可选方向：
+
+```text
+真实 MIoT adapter
+MQTT adapter
+Matter adapter
 HTTP daemon mode
 Web dashboard
-trace 可视化
-SQLite FTS5 记忆检索
-更细的参数自动搜索
+更完整 MiniCPM eval
+真实 2GB 设备压测
+CI release gate
 ```
 
-限制：
+M8 原则：
 
 ```text
-没有真实实现前不要写成已完成能力
-不要为了扩展破坏 2GB low_memory 主线
-不要引入重型依赖作为默认路径
+先 adapter contract，再真实后端。
+先 dry-run payload，再真实执行。
+先 mock/golden tests，再接设备。
+先文档边界，再宣传。
 ```
 
-## 19. 每轮开发固定流程
+不要为了 WAIC 展示临时拼一个不可验证的真实设备执行路径。
 
-每次 `/goal` 或长任务必须按这个流程：
+---
+
+## 17. 每轮开发固定流程
+
+每次继续执行时，先读本节。
 
 ```text
-1. 读 plan.md 当前里程碑
-2. 读相关 README/docs
-3. 读相关 crate 代码
-4. git status --short，确认工作区已有改动
-5. 明确本轮只处理哪个 milestone
-6. 更新 plan.md 状态或补充细节
-7. 小步实现
-8. 补测试或补可运行 demo
-9. cargo fmt --all --check
-10. cargo check
-11. cargo test
-12. eval cases/zh-home.yaml --gate
-13. 更新 README/docs
-14. git diff --stat
-15. git status --short
-16. git add 本轮相关文件
-17. git commit
-18. git push
+1. 读取 plan.md。
+2. 找到第一个未完成 milestone。
+3. 运行 git status --short。
+4. 区分已有改动和本轮改动。
+5. 读取本轮涉及的 crate 和 docs。
+6. 不做无关重构。
+7. 小步修改。
+8. 增加或更新测试。
+9. 运行本 milestone 的验证命令。
+10. 更新 README/docs/plan 中与本轮相关的状态。
+11. git diff --stat。
+12. git status --short。
+13. git add 本轮相关文件。
+14. git commit。
+15. git push。
 ```
 
-如果某一步无法执行，必须在最终回答里说明原因。
-
-提交前检查：
+如果验证失败：
 
 ```text
-是否不小心提交了临时 sqlite 数据库
-是否把未实现能力写成已实现
-是否把旧 Evidence-Gated Command Memory 放回在线主路径
-是否让 demo 依赖真实设备
-是否引入 2GB profile 不适合的默认依赖
-是否忘记更新 README 或 docs
+先修验证失败。
+不要把失败状态提交成完成态。
+如果因为环境缺少外部服务，必须在最终答复里说明跳过原因。
 ```
 
-允许跳过完整验证的唯一情况：
+如果遇到用户已有未提交改动：
 
 ```text
-用户明确要求只改文档草稿且不提交
-当前环境缺少必要外部服务
-网络或权限阻塞且已经说明
+不要 revert。
+不要 git reset --hard。
+先读懂改动。
+如果和本轮无关，忽略。
+如果和本轮冲突，按现有改动继续整合。
 ```
 
-即使跳过，也必须运行与本轮改动最接近的轻量验证。
+---
 
-## 20. 常用验证命令
+## 18. 常用命令
 
-由于项目路径包含中文，Windows 下建议使用：
+Windows 下建议：
 
 ```powershell
 $env:CARGO_TARGET_DIR="$env:TEMP\edgehome-target"
@@ -1348,88 +1746,131 @@ $env:CARGO_TARGET_DIR="$env:TEMP\edgehome-target"
 
 ```powershell
 cargo fmt --all --check
-cargo check
-cargo test
-cargo run -q -p edgehome-cli -- --db-path edgehome-eval.sqlite eval cases/zh-home.yaml
-cargo run -q -p edgehome-cli -- --db-path edgehome-gate.sqlite eval cases/zh-home.yaml --gate
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-gate.sqlite" eval cases\zh-home.yaml --gate
+git diff --check
 ```
 
-Demo：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome-demo.sqlite
-```
-
-2GB profile：
-
-```powershell
-cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 1024
-cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 400
-cargo run -q -p edgehome-cli -- config pressure --free-memory-mb 128
-```
-
-Git 留档：
+查看状态：
 
 ```powershell
 git status --short
-git add .
-git commit -m "docs: update v2 implementation plan"
-git push
+git diff --stat
+git log -1 --oneline
 ```
 
-## 21. 提交留档规则
+提交：
 
-用户明确要求经常提交留档。
+```powershell
+git add <files>
+git commit -m "<message>"
+git push origin main
+```
 
-必须提交的节点：
+不要提交：
 
 ```text
-完成一个 milestone
-完成一组可运行测试
-完成 README/plan 重大修改
-完成架构方向修正
-修复一个会影响 demo 的 bug
+*.sqlite
+*.db
+target/
+临时日志
+本地 token
+真实设备密钥
 ```
 
-提交信息建议：
+---
+
+## 19. 完成指标
+
+M0-M7 完成后，项目应该达到以下状态。
+
+### 19.1 代码指标
 
 ```text
-docs: reframe harness architecture
-feat: add runtime memory compiler
-feat: add output governor telemetry
-feat: add trace replay gate
-test: expand home command eval cases
-fix: resolve relative command memory
+cargo fmt --all --check passes
+cargo clippy --workspace --all-targets -- -D warnings passes
+cargo test --workspace passes
+eval --gate passes
+git diff --check passes
 ```
 
-禁止：
+### 19.2 架构指标
 
 ```text
-把大量无关改动混在一个 commit
-在测试明显失败时提交为完成态
-删除历史材料而不留档
+ModelCandidate 是固定 canonical schema。
+MiniCPM 不输出 vendor payload。
+DeviceResolver 从 registry 解析设备真相。
+ExecutionPlan 是 backend-neutral。
+BackendAdapter 显式存在。
+MockAdapter 和 HomeAssistantAdapter 有测试。
+MiioLocal / Mqtt 未实现时 fail closed。
+Matter 只作为 future target，除非代码和测试真正加入。
 ```
 
-## 22. 成功标准
-
-V2 完成时，项目应该能清楚证明：
+### 19.3 文档指标
 
 ```text
-1. 1B 小模型只负责候选 JSON，不负责业务真相。
-2. Rust Harness 能约束小模型输出，防止死循环和坏 JSON 拖垮系统。
-3. 短时记忆和长期偏好由 Rust + SQLite 管理，不依赖 Ollama 历史。
-4. 2GB RAM 下有明确的上下文预算、重试预算和记忆降级策略。
-5. 智能家居动作必须经过设备注册表、capability 和执行计划。
-6. Trace/Replay/Eval 能复盘失败、比较模型参数、阻止回归。
-7. README 能让面试官理解这是 Agent Harness 工程，不是简单 IoT 脚本。
+README 有 Command Pipeline Contract。
+README 有 Backend Support Matrix。
+README 有 Command Boundary。
+README 有 Customization Model。
+docs/customization.md 解释新增设备和新增后端。
+docs/backend-adapter-contract.md 解释 adapter contract。
+README 不过度声明 MIoT / Matter / MQTT。
+README 不声称真实设备执行默认开启。
 ```
 
-最终一句话：
+### 19.4 评测指标
 
 ```text
-EdgeHome Harness V2 是一个面向 1B 端侧小模型的 Rust Agent Harness。
-它用智能家居本地控制作为产品场景，用 Runtime Memory 解决实时上下文，
-用 Output Governor 解决小模型死循环和坏输出，
-用 Trace/Replay/Eval 解决失败复盘和版本回归，
-并在 2GB RAM 约束下保持可部署、可演示、可解释。
+eval case 至少扩展到 50 条，后续目标 100 条。
+case 有分类，不只是堆同义句。
+adapter golden tests 覆盖 mock / Home Assistant / unsupported backend。
+eval report 可以说明 schema validity、slot accuracy、gate rejection、adapter payload。
 ```
+
+### 19.5 对外宣传指标
+
+别人看 README 后应该理解：
+
+```text
+这是一个 MiniCPM 小模型命令输出的 Rust Harness。
+模型只生成候选 JSON。
+Rust 做验证、归一化、设备解析和 policy gate。
+后端 payload 由 adapter 生成。
+当前实现 Mock + Home Assistant demo。
+MIoT / Matter / MQTT 是 future adapter targets。
+```
+
+别人不应该误解：
+
+```text
+项目已经完整接入小米。
+项目已经支持 Matter。
+项目已经支持 MQTT。
+MiniCPM 可以直接输出任意厂家 JSON 并安全执行。
+这是生产级智能家居网关。
+```
+
+---
+
+## 20. 最终成功状态
+
+当本计划完成后，项目可以用下面这段话稳定对外介绍：
+
+```text
+EdgeHome Harness is a Rust safety harness for MiniCPM-powered edge home command agents.
+
+MiniCPM emits a backend-neutral candidate JSON. The Rust harness validates schema, resolves devices from a registry, checks capabilities and policy, and produces a gated ExecutionPlan. Backend adapters then translate the verified plan into backend-specific payloads. Mock and Home Assistant demo payloads are implemented today; MIoT, Matter, and MQTT are explicit future adapter targets. Unimplemented backends fail closed, and the model never emits vendor IDs, topics, tokens, URLs, or API payloads.
+```
+
+中文：
+
+```text
+EdgeHome Harness 是一个面向 MiniCPM 端侧小模型的 Rust 安全 Harness。
+
+MiniCPM 只输出后端无关的候选 JSON。Rust Harness 负责 schema 验证、设备注册表解析、capability 检查、policy gate，并生成通过门禁的 ExecutionPlan。Backend adapter 再把验证后的计划转换成具体后端 payload。目前已实现 Mock 和 Home Assistant demo payload；MIoT、Matter、MQTT 是明确的未来 adapter 目标。未实现后端默认 fail closed，模型永远不输出厂商设备 ID、topic、token、URL 或 API payload。
+```
+
+这是当前项目最稳、最不容易被质疑、也最适合对外宣传的定位。
