@@ -194,11 +194,13 @@ pub fn load_cases(path: impl AsRef<Path>) -> EvalResult<Vec<EvalCase>> {
 pub fn evaluate_case_output(case: &EvalCase, output: &Value) -> EvalResult<EvalCaseResult> {
     let normalized = output
         .get("normalized_command")
+        .filter(|value| !value.is_null())
         .cloned()
         .map(serde_json::from_value::<NormalizedCommand>)
         .transpose()?;
     let policy_decision = output
         .get("policy_decision")
+        .filter(|value| !value.is_null())
         .cloned()
         .map(serde_json::from_value::<PolicyDecision>)
         .transpose()?;
@@ -421,6 +423,38 @@ pub fn evaluate_case_output(case: &EvalCase, output: &Value) -> EvalResult<EvalC
         latency_ms,
         failure_reason,
     })
+}
+
+pub fn evaluate_case_error(case: &EvalCase, error: impl Into<String>) -> EvalCaseResult {
+    let expected_blocked = expected_blocked(&case.expected);
+    let failure_reason = error.into();
+    let dry_run_correct = case.expected.dry_run_ready.map(|expected| !expected);
+    EvalCaseResult {
+        id: case.id.clone(),
+        input: case.input.clone(),
+        category: case.category.clone(),
+        tags: case.tags.clone(),
+        expected_blocked,
+        input_flags: Vec::new(),
+        trace_id: None,
+        passed: false,
+        failures: vec![format!("pipeline_error: {failure_reason}")],
+        intent_correct: None,
+        slots_correct: None,
+        policy_correct: None,
+        dry_run_correct,
+        memory_write_correct: case.expected.memory_write_status.as_ref().map(|_| false),
+        input_guard_correct: (!case.expected_input_flags.is_empty()).then_some(false),
+        schema_valid: Some(false),
+        fallback_used: false,
+        dead_loop_detected: false,
+        false_allow: false,
+        fail_closed: expected_blocked,
+        executable: false,
+        retry_count: 0,
+        latency_ms: None,
+        failure_reason: Some(failure_reason),
+    }
 }
 
 impl EvalReport {
@@ -1026,5 +1060,32 @@ mod tests {
                 .iter()
                 .any(|check| check.name == "fail_closed_rate" && !check.passed)
         );
+    }
+
+    #[test]
+    fn pipeline_error_becomes_failed_case_result() {
+        let case = EvalCase {
+            id: "ollama_timeout".to_owned(),
+            input: "打开客厅灯".to_owned(),
+            category: Some("real_model".to_owned()),
+            tags: Vec::new(),
+            expected_input_flags: Vec::new(),
+            expected: ExpectedOutput {
+                policy_decision: Some(PolicyDecision::Allow),
+                dry_run_ready: Some(true),
+                ..ExpectedOutput::default()
+            },
+        };
+
+        let result = evaluate_case_error(&case, "ollama timeout");
+
+        assert!(!result.passed);
+        assert!(!result.false_allow);
+        assert!(!result.fail_closed);
+        assert!(!result.executable);
+        assert_eq!(result.schema_valid, Some(false));
+        assert_eq!(result.dry_run_correct, Some(false));
+        assert_eq!(result.failure_reason, Some("ollama timeout".to_owned()));
+        assert!(result.failures[0].contains("pipeline_error"));
     }
 }

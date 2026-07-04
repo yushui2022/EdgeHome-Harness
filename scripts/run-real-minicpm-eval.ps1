@@ -1,9 +1,11 @@
 param(
-    [string]$ModelName = "openbmb/minicpm5:1b",
+    [string]$ModelName = "openbmb/minicpm5:latest",
     [string]$Profile = "eval_mode",
     [string]$CasesPath = "cases\zh-home.yaml",
     [string]$OutputDir = "artifacts",
-    [string]$DatabasePath = ""
+    [string]$DatabasePath = "",
+    [int]$TimeoutMs = 60000,
+    [int]$NumPredict = 128
 )
 
 $ErrorActionPreference = "Stop"
@@ -23,6 +25,12 @@ if (-not (Get-Command ollama -ErrorAction SilentlyContinue)) {
 if (-not (Test-Path $CasesPath)) {
     throw "cases file not found: $CasesPath"
 }
+if ($TimeoutMs -le 0) {
+    throw "TimeoutMs must be greater than 0"
+}
+if ($NumPredict -le 0) {
+    throw "NumPredict must be greater than 0"
+}
 
 New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
 
@@ -38,9 +46,13 @@ $tempConfigDir = Join-Path $env:TEMP "edgehome-real-eval-config-$timestamp"
 
 Write-Step "checking Ollama model: $ModelName"
 $modelList = ollama list
-if ($modelList -notmatch [regex]::Escape($ModelName)) {
+$installedModels = $modelList | Select-Object -Skip 1 | ForEach-Object { ($_ -split '\s+')[0] }
+if ($installedModels -notcontains $ModelName) {
     Write-Step "model tag not found in 'ollama list'; attempting 'ollama pull $ModelName'"
     ollama pull $ModelName
+    if ($LASTEXITCODE -ne 0) {
+        throw "ollama pull failed for $ModelName"
+    }
 }
 
 Write-Step "writing metadata to $metadataPath"
@@ -51,6 +63,8 @@ Write-Step "writing metadata to $metadataPath"
     "model=$ModelName"
     "profile=$Profile"
     "cases=$CasesPath"
+    "timeout_ms=$TimeoutMs"
+    "num_predict=$NumPredict"
     "db_path=$DatabasePath"
     "ollama_version=$(ollama --version)"
     "rustc=$(rustc --version)"
@@ -65,16 +79,37 @@ if (-not (Test-Path $profilePath)) {
     throw "profile config not found after copy: $profilePath"
 }
 $profileContent = Get-Content -Raw -Encoding UTF8 $profilePath
+$quotedModelName = "'" + ($ModelName -replace "'", "''") + "'"
 if ($profileContent -match '(?m)^model_name:\s*.+$') {
-    $profileContent = $profileContent -replace '(?m)^model_name:\s*.+$', "model_name: $ModelName"
+    $profileContent = $profileContent -replace '(?m)^model_name:\s*.+$', "model_name: $quotedModelName"
 } else {
-    $profileContent = $profileContent.TrimEnd() + "`nmodel_name: $ModelName`n"
+    $profileContent = $profileContent.TrimEnd() + "`nmodel_name: $quotedModelName`n"
 }
-Set-Content -Encoding UTF8 -Path $profilePath -Value $profileContent
+if ($profileContent -match '(?m)^timeout_ms:\s*.+$') {
+    $profileContent = $profileContent -replace '(?m)^timeout_ms:\s*.+$', "timeout_ms: $TimeoutMs"
+} else {
+    $profileContent = $profileContent.TrimEnd() + "`ntimeout_ms: $TimeoutMs`n"
+}
+if ($profileContent -match '(?m)^num_predict:\s*.+$') {
+    $profileContent = $profileContent -replace '(?m)^num_predict:\s*.+$', "num_predict: $NumPredict"
+} else {
+    $profileContent = $profileContent.TrimEnd() + "`nnum_predict: $NumPredict`n"
+}
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText($profilePath, $profileContent, $utf8NoBom)
+
+Write-Step "validating temporary profile"
+cargo run -q -p edgehome-cli -- --config-dir $tempConfigDir --profile $Profile config show | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    throw "temporary profile validation failed"
+}
 
 Write-Step "running real MiniCPM/Ollama eval"
 cargo run -q -p edgehome-cli -- --config-dir $tempConfigDir --profile $Profile --db-path $DatabasePath eval $CasesPath --ollama |
     Tee-Object -FilePath $outputPath
+if ($LASTEXITCODE -ne 0) {
+    throw "real MiniCPM/Ollama eval failed"
+}
 
 Write-Step "raw eval JSON written to $outputPath"
 Write-Step "metadata written to $metadataPath"

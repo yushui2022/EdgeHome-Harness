@@ -67,6 +67,15 @@ HomeAssistantExecutor::validate_routes(devices)
 The current checks reject entity IDs with path separators, whitespace, control
 characters, missing domain, or missing object ID.
 
+CLI readiness check:
+
+```powershell
+cargo run -q -p edgehome-cli -- backend check --backend home_assistant --registry configs/devices.home_assistant.example.yaml
+```
+
+The check command is read-only. It validates configured routes and execution
+prerequisites, but it does not call Home Assistant.
+
 ## Dry-Run
 
 Dry-run does not require a token and does not call Home Assistant. It returns a

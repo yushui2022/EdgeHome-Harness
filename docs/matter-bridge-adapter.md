@@ -45,6 +45,16 @@ execute_enabled: false
 
 Real execution remains disabled unless explicitly enabled in private config.
 
+Read-only readiness check:
+
+```powershell
+cargo run -q -p edgehome-cli -- backend check --backend matter --registry configs/devices.matter.example.yaml
+```
+
+The check validates route IDs, bridge config shape, execution switch, and token
+availability. It does not contact a Matter controller bridge and does not prove
+real Matter device control.
+
 CLI shape:
 
 ```powershell

@@ -42,14 +42,17 @@ Current backend status:
 | MQTT | Dry-run and guarded publish implemented | Configured topic/payload dry-run and opt-in broker publish |
 | MIoT / Xiaomi | Bridge request adapter implemented | Verified commands can become MIoT bridge requests; real Xiaomi support requires private bridge/device validation |
 | Matter | Bridge request adapter implemented | Verified commands can become Matter controller bridge requests; real control requires private Matter bridge/controller |
+| Backend check CLI | Implemented | Read-only route/config readiness validation for Home Assistant, MQTT, MIoT bridge, and Matter bridge |
 
 Important implemented files:
 
 ```text
+crates/edgehome-cli/src/main.rs
 crates/edgehome-executor/src/mqtt.rs
 crates/edgehome-executor/src/miot.rs
 crates/edgehome-executor/src/matter.rs
 crates/edgehome-executor/src/home_assistant.rs
+crates/edgehome-registry/src/lib.rs
 configs/adapters/mqtt.example.yaml
 configs/adapters/miot.example.yaml
 configs/adapters/matter.example.yaml
@@ -139,6 +142,10 @@ cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-release-gate.sqlite" eval cases\zh-home.yaml --gate
+cargo run -q -p edgehome-cli -- backend check --backend home_assistant --registry configs\devices.home_assistant.example.yaml
+cargo run -q -p edgehome-cli -- backend check --backend mqtt --registry configs\devices.mqtt.example.yaml
+cargo run -q -p edgehome-cli -- backend check --backend miot --registry configs\devices.miot.example.yaml
+cargo run -q -p edgehome-cli -- backend check --backend matter --registry configs\devices.matter.example.yaml
 git diff --check
 ```
 
@@ -186,6 +193,7 @@ cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
 mock eval gate passes
+backend check passes for HA/MQTT/MIoT/Matter example registries
 git diff --check
 README/backend docs agree with code
 ```
@@ -207,7 +215,7 @@ Goal: separate real-model behavior from deterministic mock release gate.
 Run:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\run-real-minicpm-eval.ps1 -ModelName openbmb/minicpm5:latest
+powershell -ExecutionPolicy Bypass -File scripts\run-real-minicpm-eval.ps1 -ModelName openbmb/minicpm5:latest -TimeoutMs 60000 -NumPredict 128
 ```
 
 The script writes raw output to `artifacts/`, which is ignored by git.
@@ -217,6 +225,28 @@ Publish only reviewed summary metrics in:
 ```text
 docs/real-minicpm-eval-report.md
 ```
+
+Latest reviewed run:
+
+```text
+date = 2026-07-04 20:38:18 +08:00
+model = openbmb/minicpm5:latest
+model_id = 08239e8f70e0
+cases = 108
+passed = 30
+failed = 78
+pass_rate = 0.2778
+schema_valid_rate = 0.8800
+trace_coverage = 1.0
+false_allow_rate = 0.0
+fail_closed_rate = 1.0
+latency_avg_ms = 2638.64
+latency_p95_ms = 4054
+```
+
+Interpretation: this is not a strong MiniCPM command-accuracy result, but it is
+useful safety evidence because the full real-model path is traceable and
+fail-closed. Do not market it as production parser accuracy.
 
 Required report fields:
 

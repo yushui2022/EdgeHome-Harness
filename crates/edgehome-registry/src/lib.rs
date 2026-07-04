@@ -143,6 +143,10 @@ impl DeviceRegistry {
         DeviceResolver { registry: self }
     }
 
+    pub fn devices(&self) -> &[DeviceRecord] {
+        &self.devices
+    }
+
     pub fn resolve_alias(&self, alias: &str) -> RegistryResult<&DeviceRecord> {
         let normalized_alias = normalize_alias(alias);
         self.alias_index

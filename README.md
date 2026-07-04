@@ -56,6 +56,7 @@ enter a constrained command pipeline without being trusted as the executor.
 | MIoT / Xiaomi | Bridge request adapter implemented; real device support requires a private bridge |
 | Matter | Bridge request adapter implemented; real control requires a Matter controller bridge |
 | MQTT | Dry-run payload adapter and guarded publish executor implemented |
+| Backend readiness check | Read-only CLI validation for HA / MQTT / MIoT bridge / Matter bridge routes |
 | Real device execution | Explicit opt-in only; disabled by default |
 | Release eval gate | 108 mock cases across 12 categories |
 
@@ -147,6 +148,20 @@ Run the scripted demo:
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome-demo.sqlite
 ```
+
+Check backend routes and adapter configs without touching devices:
+
+```powershell
+cargo run -q -p edgehome-cli -- backend check --backend all
+cargo run -q -p edgehome-cli -- backend check --backend home_assistant --registry configs/devices.home_assistant.example.yaml
+cargo run -q -p edgehome-cli -- backend check --backend mqtt --registry configs/devices.mqtt.example.yaml
+cargo run -q -p edgehome-cli -- backend check --backend miot --registry configs/devices.miot.example.yaml
+cargo run -q -p edgehome-cli -- backend check --backend matter --registry configs/devices.matter.example.yaml
+```
+
+The check command is read-only. It validates registry routes, adapter config,
+execution switches, and secret availability. It never calls Home Assistant,
+publishes MQTT, or contacts MIoT/Matter bridges.
 
 ## Example Pipeline
 
@@ -244,6 +259,13 @@ This gate verifies covered harness regressions. It is not a broad
 natural-language understanding benchmark, a production-readiness claim, or proof
 of real-device deployment at scale.
 
+Real MiniCPM/Ollama behavior is tracked separately in
+[Real MiniCPM / Ollama Eval Report](docs/real-minicpm-eval-report.md). The
+latest reviewed run completed 108 cases with full trace coverage,
+`false_allow_rate = 0.0`, and `fail_closed_rate = 1.0`, but low command
+accuracy. Treat it as model-path evidence, not as the deterministic release
+gate.
+
 ## Architecture
 
 ```mermaid
@@ -304,6 +326,10 @@ User Chinese command
 Unsupported backend targets must fail closed. They must not silently fall back
 to mock payloads.
 
+Use `cargo run -q -p edgehome-cli -- backend check ...` to validate backend
+routes and config before producing dry-run evidence or enabling private real
+execution.
+
 ## Implemented Scope
 
 - Rust workspace with separated crates for core types, config, parser, registry,
@@ -324,6 +350,8 @@ to mock payloads.
   disabled by default.
 - Home Assistant gateway boundary with route validation, token isolation, and
   optional post-state fetch after explicit execution.
+- Read-only backend readiness CLI for HA, MQTT, MIoT bridge, and Matter bridge
+  route/config validation.
 - SQLite-backed evidence, audit, trace, replay, and long-term memory.
 - 108-case release eval gate across 12 categories.
 - Low-memory pressure policy for context/output reduction and rule-only

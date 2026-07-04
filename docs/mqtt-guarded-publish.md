@@ -36,6 +36,16 @@ retain: false
 execute_enabled: false
 ```
 
+Read-only readiness check:
+
+```powershell
+cargo run -q -p edgehome-cli -- backend check --backend mqtt --registry configs/devices.mqtt.example.yaml
+```
+
+The check validates topic routes, adapter config, QoS, execution switch, and
+broker secret availability. It does not connect to the broker or publish a
+message.
+
 ## Dry-Run Payload
 
 Example internal command:

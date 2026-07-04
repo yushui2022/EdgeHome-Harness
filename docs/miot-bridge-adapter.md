@@ -65,6 +65,16 @@ execute_enabled: false
 Real execution remains disabled unless `execute_enabled` is explicitly changed
 in private config and the bridge token is available.
 
+Read-only readiness check:
+
+```powershell
+cargo run -q -p edgehome-cli -- backend check --backend miot --registry configs/devices.miot.example.yaml
+```
+
+The check validates route IDs, bridge config shape, execution switch, and token
+availability. It does not contact the private MIoT bridge and does not prove
+real Xiaomi device support.
+
 CLI shape:
 
 ```powershell

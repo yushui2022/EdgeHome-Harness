@@ -10,12 +10,14 @@ use edgehome_core::{
     UserInput,
 };
 use edgehome_eval::{
-    EvalGateConfig, EvalReport, evaluate_case_output, evaluate_release_gate, load_cases,
+    EvalGateConfig, EvalReport, evaluate_case_error, evaluate_case_output, evaluate_release_gate,
+    load_cases,
 };
 use edgehome_executor::{
     DryRunPlanner, ExecutionTransaction, HomeAssistantClient, HomeAssistantConfig,
     HomeAssistantExecutor, MatterBridgeConfig, MatterBridgeExecutor, MiotBridgeConfig,
     MiotBridgeExecutor, MockExecutor, MqttConfig, MqttExecutor, MqttSecrets, SecretsLoader,
+    validate_mqtt_topic,
 };
 use edgehome_gate::{GateCommandDecision, GateEngine, GateEvaluationRequest};
 use edgehome_memory::{
@@ -29,10 +31,13 @@ use edgehome_ollama::{
 };
 use edgehome_parser::{InputFlag, InputGuard, RulePreParser, SemanticNormalizer};
 use edgehome_registry::{
-    DeviceRegistry, DeviceResolutionInput, DeviceResolutionSource, StateFreshness,
+    BackendKind, DeviceRecord, DeviceRegistry, DeviceResolutionInput, DeviceResolutionSource,
+    StateFreshness,
 };
 use edgehome_storage::sqlite::integer;
-use edgehome_storage::{EvidenceKind, EvidenceRef, EvidenceStore, NewEvidence, SourceSystem};
+use edgehome_storage::{
+    EvidenceId, EvidenceKind, EvidenceRef, EvidenceStore, NewEvidence, SourceSystem,
+};
 use edgehome_trace::{
     AuditEvent, AuditSink, CommandStep, CommandTrace, GateCheck, GateOutcome, NewAuditEvent,
     NewCommandStep, StepStatus, TraceFrame, TraceId, TraceStore,
@@ -62,6 +67,10 @@ enum Commands {
     Config {
         #[command(subcommand)]
         command: ConfigCommand,
+    },
+    Backend {
+        #[command(subcommand)]
+        command: BackendCommand,
     },
     Parse {
         #[arg(long)]
@@ -106,6 +115,18 @@ enum ConfigCommand {
 }
 
 #[derive(Debug, Subcommand)]
+enum BackendCommand {
+    Check {
+        #[arg(long, default_value = "all")]
+        backend: String,
+        #[arg(long)]
+        registry: Option<PathBuf>,
+        #[arg(long)]
+        backend_config: Option<PathBuf>,
+    },
+}
+
+#[derive(Debug, Subcommand)]
 enum TraceCommand {
     Show { trace_id: String },
     Export { trace_id: String },
@@ -115,6 +136,44 @@ enum TraceCommand {
 enum PipelineMode {
     Parse,
     DryRun,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum BackendCheckTarget {
+    All,
+    HomeAssistant,
+    Mqtt,
+    Miot,
+    Matter,
+}
+
+impl BackendCheckTarget {
+    fn parse(value: &str) -> anyhow::Result<Self> {
+        match value.trim().to_ascii_lowercase().as_str() {
+            "all" => Ok(Self::All),
+            "home_assistant" | "ha" => Ok(Self::HomeAssistant),
+            "mqtt" => Ok(Self::Mqtt),
+            "miot" | "xiaomi" | "miio_local" => Ok(Self::Miot),
+            "matter" | "matter_bridge" => Ok(Self::Matter),
+            other => anyhow::bail!(
+                "unknown backend `{other}`; expected all, home_assistant, mqtt, miot, or matter"
+            ),
+        }
+    }
+
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::All => "all",
+            Self::HomeAssistant => "home_assistant",
+            Self::Mqtt => "mqtt",
+            Self::Miot => "miot",
+            Self::Matter => "matter",
+        }
+    }
+
+    fn includes(self, target: Self) -> bool {
+        self == Self::All || self == target
+    }
 }
 
 fn main() -> anyhow::Result<()> {
@@ -143,6 +202,22 @@ fn main() -> anyhow::Result<()> {
                 "free_memory_mb": free_memory_mb,
                 "decision": decision,
             }))?;
+        }
+        Commands::Backend {
+            command:
+                BackendCommand::Check {
+                    backend,
+                    registry,
+                    backend_config,
+                },
+        } => {
+            let output = check_backends(
+                &cli.config_dir,
+                &backend,
+                registry.as_deref(),
+                backend_config.as_deref(),
+            )?;
+            print_json(&output)?;
         }
         Commands::Parse { mock, input } => {
             let profile = load_profile(&cli.config_dir, &cli.profile)
@@ -311,7 +386,24 @@ fn run_harness_pipeline(
         Some(evidence.id)
     };
 
-    let candidate_run = generate_candidate(profile, &input, &prompt_context, use_mock)?;
+    let candidate_run = match generate_candidate(profile, &input, &prompt_context, use_mock) {
+        Ok(candidate_run) => candidate_run,
+        Err(error) => {
+            return model_failure_output(ModelFailureOutputInput {
+                db_path,
+                trace_store: &trace_store,
+                audit_sink: &audit_sink,
+                trace_id: &trace.trace_id,
+                raw_user_input_ref: raw_user_input.id.clone(),
+                input: &input,
+                mode,
+                use_mock,
+                profile,
+                prompt_context: &prompt_context,
+                error,
+            });
+        }
+    };
     let candidate = candidate_run.candidate;
     let raw_model_output_text = candidate_run.raw_output;
     let raw_model_output = trace_store.record_evidence(NewEvidence::new(
@@ -540,6 +632,151 @@ fn run_harness_pipeline(
     }))
 }
 
+struct ModelFailureOutputInput<'a> {
+    db_path: &'a Path,
+    trace_store: &'a TraceStore,
+    audit_sink: &'a AuditSink,
+    trace_id: &'a TraceId,
+    raw_user_input_ref: EvidenceId,
+    input: &'a UserInput,
+    mode: PipelineMode,
+    use_mock: bool,
+    profile: &'a RuntimeProfile,
+    prompt_context: &'a PromptContext,
+    error: anyhow::Error,
+}
+
+fn model_failure_output(input: ModelFailureOutputInput<'_>) -> anyhow::Result<Value> {
+    let failure_reason = input.error.to_string();
+    let model_profile = MiniCpm5Profile::from_runtime_profile(input.profile);
+    let model_name = if input.use_mock {
+        "MockModel".to_owned()
+    } else {
+        input.profile.model_name.clone()
+    };
+    let model_params = if input.use_mock {
+        json!({ "mock": true })
+    } else {
+        serde_json::to_value(model_profile.options())?
+    };
+    let prompt_hash = if input.use_mock {
+        stable_prompt_hash(&input.input.text)
+    } else {
+        stable_prompt_hash(&format!(
+            "{}\n{}",
+            system_prompt(input.prompt_context),
+            input.input.text
+        ))
+    };
+
+    let model_failure_ref = input.trace_store.record_evidence(NewEvidence::new(
+        EvidenceKind::RawModelOutput,
+        SourceSystem::Model,
+        "model output unavailable or rejected",
+        json!({
+            "model": model_name,
+            "mock": input.use_mock,
+            "raw_output": null,
+            "model_error": {
+                "kind": "model_output_failed",
+                "message": failure_reason.as_str(),
+            },
+            "output_governor": {
+                "accepted": false,
+                "failure_kind": "model_output_failed",
+                "failure_message": failure_reason.as_str(),
+                "recommended_fallback": null,
+            },
+            "model_params": model_params,
+            "prompt_hash": prompt_hash,
+            "context_chars": input.prompt_context.text.chars().count(),
+        }),
+    ))?;
+    input.trace_store.append_step(
+        input.trace_id,
+        NewCommandStep::new("model_output_failed", StepStatus::Failed)
+            .with_message(failure_reason.clone())
+            .with_evidence_refs(vec![
+                input.raw_user_input_ref.clone(),
+                model_failure_ref.id.clone(),
+            ]),
+    )?;
+
+    let policy_snapshot_ref = input.trace_store.record_evidence(NewEvidence::new(
+        EvidenceKind::PolicyRuleSnapshot,
+        SourceSystem::Policy,
+        "fail-closed policy decision after model failure",
+        json!({
+            "policy_version": "policy.v1",
+            "decision": PolicyDecision::Deny,
+            "reason": "model output was unavailable or rejected before normalization",
+            "model_failure": failure_reason.as_str(),
+        }),
+    ))?;
+    input.trace_store.append_step(
+        input.trace_id,
+        NewCommandStep::new("fail_closed_before_gate", StepStatus::Rejected)
+            .with_message("model failure prevented normalization; dry-run and execution disabled")
+            .with_evidence_refs(vec![
+                model_failure_ref.id.clone(),
+                policy_snapshot_ref.id.clone(),
+            ]),
+    )?;
+
+    input.audit_sink.append(
+        NewAuditEvent::new(
+            "harness_model_output_rejected",
+            "model output was unavailable or rejected; harness failed closed",
+            json!({
+                "mode": input.mode.as_str(),
+                "model_mode": if input.use_mock { "mock" } else { "ollama" },
+                "trace_id": input.trace_id.0.as_str(),
+                "policy_decision": PolicyDecision::Deny,
+                "dry_run_ready": false,
+                "executable": false,
+                "execute_enabled": false,
+                "failure_reason": failure_reason.as_str(),
+            }),
+        )
+        .with_trace_id(input.trace_id.clone()),
+    )?;
+
+    let trace_frame = build_trace_frame(&load_trace_bundle(input.db_path, input.trace_id.clone())?);
+    Ok(json!({
+        "trace_id": input.trace_id,
+        "trace_frame": trace_frame,
+        "mode": input.mode.as_str(),
+        "mock": input.use_mock,
+        "model_mode": if input.use_mock { "mock" } else { "ollama" },
+        "model_candidate": null,
+        "normalized_command": null,
+        "gate_evaluation": {
+            "trace_id": input.trace_id,
+            "policy_decision": PolicyDecision::Deny,
+            "authoritative_risk": RiskLevel::Unknown,
+            "device_id": null,
+            "executable": false,
+            "requires_confirmation": false,
+            "blocking_reasons": [
+                "model output was unavailable or rejected before normalization"
+            ],
+            "gate_checks": []
+        },
+        "evidence_refs": {
+            "raw_user_input": input.raw_user_input_ref,
+            "raw_model_output": model_failure_ref.id,
+            "policy_snapshot": policy_snapshot_ref.id,
+        },
+        "policy_decision": PolicyDecision::Deny,
+        "dry_run_plan": null,
+        "execution_plan": null,
+        "executable": false,
+        "execute_enabled": false,
+        "failure_reason": failure_reason,
+        "note": "model-path failures are traceable and fail closed; no dry-run or real execution was produced"
+    }))
+}
+
 fn run_eval(
     db_path: &Path,
     config_dir: &Path,
@@ -552,15 +789,19 @@ fn run_eval(
     let mut results = Vec::with_capacity(cases.len());
 
     for case in cases {
-        let output = run_harness_pipeline(
+        let result = match run_harness_pipeline(
             db_path,
             config_dir,
             profile,
             case.input.clone(),
             PipelineMode::DryRun,
             use_mock,
-        )?;
-        results.push(evaluate_case_output(&case, &output)?);
+        ) {
+            Ok(output) => evaluate_case_output(&case, &output)
+                .unwrap_or_else(|error| evaluate_case_error(&case, error.to_string())),
+            Err(error) => evaluate_case_error(&case, error.to_string()),
+        };
+        results.push(result);
     }
 
     let report = EvalReport::from_results(results);
@@ -588,6 +829,318 @@ fn gate_failed(output: &Value) -> bool {
         .and_then(|gate| gate.get("passed"))
         .and_then(Value::as_bool)
         == Some(false)
+}
+
+fn check_backends(
+    config_dir: &Path,
+    backend: &str,
+    registry_override: Option<&Path>,
+    backend_config: Option<&Path>,
+) -> anyhow::Result<Value> {
+    let target = BackendCheckTarget::parse(backend)?;
+    if target == BackendCheckTarget::All && backend_config.is_some() {
+        anyhow::bail!("--backend-config is only valid when checking one backend");
+    }
+
+    let registry_path = registry_override
+        .map(Path::to_path_buf)
+        .unwrap_or_else(|| config_dir.join("devices.yaml"));
+    let registry = DeviceRegistry::load_from_path(&registry_path).with_context(|| {
+        format!(
+            "failed to load backend check registry `{}`",
+            registry_path.display()
+        )
+    })?;
+    let devices = registry.devices();
+    let mut checks = Vec::new();
+
+    if target.includes(BackendCheckTarget::HomeAssistant) {
+        checks.push(check_home_assistant_backend(
+            config_dir,
+            devices,
+            backend_config,
+        )?);
+    }
+    if target.includes(BackendCheckTarget::Mqtt) {
+        checks.push(check_mqtt_backend(config_dir, devices, backend_config)?);
+    }
+    if target.includes(BackendCheckTarget::Miot) {
+        checks.push(check_miot_backend(config_dir, devices, backend_config)?);
+    }
+    if target.includes(BackendCheckTarget::Matter) {
+        checks.push(check_matter_backend(config_dir, devices, backend_config)?);
+    }
+
+    let configured_backend_count = checks
+        .iter()
+        .filter(|check| json_usize(check, "route_count") > 0)
+        .count();
+    let dry_run_ready_count = checks
+        .iter()
+        .filter(|check| json_bool(check, "dry_run_ready"))
+        .count();
+    let execute_ready_count = checks
+        .iter()
+        .filter(|check| json_bool(check, "execute_ready"))
+        .count();
+
+    Ok(json!({
+        "registry_path": registry_path.display().to_string(),
+        "target": target.as_str(),
+        "checks": checks,
+        "summary": {
+            "checked_backends": checks.len(),
+            "configured_backends": configured_backend_count,
+            "dry_run_ready_backends": dry_run_ready_count,
+            "execute_ready_backends": execute_ready_count,
+            "real_execution_default": "disabled",
+            "note": "backend check is read-only; it validates config and routes but never contacts devices"
+        }
+    }))
+}
+
+fn check_home_assistant_backend(
+    config_dir: &Path,
+    devices: &[DeviceRecord],
+    backend_config: Option<&Path>,
+) -> anyhow::Result<Value> {
+    let config_path =
+        backend_config_path(config_dir, backend_config, "home_assistant.yaml.example");
+    let config = HomeAssistantConfig::load_from_path(&config_path)
+        .with_context(|| format!("failed to load `{}`", config_path.display()))?;
+    let readiness = HomeAssistantExecutor::validate_routes(devices)?;
+    let secret_available = SecretsLoader::load(&config)?.is_some();
+    let dry_run_ready = readiness.route_count > 0 && readiness.routes_valid;
+    let execute_ready = dry_run_ready && config.execute_enabled && secret_available;
+
+    Ok(json!({
+        "backend": "home_assistant",
+        "status": backend_status(readiness.route_count, dry_run_ready),
+        "config_path": config_path.display().to_string(),
+        "route_count": readiness.route_count,
+        "routes_valid": readiness.routes_valid,
+        "dry_run_ready": dry_run_ready,
+        "execute_enabled": config.execute_enabled,
+        "secret_available": secret_available,
+        "post_state_verification": config.verify_state_after_execute,
+        "execute_ready": execute_ready,
+        "execution_blocker": execution_blocker(
+            dry_run_ready,
+            config.execute_enabled,
+            secret_available,
+        ),
+    }))
+}
+
+fn check_mqtt_backend(
+    config_dir: &Path,
+    devices: &[DeviceRecord],
+    backend_config: Option<&Path>,
+) -> anyhow::Result<Value> {
+    let config_path = backend_config_path(config_dir, backend_config, "adapters/mqtt.example.yaml");
+    let config = MqttConfig::load_from_path(&config_path)
+        .with_context(|| format!("failed to load `{}`", config_path.display()))?;
+    if config.qos > 2 {
+        anyhow::bail!("invalid MQTT QoS `{}`; expected 0, 1, or 2", config.qos);
+    }
+    let route_count = validate_mqtt_routes(devices)?;
+    let secret_available = MqttSecrets::load(&config)?.is_some();
+    let dry_run_ready = route_count > 0;
+    let execute_ready = dry_run_ready && config.execute_enabled && secret_available;
+
+    Ok(json!({
+        "backend": "mqtt",
+        "status": backend_status(route_count, dry_run_ready),
+        "config_path": config_path.display().to_string(),
+        "route_count": route_count,
+        "routes_valid": true,
+        "dry_run_ready": dry_run_ready,
+        "execute_enabled": config.execute_enabled,
+        "secret_available": secret_available,
+        "qos": config.qos,
+        "retain": config.retain,
+        "execute_ready": execute_ready,
+        "execution_blocker": execution_blocker(
+            dry_run_ready,
+            config.execute_enabled,
+            secret_available,
+        ),
+    }))
+}
+
+fn check_miot_backend(
+    config_dir: &Path,
+    devices: &[DeviceRecord],
+    backend_config: Option<&Path>,
+) -> anyhow::Result<Value> {
+    let config_path = backend_config_path(config_dir, backend_config, "adapters/miot.example.yaml");
+    let config = MiotBridgeConfig::load_from_path(&config_path)
+        .with_context(|| format!("failed to load `{}`", config_path.display()))?;
+    validate_bridge_base_url_for_check("miot_bridge", &config.base_url)?;
+    let route_count = validate_miot_routes(&config, devices)?;
+    let secret_available = env_secret_available(&config.token_env);
+    let dry_run_ready = route_count > 0;
+    let execute_ready = dry_run_ready && config.execute_enabled && secret_available;
+
+    Ok(json!({
+        "backend": "miot",
+        "status": backend_status(route_count, dry_run_ready),
+        "config_path": config_path.display().to_string(),
+        "route_count": route_count,
+        "routes_valid": true,
+        "bridge_url_configured": !config.base_url.trim().is_empty(),
+        "dry_run_ready": dry_run_ready,
+        "execute_enabled": config.execute_enabled,
+        "secret_available": secret_available,
+        "execute_ready": execute_ready,
+        "execution_blocker": execution_blocker(
+            dry_run_ready,
+            config.execute_enabled,
+            secret_available,
+        ),
+        "claim_boundary": "bridge_request_adapter_only",
+    }))
+}
+
+fn check_matter_backend(
+    config_dir: &Path,
+    devices: &[DeviceRecord],
+    backend_config: Option<&Path>,
+) -> anyhow::Result<Value> {
+    let config_path =
+        backend_config_path(config_dir, backend_config, "adapters/matter.example.yaml");
+    let config = MatterBridgeConfig::load_from_path(&config_path)
+        .with_context(|| format!("failed to load `{}`", config_path.display()))?;
+    validate_bridge_base_url_for_check("matter_bridge", &config.base_url)?;
+    let route_count = validate_matter_routes(&config, devices)?;
+    let secret_available = env_secret_available(&config.token_env);
+    let dry_run_ready = route_count > 0;
+    let execute_ready = dry_run_ready && config.execute_enabled && secret_available;
+
+    Ok(json!({
+        "backend": "matter",
+        "status": backend_status(route_count, dry_run_ready),
+        "config_path": config_path.display().to_string(),
+        "route_count": route_count,
+        "routes_valid": true,
+        "bridge_url_configured": !config.base_url.trim().is_empty(),
+        "dry_run_ready": dry_run_ready,
+        "execute_enabled": config.execute_enabled,
+        "secret_available": secret_available,
+        "execute_ready": execute_ready,
+        "execution_blocker": execution_blocker(
+            dry_run_ready,
+            config.execute_enabled,
+            secret_available,
+        ),
+        "claim_boundary": "controller_bridge_request_adapter_only",
+    }))
+}
+
+fn validate_mqtt_routes(devices: &[DeviceRecord]) -> anyhow::Result<usize> {
+    let mut route_count = 0;
+    for device in devices
+        .iter()
+        .filter(|device| device.backend == BackendKind::Mqtt)
+    {
+        validate_mqtt_topic(&device.backend_entity_id)
+            .with_context(|| format!("invalid MQTT topic route for `{}`", device.device_id.0))?;
+        route_count += 1;
+    }
+    Ok(route_count)
+}
+
+fn validate_miot_routes(
+    config: &MiotBridgeConfig,
+    devices: &[DeviceRecord],
+) -> anyhow::Result<usize> {
+    let mut executor = MiotBridgeExecutor::new(config.clone(), None);
+    let mut route_count = 0;
+    for device in devices
+        .iter()
+        .filter(|device| device.backend == BackendKind::MiioLocal)
+    {
+        executor = executor
+            .with_route(device.device_id.clone(), &device.backend_entity_id)
+            .with_context(|| format!("invalid MIoT bridge route for `{}`", device.device_id.0))?;
+        route_count += 1;
+    }
+    Ok(route_count)
+}
+
+fn validate_matter_routes(
+    config: &MatterBridgeConfig,
+    devices: &[DeviceRecord],
+) -> anyhow::Result<usize> {
+    let mut executor = MatterBridgeExecutor::new(config.clone(), None);
+    let mut route_count = 0;
+    for device in devices
+        .iter()
+        .filter(|device| device.backend == BackendKind::MatterBridge)
+    {
+        executor = executor
+            .with_route(device.device_id.clone(), &device.backend_entity_id)
+            .with_context(|| format!("invalid Matter bridge route for `{}`", device.device_id.0))?;
+        route_count += 1;
+    }
+    Ok(route_count)
+}
+
+fn validate_bridge_base_url_for_check(backend: &str, base_url: &str) -> anyhow::Result<()> {
+    let base_url = base_url.trim();
+    if !(base_url.starts_with("http://") || base_url.starts_with("https://"))
+        || base_url.contains('?')
+        || base_url.contains('#')
+    {
+        anyhow::bail!("unsupported {backend} base URL `{base_url}`");
+    }
+    Ok(())
+}
+
+fn backend_status(route_count: usize, dry_run_ready: bool) -> &'static str {
+    if route_count == 0 {
+        "not_configured"
+    } else if dry_run_ready {
+        "ready"
+    } else {
+        "invalid"
+    }
+}
+
+fn execution_blocker(
+    dry_run_ready: bool,
+    execute_enabled: bool,
+    secret_available: bool,
+) -> Option<&'static str> {
+    if !dry_run_ready {
+        Some("no_valid_routes")
+    } else if !execute_enabled {
+        Some("execute_enabled_false")
+    } else if !secret_available {
+        Some("secret_missing")
+    } else {
+        None
+    }
+}
+
+fn env_secret_available(env_var: &str) -> bool {
+    let env_var = env_var.trim();
+    !env_var.is_empty()
+        && std::env::var(env_var)
+            .ok()
+            .is_some_and(|value| !value.trim().is_empty())
+}
+
+fn json_bool(value: &Value, key: &str) -> bool {
+    value.get(key).and_then(Value::as_bool).unwrap_or(false)
+}
+
+fn json_usize(value: &Value, key: &str) -> usize {
+    value
+        .get(key)
+        .and_then(Value::as_u64)
+        .and_then(|count| usize::try_from(count).ok())
+        .unwrap_or(0)
 }
 
 fn show_trace(db_path: &Path, trace_id: TraceId) -> anyhow::Result<Value> {
