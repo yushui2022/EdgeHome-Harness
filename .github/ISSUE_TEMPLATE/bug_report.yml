@@ -1,0 +1,36 @@
+name: Bug report
+description: Report a reproducible parser, gate, adapter, eval, or CLI issue.
+title: "bug: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Include the exact command, input text, profile, and config path if relevant.
+      placeholder: |
+        cargo run -q -p edgehome-cli -- --db-path repro.sqlite dry-run --mock "把客厅灯打开"
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Relevant output
+      description: Paste the smallest useful output. Redact tokens, URLs, and private device IDs.
+      render: text
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety and privacy
+      options:
+        - label: I did not include real Home Assistant tokens, MIoT tokens, private URLs, or other secrets.
+          required: true
+        - label: If this is a vulnerability, I will follow SECURITY.md instead of posting exploit details publicly.
+          required: true

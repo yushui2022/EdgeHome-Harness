@@ -1,0 +1,38 @@
+# Changelog
+
+All notable project-facing changes should be recorded here.
+
+This project follows a conservative release style: public claims must match
+implemented code, tests, docs, and eval evidence.
+
+## Unreleased
+
+### Added
+
+- GitHub Actions CI for formatting, Clippy, workspace tests, and the release
+  eval gate.
+- Contributor, security, roadmap, release checklist, and GitHub issue/PR
+  templates.
+
+## 0.1.0 - 2026-07-04
+
+### Added
+
+- Rust workspace for the EdgeHome Harness prototype.
+- Backend-neutral MiniCPM candidate JSON boundary.
+- Parser, schema validation, semantic normalization, registry resolution,
+  capability checks, policy gates, and typed `GatedCommand` boundary.
+- Dry-run `ExecutionPlan` generation.
+- Mock adapter and Home Assistant demo payload adapter.
+- SQLite-backed evidence, trace, replay, audit, and memory support.
+- Low-memory MiniCPM5-1B oriented runtime profile.
+- 108-case mock release eval gate across 12 categories.
+- Public README, WAIC one-page, architecture, customization, adapter, deployment,
+  and low-memory documentation.
+
+### Not Included
+
+- Production smart-home gateway support.
+- Real MIoT/Xiaomi, Matter, or MQTT adapters.
+- Real-device execution enabled by default.
+- Long-running benchmark on a physical 2GB ARM board.

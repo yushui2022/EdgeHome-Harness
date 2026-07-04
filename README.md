@@ -3,6 +3,7 @@
   <h1>EdgeHome Harness</h1>
   <p><strong>A Rust safety harness for MiniCPM-powered edge home command agents.</strong></p>
   <p>
+    <a href="https://github.com/yushui2022/EdgeHome-Harness/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/yushui2022/EdgeHome-Harness/actions/workflows/ci.yml/badge.svg" /></a>
     <img alt="Rust 1.95+" src="https://img.shields.io/badge/Rust-1.95%2B-b7410e?style=flat-square&logo=rust&logoColor=white" />
     <img alt="MiniCPM local 1B" src="https://img.shields.io/badge/MiniCPM-local%201B-0f766e?style=flat-square" />
     <img alt="Release gate: 108 cases" src="https://img.shields.io/badge/eval%20gate-108%20cases-2563eb?style=flat-square" />
@@ -14,7 +15,8 @@
     <a href="#architecture">Architecture</a> ·
     <a href="#command-contract">Command Contract</a> ·
     <a href="#backend-support-matrix">Backends</a> ·
-    <a href="#customization-model">Customization</a>
+    <a href="#customization-model">Customization</a> ·
+    <a href="#roadmap-and-governance">Roadmap</a>
   </p>
   <p><code>MiniCPM proposes.</code> <code>Rust decides.</code> <code>Adapters translate.</code></p>
 </div>
@@ -434,6 +436,8 @@ See:
 - [Customization Contract](docs/customization.md)
 - [Command Pipeline Contract](docs/command-pipeline-contract.md)
 - [Backend Adapter Contract](docs/backend-adapter-contract.md)
+- [Roadmap](docs/roadmap.md)
+- [Release Checklist](docs/release-checklist.md)
 - [Eval Report Example](docs/eval-report-example.md)
 - [Demo Walkthrough](docs/demo-walkthrough.md)
 - [2GB RAM Profile](docs/2gb-profile.md)
@@ -454,6 +458,7 @@ crates/edgehome-trace      trace, audit, replay frame types
 crates/edgehome-eval       case loading, metrics, release gate
 crates/edgehome-cli        command-line demo and eval runner
 
+.github/                  CI, issue templates, and pull request template
 cases/                     regression cases
 configs/                   runtime and device configuration
 docs/                      architecture, demo, deployment, and memory notes
@@ -469,6 +474,21 @@ cargo test --workspace
 cargo run -q -p edgehome-cli -- --db-path edgehome-gate.sqlite eval cases/zh-home.yaml --gate
 git diff --check
 ```
+
+The same checks run in GitHub Actions for pushes and pull requests to `main`.
+
+## Roadmap And Governance
+
+- [Roadmap](docs/roadmap.md): current baseline, near-term work, adapter order,
+  hardware evidence requirements, and non-goals.
+- [Release Checklist](docs/release-checklist.md): commands, release gate
+  thresholds, docs review, secrets review, and release-note requirements.
+- [Changelog](CHANGELOG.md): project-facing changes and public baseline.
+- [Contributing](CONTRIBUTING.md): contribution workflow, boundary rules, eval
+  case guidance, and adapter requirements.
+- [Security Policy](SECURITY.md): private reporting guidance and examples of
+  safety boundary issues.
+- [Code of Conduct](CODE_OF_CONDUCT.md): discussion and community expectations.
 
 ## Positioning
 

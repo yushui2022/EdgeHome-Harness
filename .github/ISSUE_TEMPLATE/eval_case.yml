@@ -1,0 +1,50 @@
+name: Eval case proposal
+description: Propose a new regression case for cases/zh-home.yaml.
+title: "eval: "
+labels: ["eval", "needs-triage"]
+body:
+  - type: input
+    id: input
+    attributes:
+      label: User input
+      description: The natural-language command to add.
+      placeholder: "晚上十点后把走廊灯调到30%"
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - normal_control
+        - slot_extraction
+        - air_conditioner_controls
+        - runtime_memory
+        - long_memory
+        - long_memory_rejected
+        - high_risk_policy
+        - fail_closed_safety
+        - capability_boundary
+        - unknown_device
+        - input_guard
+        - backend_boundary
+        - new_category
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+      description: Include expected intent, room, device, action, policy decision, and dry-run readiness.
+      render: yaml
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Regression purpose
+      options:
+        - label: This case tests harness behavior, not a broad natural-language benchmark claim.
+          required: true
+        - label: Unsafe or unsupported behavior fails closed.
+          required: true

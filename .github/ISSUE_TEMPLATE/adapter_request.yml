@@ -1,0 +1,46 @@
+name: Backend adapter request
+description: Propose a backend adapter or backend mapping extension.
+title: "adapter: "
+labels: ["adapter", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Adapter work must preserve the project boundary: MiniCPM emits backend-neutral candidate JSON; backend-specific IDs and payloads belong in registry and adapter configuration.
+  - type: dropdown
+    id: backend
+    attributes:
+      label: Backend target
+      options:
+        - Home Assistant
+        - MQTT
+        - MIoT / Xiaomi
+        - Matter
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use case
+      description: Describe the device family, commands, and dry-run payload shape.
+    validations:
+      required: true
+  - type: textarea
+    id: mapping_source
+    attributes:
+      label: Mapping source
+      description: Explain where backend IDs, topics, entity IDs, or service routes come from. Do not include secrets or real tokens.
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Boundary checks
+      options:
+        - label: The model output schema stays backend-neutral.
+          required: true
+        - label: Unsupported or missing mappings fail closed.
+          required: true
+        - label: Tests or eval cases are planned for allowed, unsupported, and unsafe paths.
+          required: true

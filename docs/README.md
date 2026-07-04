@@ -9,6 +9,8 @@ architecture-v2.md   V2 架构定调：Runtime Memory 主路径，Trace/Replay/E
 command-pipeline-contract.md  模型候选 JSON、内部命令、ExecutionPlan、BackendAdapter 的边界
 backend-adapter-contract.md  Mock / Home Assistant / future adapter 的实现契约和 fail-closed 规则
 customization.md  用户如何定制设备、capability 和后端映射；模型输出 schema 为什么固定
+roadmap.md  当前 baseline、near-term work、adapter 顺序、硬件证据要求和 non-goals
+release-checklist.md  release 前必须跑的检查、gate 阈值、docs 审查和 secrets 审查
 2gb-profile.md       2GB RAM 约束、low_memory profile、内存压力降级
 2gb-memory-budget.md 2GB RAM 运行时内存预算、模块上限、余量和实测命令
 model-parameters.md  MiniCPM5-1B / Ollama 参数、输出治理、调参顺序
