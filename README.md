@@ -60,6 +60,7 @@ enter a constrained command pipeline without being trusted as the executor.
 | Real device execution | Explicit opt-in only; disabled by default |
 | Execution evidence privacy | Backend responses are redacted and bounded before trace storage |
 | Release eval gate | 108 mock cases across 12 categories |
+| Public evidence bundle | Git-ignored report, JSON artifacts, SHA-256 manifest, schema, and standalone verifier |
 
 ## Why This Exists
 
@@ -181,6 +182,37 @@ cargo run -q -p edgehome-cli -- backend check --backend matter --registry config
 The check command is read-only. It validates registry routes, adapter config,
 execution switches, and secret availability. It never calls Home Assistant,
 publishes MQTT, or contacts MIoT/Matter bridges.
+
+## Release Evidence Bundle
+
+Public demos and release announcements should be backed by a generated evidence
+bundle rather than screenshots or unchecked claims:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\release-check.ps1 -WithDemoSmoke
+```
+
+The bundle is written under `artifacts\release-demo-smoke` and is ignored by
+git. It contains:
+
+- `public-demo-report.md` for the human-readable claim boundary.
+- JSON evidence for the release gate, dry-runs, trace export, memory examples,
+  backend readiness checks, and output-governor behavior.
+- `12-evidence-manifest.json` with the current git commit, tracked dirty flag,
+  file sizes, SHA-256 hashes, and the public claim boundary.
+- A machine-readable manifest contract at
+  [docs/schemas/demo-evidence-manifest.schema.json](docs/schemas/demo-evidence-manifest.schema.json).
+
+Verify an existing bundle independently:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\verify-demo-evidence.ps1 -EvidenceDir artifacts\release-demo-smoke
+```
+
+This evidence proves the covered harness pipeline, gates, trace/replay, eval
+gate, and adapter readiness boundaries. It does not prove universal smart-home
+support, real Xiaomi device validation, real Matter validation, or default-on
+real-device execution.
 
 ## Example Pipeline
 
