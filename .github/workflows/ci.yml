@@ -19,6 +19,61 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Repository hygiene
+        run: |
+          python - <<'PY'
+          import pathlib
+          import re
+          import subprocess
+          import sys
+
+          tracked = subprocess.check_output(
+              ["git", "ls-files"], text=True, encoding="utf-8"
+          ).splitlines()
+          failures = []
+          binary_suffixes = {".jpg", ".jpeg", ".png", ".gif", ".ico", ".pdf"}
+
+          for raw_path in tracked:
+              normalized = raw_path.replace("\\", "/")
+              path = pathlib.Path(raw_path)
+
+              if re.search(r"(^|/)artifacts/", normalized):
+                  failures.append(f"tracked artifact file: {raw_path}")
+              if re.search(r"(^|/)\.env($|\.)", normalized):
+                  failures.append(f"tracked environment file: {raw_path}")
+              if re.search(r"\.(db|sqlite|sqlite3|log)$", normalized):
+                  failures.append(f"tracked runtime output file: {raw_path}")
+
+              if path.suffix.lower() in binary_suffixes:
+                  continue
+              try:
+                  if path.stat().st_size > 2 * 1024 * 1024:
+                      continue
+                  content = path.read_text(encoding="utf-8")
+              except (OSError, UnicodeDecodeError):
+                  continue
+
+              if re.search(r"-----BEGIN (RSA |EC |OPENSSH |)PRIVATE KEY-----", content):
+                  failures.append(f"private key marker found in tracked file: {raw_path}")
+
+              if (
+                  normalized.startswith("configs/")
+                  and ".example." in normalized
+                  and re.search(r"(?m)^\s*execute_enabled:\s*true\s*$", content)
+              ):
+                  failures.append(
+                      f"public example config enables real execution: {raw_path}"
+                  )
+
+          if failures:
+              print("Repository hygiene failed:", file=sys.stderr)
+              for failure in failures:
+                  print(f"FAIL: {failure}", file=sys.stderr)
+              sys.exit(1)
+
+          print("repository hygiene passed")
+          PY
+
       - name: Install Rust components
         run: |
           rustup component add rustfmt clippy
@@ -54,3 +109,6 @@ jobs:
           cargo run --locked -q -p edgehome-cli -- backend check --backend mqtt --registry configs/devices.mqtt.example.yaml
           cargo run --locked -q -p edgehome-cli -- backend check --backend miot --registry configs/devices.miot.example.yaml
           cargo run --locked -q -p edgehome-cli -- backend check --backend matter --registry configs/devices.matter.example.yaml
+
+      - name: Diff whitespace check
+        run: git diff --check
