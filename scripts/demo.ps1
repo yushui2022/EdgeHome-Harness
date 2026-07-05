@@ -15,9 +15,42 @@ try {
     $Artifacts = New-Object System.Collections.Generic.List[object]
     $ReportLines = New-Object System.Collections.Generic.List[string]
     $ResolvedOutputDir = $null
+    $ResolvedDatabasePath = $DatabasePath
+
+    if ([string]::IsNullOrWhiteSpace($ResolvedDatabasePath)) {
+        throw "DatabasePath must not be empty."
+    }
+
+    if (-not [System.IO.Path]::IsPathRooted($ResolvedDatabasePath)) {
+        $ResolvedDatabasePath = Join-Path $RepoRoot $ResolvedDatabasePath
+    }
+    $ResolvedDatabasePath = [System.IO.Path]::GetFullPath($ResolvedDatabasePath)
+
+    $databaseParent = [System.IO.Path]::GetDirectoryName($ResolvedDatabasePath)
+    if ([string]::IsNullOrWhiteSpace($databaseParent)) {
+        throw "DatabasePath must include a writable parent directory: $DatabasePath"
+    }
+    New-Item -ItemType Directory -Force -Path $databaseParent | Out-Null
+
+    $databaseWriteProbe = Join-Path $databaseParent ".edgehome-demo-write-test-$PID.tmp"
+    try {
+        "ok" | Set-Content -Encoding UTF8 -LiteralPath $databaseWriteProbe
+    }
+    catch {
+        throw "DatabasePath parent is not writable: $databaseParent. $($_.Exception.Message)"
+    }
+    finally {
+        if (Test-Path -LiteralPath $databaseWriteProbe) {
+            Remove-Item -LiteralPath $databaseWriteProbe -Force
+        }
+    }
 
     if (-not [string]::IsNullOrWhiteSpace($OutputDir)) {
-        $ResolvedOutputDir = Join-Path $RepoRoot $OutputDir
+        $ResolvedOutputDir = $OutputDir
+        if (-not [System.IO.Path]::IsPathRooted($ResolvedOutputDir)) {
+            $ResolvedOutputDir = Join-Path $RepoRoot $ResolvedOutputDir
+        }
+        $ResolvedOutputDir = [System.IO.Path]::GetFullPath($ResolvedOutputDir)
         New-Item -ItemType Directory -Force -Path $ResolvedOutputDir | Out-Null
     }
 
@@ -180,7 +213,7 @@ try {
             git_commit = Invoke-GitText @("rev-parse", "HEAD")
             git_branch = Invoke-GitText @("rev-parse", "--abbrev-ref", "HEAD")
             tracked_worktree_dirty = $trackedDirty
-            database_path = $DatabasePath
+            database_path = $ResolvedDatabasePath
             model_mode = "mock"
             real_device_execution = "disabled_by_default"
             artifact_count = $artifactEntries.Count
@@ -309,13 +342,13 @@ try {
     Add-ReportLine "# EdgeHome Harness Public Demo Report"
     Add-ReportLine ""
     Add-ReportLine "- Generated at: $((Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"))"
-    Add-ReportLine "- Database path: ``$DatabasePath``"
+    Add-ReportLine "- Database path: ``$ResolvedDatabasePath``"
     Add-ReportLine "- Model mode: mock"
     Add-ReportLine "- Real device execution: disabled by default"
     Add-ReportLine ""
 
     Write-Host "== 1. Release gate: cases/zh-home.yaml =="
-    $eval = Invoke-EdgeHomeJson @("--db-path", $DatabasePath, "eval", "cases/zh-home.yaml", "--gate")
+    $eval = Invoke-EdgeHomeJson @("--db-path", $ResolvedDatabasePath, "eval", "cases/zh-home.yaml", "--gate")
     $evalSummary = [ordered]@{
         report = $eval.report
         gate = $eval.gate
@@ -336,7 +369,7 @@ try {
 
     Write-Host "`n== 2. Ordinary command: living room light off =="
     $ordinary = Invoke-EdgeHomeJson @(
-        "--db-path", $DatabasePath,
+        "--db-path", $ResolvedDatabasePath,
         "dry-run", "--mock",
         $CommandLivingRoomLightOff
     )
@@ -354,7 +387,7 @@ try {
 
     Write-Host "`n== 3. Slot extraction: scheduled hallway brightness =="
     $dryRun = Invoke-EdgeHomeJson @(
-        "--db-path", $DatabasePath,
+        "--db-path", $ResolvedDatabasePath,
         "dry-run", "--mock",
         $CommandHallwaySchedule
     )
@@ -371,8 +404,8 @@ try {
     Add-ReportLine ""
 
     Write-Host "`n== 4. Replay and export dry-run trace =="
-    $replay = Invoke-EdgeHomeJson @("--db-path", $DatabasePath, "replay", $dryRun.trace_id)
-    $traceFrame = Invoke-EdgeHomeJson @("--db-path", $DatabasePath, "trace", "export", $dryRun.trace_id)
+    $replay = Invoke-EdgeHomeJson @("--db-path", $ResolvedDatabasePath, "replay", $dryRun.trace_id)
+    $traceFrame = Invoke-EdgeHomeJson @("--db-path", $ResolvedDatabasePath, "trace", "export", $dryRun.trace_id)
     $traceEvidence = [ordered]@{
         replay_summary = $replay.replay_summary
         trace_frame = $traceFrame
@@ -391,7 +424,7 @@ try {
 
     Write-Host "`n== 5. Short memory resolves relative command =="
     $relative = Invoke-EdgeHomeJson @(
-        "--db-path", $DatabasePath,
+        "--db-path", $ResolvedDatabasePath,
         "dry-run", "--mock",
         $CommandRelativeLightDarker
     )
@@ -413,12 +446,12 @@ try {
 
     Write-Host "`n== 6. Long memory alias write and resolution =="
     $memoryWrite = Invoke-EdgeHomeJson @(
-        "--db-path", $DatabasePath,
+        "--db-path", $ResolvedDatabasePath,
         "dry-run", "--mock",
         $CommandRememberHallwayAlias
     )
     $aliasUse = Invoke-EdgeHomeJson @(
-        "--db-path", $DatabasePath,
+        "--db-path", $ResolvedDatabasePath,
         "dry-run", "--mock",
         $CommandAliasLightOn
     )
@@ -439,7 +472,7 @@ try {
 
     Write-Host "`n== 7. Dangerous action is blocked by gate =="
     $dangerous = Invoke-EdgeHomeJson @(
-        "--db-path", $DatabasePath,
+        "--db-path", $ResolvedDatabasePath,
         "dry-run", "--mock",
         $CommandGasAlarmOff
     )
