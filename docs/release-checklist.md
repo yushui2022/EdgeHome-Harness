@@ -28,9 +28,11 @@ powershell -ExecutionPolicy Bypass -File scripts\release-check.ps1
 ```
 
 The script wraps the required commands, backend readiness checks, `git diff
---check`, and lightweight repository hygiene checks. To run the checks manually:
+--check`, public claim lint, and lightweight repository hygiene checks. To run
+the checks manually:
 
 ```powershell
+powershell -ExecutionPolicy Bypass -File scripts\check-public-claims.ps1
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
@@ -90,6 +92,8 @@ Check:
   after `real_execution_completed` has already been recorded for a trace.
 - `docs/customization.md` still says model JSON is canonical and backend
   mappings are configurable below the model.
+- `docs/public-claims.md` still matches implemented code, release evidence, and
+  the current adapter validation boundary.
 - `docs/waic-one-page.md` avoids production, Xiaomi, Matter, MQTT, or 2GB
   hardware claims that are not supported by evidence.
 

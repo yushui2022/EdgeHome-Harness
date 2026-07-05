@@ -28,6 +28,10 @@ try {
     if (-not $NoLocked) {
         $CargoLockArgs += "--locked"
     }
+    $PowerShellExe = "powershell"
+    if ($PSVersionTable.PSEdition -eq "Core") {
+        $PowerShellExe = "pwsh"
+    }
 
     function Invoke-Native {
         param(
@@ -144,6 +148,12 @@ try {
     }
     Assert-JsonSchemaFiles
 
+    Invoke-Native "Public claim lint" @(
+        $PowerShellExe,
+        "-ExecutionPolicy", "Bypass",
+        "-File", (Join-Path $PSScriptRoot "check-public-claims.ps1")
+    )
+
     Invoke-Native "Format" @("cargo", "fmt", "--all", "--check")
     Invoke-Native "Clippy" (@("cargo", "clippy") + $CargoLockArgs + @("--workspace", "--all-targets", "--", "-D", "warnings"))
     Invoke-Native "Workspace tests" (@("cargo", "test") + $CargoLockArgs + @("--workspace"))
@@ -190,13 +200,8 @@ try {
     Invoke-Native "Diff whitespace check" @("git", "diff", "--check")
 
     if ($WithDemoSmoke) {
-        $powerShellExe = "powershell"
-        if ($PSVersionTable.PSEdition -eq "Core") {
-            $powerShellExe = "pwsh"
-        }
-
         Invoke-Native "Demo evidence smoke" @(
-            $powerShellExe,
+            $PowerShellExe,
             "-ExecutionPolicy", "Bypass",
             "-File", (Join-Path $PSScriptRoot "demo.ps1"),
             "-DatabasePath", $DemoDatabasePath,
@@ -205,7 +210,7 @@ try {
         )
 
         Invoke-Native "Demo evidence manifest verify" @(
-            $powerShellExe,
+            $PowerShellExe,
             "-ExecutionPolicy", "Bypass",
             "-File", (Join-Path $PSScriptRoot "verify-demo-evidence.ps1"),
             "-EvidenceDir", $DemoOutputDir

@@ -55,6 +55,14 @@ implemented code, tests, docs, and eval evidence.
   index in English with clearer claim boundaries and verification steps.
 - Demo script can now generate a local public demo evidence bundle with a
   Markdown summary and per-step JSON artifacts under ignored `artifacts/`.
+- Demo evidence bundles now include a SHA-256 manifest with git commit, tracked
+  dirty flag, artifact sizes, hashes, model mode, execution boundary, and public
+  claim boundary.
+- Standalone demo evidence verifier and manifest JSON Schema for reviewing
+  generated public demo bundles.
+- Public claim policy and release-check lint for catching unsupported
+  production, Xiaomi/MIoT, Matter, default execution, and vendor-ready JSON
+  claims in release-facing documents.
 
 ## 0.1.0 - 2026-07-04
 

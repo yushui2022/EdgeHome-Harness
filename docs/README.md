@@ -41,6 +41,11 @@ release-evidence.md
   Reproducible release evidence boundary, demo smoke command, artifact index,
   standalone manifest verifier, and safe public claim language.
 
+public-claims.md
+  Public claim policy, allowed claims, blocked overclaims, and evidence required
+  before upgrading Xiaomi, Matter, Home Assistant, MQTT, hardware, or production
+  readiness language.
+
 2gb-profile.md
   2GB RAM constraints, low_memory profile, and runtime pressure degradation.
 
