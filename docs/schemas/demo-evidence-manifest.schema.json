@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://edgehome-harness.local/schemas/demo-evidence-manifest.schema.json",
+  "title": "EdgeHome Demo Evidence Manifest",
+  "description": "Machine-readable manifest for a git-ignored EdgeHome public demo evidence bundle. It binds generated files to a git commit, claim boundary, byte counts, and SHA-256 hashes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "generated_at_utc",
+    "git_commit",
+    "git_branch",
+    "tracked_worktree_dirty",
+    "database_path",
+    "model_mode",
+    "real_device_execution",
+    "artifact_count",
+    "artifacts",
+    "claim_boundary"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "edgehome.demo_evidence_manifest.v1"
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "git_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "git_branch": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tracked_worktree_dirty": {
+      "type": "boolean",
+      "description": "True when tracked files changed after the recorded git commit. Public release snapshots should normally be generated from a clean tracked worktree."
+    },
+    "database_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Local demo SQLite path used for evidence generation. This path is informational and must not be treated as portable."
+    },
+    "model_mode": {
+      "const": "mock"
+    },
+    "real_device_execution": {
+      "const": "disabled_by_default"
+    },
+    "artifact_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "claim_boundary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "description",
+        "bytes",
+        "sha256"
+      ],
+      "properties": {
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[^\\\\/:*?\"<>|]+$",
+          "description": "Artifact file name relative to the evidence bundle root. Path separators and parent-directory traversal are not allowed."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    }
+  }
+}

@@ -54,6 +54,7 @@ Current backend status:
 | Release evidence smoke | Implemented | `scripts/release-check.ps1 -WithDemoSmoke` generates a git-ignored public demo evidence bundle |
 | Demo evidence manifest | Implemented | Demo bundles include `12-evidence-manifest.json` with git commit, dirty flag, file sizes, SHA-256 hashes, and claim boundary |
 | Demo evidence verifier | Implemented | `scripts/verify-demo-evidence.ps1` independently validates manifest schema, expected files, byte counts, and SHA-256 hashes |
+| Demo evidence manifest schema | Implemented | `docs/schemas/demo-evidence-manifest.schema.json` documents the public manifest contract |
 | Eval summary output | Implemented | `edgehome-cli eval --summary` keeps release logs concise while preserving gate metrics and failing cases |
 
 Important implemented files:
@@ -79,6 +80,7 @@ docs/bridge-api-contract.md
 docs/schemas/miot-bridge-request.schema.json
 docs/schemas/matter-bridge-request.schema.json
 docs/schemas/bridge-response.schema.json
+docs/schemas/demo-evidence-manifest.schema.json
 docs/home-assistant-gateway.md
 docs/home-assistant-golden-payloads.md
 docs/real-minicpm-eval-report.md

@@ -22,6 +22,9 @@ bridge-api-contract.md
   Private MIoT/Matter bridge HTTP API shape, error semantics, and redaction
   boundary.
 
+schemas/demo-evidence-manifest.schema.json
+  JSON Schema for the generated public demo evidence manifest.
+
 customization.md
   How users customize devices, capabilities, and backend mappings while keeping
   the model output schema fixed.

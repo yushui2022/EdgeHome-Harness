@@ -83,6 +83,12 @@ powershell -ExecutionPolicy Bypass -File scripts\verify-demo-evidence.ps1 `
   -EvidenceDir artifacts\release-demo-smoke
 ```
 
+The manifest schema is published at:
+
+```text
+docs/schemas/demo-evidence-manifest.schema.json
+```
+
 ## Demo Bundle Contents
 
 The demo smoke bundle currently contains:

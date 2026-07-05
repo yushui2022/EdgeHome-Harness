@@ -94,6 +94,9 @@ try {
         if ([System.IO.Path]::IsPathRooted([string]$artifact.file)) {
             throw "evidence manifest artifact uses an absolute path: $($artifact.file)"
         }
+        if (([string]$artifact.file) -match '[\\/]') {
+            throw "evidence manifest artifact must be a file name, not a path: $($artifact.file)"
+        }
         if (([string]$artifact.file) -match '(^|[\\/])\.\.([\\/]|$)') {
             throw "evidence manifest artifact escapes the evidence directory: $($artifact.file)"
         }
