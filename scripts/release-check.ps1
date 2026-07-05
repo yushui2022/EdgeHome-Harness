@@ -200,7 +200,8 @@ try {
             "-ExecutionPolicy", "Bypass",
             "-File", (Join-Path $PSScriptRoot "demo.ps1"),
             "-DatabasePath", $DemoDatabasePath,
-            "-OutputDir", $DemoOutputDir
+            "-OutputDir", $DemoOutputDir,
+            "-Quiet"
         )
     }
 

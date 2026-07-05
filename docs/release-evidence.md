@@ -60,6 +60,9 @@ bundle under:
 artifacts\release-demo-smoke
 ```
 
+`release-check.ps1 -WithDemoSmoke` runs the demo in quiet mode so automation
+logs stay readable while the full JSON evidence is still written to the bundle.
+
 The `artifacts/` directory is ignored by git. Do not commit generated demo
 artifacts unless a future release process explicitly creates a reviewed,
 redacted, versioned evidence snapshot.

@@ -1,6 +1,7 @@
 param(
     [string]$DatabasePath = "edgehome-demo.sqlite",
-    [string]$OutputDir = ""
+    [string]$OutputDir = "",
+    [switch]$Quiet
 )
 
 $ErrorActionPreference = "Stop"
@@ -106,6 +107,10 @@ try {
             [Parameter(Mandatory = $true)]
             $Value
         )
+
+        if ($Quiet) {
+            return
+        }
 
         ConvertTo-DemoJson $Value
     }
@@ -366,7 +371,12 @@ try {
         "edgehome-ollama",
         "output_governor_report_classifies_dead_loop_and_fallback"
     )
-    Write-Host $governorOutput
+    if ($Quiet) {
+        Write-Host "OutputGovernor focused test passed."
+    }
+    else {
+        Write-Host $governorOutput
+    }
     Save-DemoText "11-output-governor-test.txt" $governorOutput "OutputGovernor focused test output."
 
     Add-ReportLine "## Output Governor"
