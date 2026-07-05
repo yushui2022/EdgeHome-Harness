@@ -23,8 +23,20 @@ $env:CARGO_TARGET_DIR="$env:TEMP\edgehome-target"
 powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome-demo.sqlite
 ```
 
-The script prints JSON for each stage. Keep the generated SQLite database if you
-want to inspect trace and audit records after the demo.
+The script prints JSON for each stage. To also write a local evidence bundle,
+pass an output directory:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 `
+  -DatabasePath edgehome-demo.sqlite `
+  -OutputDir artifacts\public-demo
+```
+
+The output directory is ignored by git. It contains a `public-demo-report.md`
+summary plus JSON artifacts for release gate metrics, dry-runs, trace export,
+memory examples, backend readiness, and the OutputGovernor focused test. Keep
+the generated SQLite database if you want to inspect trace and audit records
+after the demo.
 
 ## Demo Story
 

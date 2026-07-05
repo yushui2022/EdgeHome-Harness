@@ -153,8 +153,12 @@ powershell -ExecutionPolicy Bypass -File scripts\release-check.ps1
 Run the scripted demo:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome-demo.sqlite
+powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome-demo.sqlite -OutputDir artifacts\public-demo
 ```
+
+The output directory is ignored by git and contains a Markdown report plus JSON
+evidence for the release gate, dry-runs, trace export, memory examples, backend
+readiness checks, and OutputGovernor focused test.
 
 Check backend routes and adapter configs without touching devices:
 

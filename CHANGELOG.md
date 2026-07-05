@@ -53,6 +53,8 @@ implemented code, tests, docs, and eval evidence.
   the trace as completed.
 - Rewrote the public demo walkthrough, Home Assistant demo guide, and docs
   index in English with clearer claim boundaries and verification steps.
+- Demo script can now generate a local public demo evidence bundle with a
+  Markdown summary and per-step JSON artifacts under ignored `artifacts/`.
 
 ## 0.1.0 - 2026-07-04
 
