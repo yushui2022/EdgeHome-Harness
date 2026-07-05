@@ -76,6 +76,13 @@ powershell -ExecutionPolicy Bypass -File scripts\release-check.ps1 `
   -DemoOutputDir artifacts\release-demo-smoke
 ```
 
+To independently verify an existing bundle:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\verify-demo-evidence.ps1 `
+  -EvidenceDir artifacts\release-demo-smoke
+```
+
 ## Demo Bundle Contents
 
 The demo smoke bundle currently contains:
@@ -97,7 +104,9 @@ The demo smoke bundle currently contains:
 | `12-evidence-manifest.json` | Machine-readable manifest with git commit, dirty flag, file sizes, SHA-256 hashes, and claim boundary. |
 
 The demo script verifies that each expected artifact exists, is non-empty, and
-matches the SHA-256 hash recorded in `12-evidence-manifest.json`.
+matches the SHA-256 hash recorded in `12-evidence-manifest.json`. The standalone
+`scripts\verify-demo-evidence.ps1` verifier performs the same check for an
+existing bundle and is run by `scripts\release-check.ps1 -WithDemoSmoke`.
 
 ## Current Gate Thresholds
 

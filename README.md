@@ -166,6 +166,7 @@ powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome
 The output directory is ignored by git and contains a Markdown report plus JSON
 evidence for the release gate, dry-runs, trace export, memory examples, backend
 readiness checks, OutputGovernor focused test, and a SHA-256 evidence manifest.
+Verify an existing bundle with `scripts\verify-demo-evidence.ps1`.
 
 Check backend routes and adapter configs without touching devices:
 
@@ -558,7 +559,7 @@ crates/edgehome-cli        command-line demo and eval runner
 cases/                     regression cases
 configs/                   runtime and device configuration
 docs/                      architecture, demo, deployment, and memory notes
-scripts/                   demo and embedded validation scripts
+scripts/                   demo, evidence, release, and embedded validation scripts
 ```
 
 ## Development Checks

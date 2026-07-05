@@ -36,7 +36,7 @@ release-checklist.md
 
 release-evidence.md
   Reproducible release evidence boundary, demo smoke command, artifact index,
-  and safe public claim language.
+  standalone manifest verifier, and safe public claim language.
 
 2gb-profile.md
   2GB RAM constraints, low_memory profile, and runtime pressure degradation.

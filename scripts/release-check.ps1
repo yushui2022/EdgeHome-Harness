@@ -203,6 +203,13 @@ try {
             "-OutputDir", $DemoOutputDir,
             "-Quiet"
         )
+
+        Invoke-Native "Demo evidence manifest verify" @(
+            $powerShellExe,
+            "-ExecutionPolicy", "Bypass",
+            "-File", (Join-Path $PSScriptRoot "verify-demo-evidence.ps1"),
+            "-EvidenceDir", $DemoOutputDir
+        )
     }
 
     Write-Host ""
