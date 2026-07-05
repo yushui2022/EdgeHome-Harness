@@ -94,6 +94,8 @@ Check:
   mappings are configurable below the model.
 - `docs/public-claims.md` still matches implemented code, release evidence, and
   the current adapter validation boundary.
+- `docs/public-release-baseline.md` still matches the current release gate,
+  backend readiness checks, evidence bundle, and non-claims.
 - `docs/waic-one-page.md` avoids production, Xiaomi, Matter, MQTT, or 2GB
   hardware claims that are not supported by evidence.
 

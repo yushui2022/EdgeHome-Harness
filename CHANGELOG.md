@@ -63,6 +63,8 @@ implemented code, tests, docs, and eval evidence.
 - Public claim policy and release-check lint for catching unsupported
   production, Xiaomi/MIoT, Matter, default execution, and vendor-ready JSON
   claims in release-facing documents.
+- Public release baseline document for GitHub releases, demos, WAIC one-page
+  material, evidence bundles, and non-claim boundaries.
 
 ## 0.1.0 - 2026-07-04
 

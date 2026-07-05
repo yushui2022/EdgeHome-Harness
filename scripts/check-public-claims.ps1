@@ -7,6 +7,7 @@ param(
         "docs\roadmap.md",
         "docs\release-checklist.md",
         "docs\release-evidence.md",
+        "docs\public-release-baseline.md",
         "docs\home-assistant-gateway.md",
         "docs\mqtt-guarded-publish.md",
         "docs\miot-bridge-adapter.md",

@@ -618,6 +618,9 @@ The same checks run in GitHub Actions for pushes and pull requests to `main`.
   hardware evidence requirements, and non-goals.
 - [Release Checklist](docs/release-checklist.md): commands, release gate
   thresholds, docs review, secrets review, and release-note requirements.
+- [Public Release Baseline](docs/public-release-baseline.md): evidence-backed
+  public baseline for GitHub releases, demos, WAIC material, and claim
+  boundaries.
 - [Release Evidence](docs/release-evidence.md): reproducible demo evidence
   command, artifact index, and claim boundary for public material.
 - [Changelog](CHANGELOG.md): project-facing changes and public baseline.

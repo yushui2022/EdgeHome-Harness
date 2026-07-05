@@ -57,6 +57,7 @@ Current backend status:
 | Demo evidence manifest schema | Implemented | `docs/schemas/demo-evidence-manifest.schema.json` documents the public manifest contract |
 | Eval summary output | Implemented | `edgehome-cli eval --summary` keeps release logs concise while preserving gate metrics and failing cases |
 | Public claim policy | Implemented | `docs/public-claims.md` and `scripts/check-public-claims.ps1` keep public wording aligned with evidence |
+| Public release baseline | Implemented | `docs/public-release-baseline.md` defines the evidence-backed release baseline and non-claims |
 
 Important implemented files:
 
@@ -83,6 +84,7 @@ docs/schemas/matter-bridge-request.schema.json
 docs/schemas/bridge-response.schema.json
 docs/schemas/demo-evidence-manifest.schema.json
 docs/public-claims.md
+docs/public-release-baseline.md
 docs/home-assistant-gateway.md
 docs/home-assistant-golden-payloads.md
 docs/real-minicpm-eval-report.md

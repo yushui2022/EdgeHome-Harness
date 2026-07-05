@@ -46,6 +46,10 @@ public-claims.md
   before upgrading Xiaomi, Matter, Home Assistant, MQTT, hardware, or production
   readiness language.
 
+public-release-baseline.md
+  Current public release baseline for GitHub releases, WAIC one-page material,
+  demos, evidence bundles, and claim boundaries.
+
 2gb-profile.md
   2GB RAM constraints, low_memory profile, and runtime pressure degradation.
 
