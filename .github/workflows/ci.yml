@@ -101,7 +101,7 @@ jobs:
           PY
 
       - name: Release eval gate
-        run: cargo run --locked -q -p edgehome-cli -- --db-path edgehome-ci-gate.sqlite eval cases/zh-home.yaml --gate
+        run: cargo run --locked -q -p edgehome-cli -- --db-path edgehome-ci-gate.sqlite eval cases/zh-home.yaml --gate --summary
 
       - name: Backend readiness checks
         run: |
