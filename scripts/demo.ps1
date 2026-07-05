@@ -110,6 +110,56 @@ try {
         ConvertTo-DemoJson $Value
     }
 
+    function Invoke-NativeText {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$Command,
+            [Parameter(Mandatory = $true)]
+            [string[]]$Arguments
+        )
+
+        function ConvertTo-ProcessArgument {
+            param([string]$Argument)
+
+            if ($Argument.Length -eq 0) {
+                return '""'
+            }
+            if ($Argument -notmatch '[\s"]') {
+                return $Argument
+            }
+
+            return '"' + ($Argument -replace '"', '\"') + '"'
+        }
+
+        $process = New-Object System.Diagnostics.Process
+        $process.StartInfo.FileName = $Command
+        $process.StartInfo.Arguments = ($Arguments | ForEach-Object { ConvertTo-ProcessArgument $_ }) -join " "
+        $process.StartInfo.UseShellExecute = $false
+        $process.StartInfo.RedirectStandardOutput = $true
+        $process.StartInfo.RedirectStandardError = $true
+        $process.StartInfo.CreateNoWindow = $true
+
+        $process.Start() | Out-Null
+        $stdout = $process.StandardOutput.ReadToEnd()
+        $stderr = $process.StandardError.ReadToEnd()
+        $process.WaitForExit()
+
+        $outputParts = @()
+        if (-not [string]::IsNullOrWhiteSpace($stderr)) {
+            $outputParts += $stderr.TrimEnd()
+        }
+        if (-not [string]::IsNullOrWhiteSpace($stdout)) {
+            $outputParts += $stdout.TrimEnd()
+        }
+        $output = $outputParts -join "`n"
+
+        if ($process.ExitCode -ne 0) {
+            throw "$Command failed with exit code $($process.ExitCode)`n$output"
+        }
+
+        return $output
+    }
+
     $CommandHallwaySchedule = New-Utf16Text @(26202,19978,21313,28857,21518,25226,36208,24266,28783,35843,21040,51,48,37)
     $CommandGasAlarmOff = New-Utf16Text @(20851,38381,29123,27668,25253,35686,22120)
     $CommandLivingRoomLightOff = New-Utf16Text @(25226,23458,21381,28783,20851,25481)
@@ -309,11 +359,14 @@ try {
     Add-ReportLine ""
 
     Write-Host "`n== 10. OutputGovernor dead-loop fallback test =="
-    $governorOutput = & cargo test -q -p edgehome-ollama output_governor_report_classifies_dead_loop_and_fallback 2>&1 | Out-String
+    $governorOutput = Invoke-NativeText "cargo" @(
+        "test",
+        "-q",
+        "-p",
+        "edgehome-ollama",
+        "output_governor_report_classifies_dead_loop_and_fallback"
+    )
     Write-Host $governorOutput
-    if ($LASTEXITCODE -ne 0) {
-        throw "OutputGovernor fallback test failed"
-    }
     Save-DemoText "11-output-governor-test.txt" $governorOutput "OutputGovernor focused test output."
 
     Add-ReportLine "## Output Governor"

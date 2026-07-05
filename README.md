@@ -150,6 +150,13 @@ Run the full local release check:
 powershell -ExecutionPolicy Bypass -File scripts\release-check.ps1
 ```
 
+Run the release check and generate a git-ignored public demo evidence smoke
+bundle:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\release-check.ps1 -WithDemoSmoke
+```
+
 Run the scripted demo:
 
 ```powershell
@@ -523,6 +530,7 @@ private backend configuration is fixed.
 - [Matter Bridge Adapter](docs/matter-bridge-adapter.md)
 - [Roadmap](docs/roadmap.md)
 - [Release Checklist](docs/release-checklist.md)
+- [Release Evidence](docs/release-evidence.md)
 - [Real MiniCPM / Ollama Eval Report](docs/real-minicpm-eval-report.md)
 - [Home Assistant Gateway Boundary](docs/home-assistant-gateway.md)
 - [Home Assistant Golden Payloads](docs/home-assistant-golden-payloads.md)
@@ -564,7 +572,9 @@ git diff --check
 ```
 
 The same commands plus backend readiness checks and repository hygiene checks
-are wrapped by `scripts\release-check.ps1`.
+are wrapped by `scripts\release-check.ps1`. Add `-WithDemoSmoke` when preparing
+public demo material or a release announcement; it runs the same checks and
+generates a git-ignored evidence bundle under `artifacts\release-demo-smoke`.
 
 The same checks run in GitHub Actions for pushes and pull requests to `main`.
 
@@ -574,6 +584,8 @@ The same checks run in GitHub Actions for pushes and pull requests to `main`.
   hardware evidence requirements, and non-goals.
 - [Release Checklist](docs/release-checklist.md): commands, release gate
   thresholds, docs review, secrets review, and release-note requirements.
+- [Release Evidence](docs/release-evidence.md): reproducible demo evidence
+  command, artifact index, and claim boundary for public material.
 - [Changelog](CHANGELOG.md): project-facing changes and public baseline.
 - [Contributing](CONTRIBUTING.md): contribution workflow, boundary rules, eval
   case guidance, and adapter requirements.

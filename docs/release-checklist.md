@@ -42,6 +42,17 @@ cargo run -q -p edgehome-cli -- backend check --backend matter --registry config
 git diff --check
 ```
 
+When preparing public demo material or a WAIC one-page, run the same release
+check with the demo evidence smoke enabled:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\release-check.ps1 -WithDemoSmoke
+```
+
+This writes a local, git-ignored evidence bundle under
+`artifacts\release-demo-smoke`. See `docs/release-evidence.md` for the artifact
+index and claim boundary.
+
 The release gate must pass with:
 
 ```text

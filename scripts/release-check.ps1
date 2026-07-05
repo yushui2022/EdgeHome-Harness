@@ -1,8 +1,11 @@
 param(
     [string]$DatabasePath = "",
+    [string]$DemoDatabasePath = "",
+    [string]$DemoOutputDir = "artifacts\release-demo-smoke",
     [switch]$NoLocked,
     [switch]$SkipEval,
-    [switch]$SkipHygieneScan
+    [switch]$SkipHygieneScan,
+    [switch]$WithDemoSmoke
 )
 
 $ErrorActionPreference = "Stop"
@@ -14,6 +17,11 @@ try {
     if ([string]::IsNullOrWhiteSpace($DatabasePath)) {
         $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
         $DatabasePath = Join-Path $env:TEMP "edgehome-release-check-$timestamp.sqlite"
+    }
+
+    if ($WithDemoSmoke -and [string]::IsNullOrWhiteSpace($DemoDatabasePath)) {
+        $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+        $DemoDatabasePath = Join-Path $env:TEMP "edgehome-release-demo-$timestamp.sqlite"
     }
 
     $CargoLockArgs = @()
@@ -180,6 +188,21 @@ try {
     ))
 
     Invoke-Native "Diff whitespace check" @("git", "diff", "--check")
+
+    if ($WithDemoSmoke) {
+        $powerShellExe = "powershell"
+        if ($PSVersionTable.PSEdition -eq "Core") {
+            $powerShellExe = "pwsh"
+        }
+
+        Invoke-Native "Demo evidence smoke" @(
+            $powerShellExe,
+            "-ExecutionPolicy", "Bypass",
+            "-File", (Join-Path $PSScriptRoot "demo.ps1"),
+            "-DatabasePath", $DemoDatabasePath,
+            "-OutputDir", $DemoOutputDir
+        )
+    }
 
     Write-Host ""
     Write-Host "Release check passed." -ForegroundColor Green

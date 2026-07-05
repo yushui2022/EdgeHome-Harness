@@ -34,6 +34,10 @@ release-checklist.md
   Required checks, gate thresholds, docs review, and secrets review before
   release.
 
+release-evidence.md
+  Reproducible release evidence boundary, demo smoke command, artifact index,
+  and safe public claim language.
+
 2gb-profile.md
   2GB RAM constraints, low_memory profile, and runtime pressure degradation.
 
