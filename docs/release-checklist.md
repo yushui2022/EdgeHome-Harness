@@ -34,13 +34,16 @@ The script wraps the required commands, backend readiness checks, `git diff
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
-cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-release-gate.sqlite" eval cases\zh-home.yaml --gate
+cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-release-gate.sqlite" eval cases\zh-home.yaml --gate --summary
 cargo run -q -p edgehome-cli -- backend check --backend home_assistant --registry configs\devices.home_assistant.example.yaml
 cargo run -q -p edgehome-cli -- backend check --backend mqtt --registry configs\devices.mqtt.example.yaml
 cargo run -q -p edgehome-cli -- backend check --backend miot --registry configs\devices.miot.example.yaml
 cargo run -q -p edgehome-cli -- backend check --backend matter --registry configs\devices.matter.example.yaml
 git diff --check
 ```
+
+Use `--summary` for release logs. Omit it when a full per-case JSON report is
+needed for debugging or a reviewed evidence snapshot.
 
 When preparing public demo material or a WAIC one-page, run the same release
 check with the demo evidence smoke enabled:

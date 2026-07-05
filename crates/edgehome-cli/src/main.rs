@@ -90,6 +90,8 @@ enum Commands {
         ollama: bool,
         #[arg(long)]
         gate: bool,
+        #[arg(long)]
+        summary: bool,
     },
     Replay {
         trace_id: String,
@@ -253,6 +255,7 @@ fn main() -> anyhow::Result<()> {
             cases_path,
             ollama,
             gate,
+            summary,
         } => {
             let profile = load_profile(&cli.config_dir, &cli.profile)
                 .with_context(|| format!("failed to load profile `{}`", cli.profile))?;
@@ -264,7 +267,11 @@ fn main() -> anyhow::Result<()> {
                 !ollama,
                 gate,
             )?;
-            print_json(&output)?;
+            if summary {
+                print_json(&summarize_eval_output(&output))?;
+            } else {
+                print_json(&output)?;
+            }
             if gate_failed(&output) {
                 std::process::exit(1);
             }
@@ -917,6 +924,14 @@ fn gate_failed(output: &Value) -> bool {
         .and_then(|gate| gate.get("passed"))
         .and_then(Value::as_bool)
         == Some(false)
+}
+
+fn summarize_eval_output(output: &Value) -> Value {
+    let mut summary = output.clone();
+    if let Some(report) = summary.get_mut("report").and_then(Value::as_object_mut) {
+        report.remove("results");
+    }
+    summary
 }
 
 fn check_backends(
@@ -2249,6 +2264,53 @@ capabilities:
 
     fn yaml_single_quoted(value: &Path) -> String {
         format!("'{}'", value.to_string_lossy().replace('\'', "''"))
+    }
+
+    #[test]
+    fn eval_summary_removes_case_results_but_keeps_gate() {
+        let output = json!({
+            "cases_path": "cases/zh-home.yaml",
+            "profile": "low_memory",
+            "model_mode": "mock",
+            "report": {
+                "total": 1,
+                "passed": 1,
+                "pass_rate": 1.0,
+                "false_allow_rate": 0.0,
+                "results": [
+                    {
+                        "id": "living_room_light_on",
+                        "input": "打开客厅灯",
+                        "passed": true
+                    }
+                ]
+            },
+            "gate": {
+                "passed": true,
+                "checks": [
+                    {
+                        "name": "total_cases",
+                        "actual": 1.0,
+                        "expected": ">= 1",
+                        "passed": true
+                    }
+                ],
+                "failing_cases": []
+            }
+        });
+
+        let summary = summarize_eval_output(&output);
+
+        assert!(summary.pointer("/report/results").is_none());
+        assert!(output.pointer("/report/results").is_some());
+        assert_eq!(
+            summary.pointer("/report/total").and_then(Value::as_u64),
+            Some(1)
+        );
+        assert_eq!(
+            summary.pointer("/gate/passed").and_then(Value::as_bool),
+            Some(true)
+        );
     }
 
     fn dry_run_trace_id(db_path: &Path, config_dir: &Path, input: &str) -> anyhow::Result<String> {

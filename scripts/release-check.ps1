@@ -154,7 +154,7 @@ try {
         ) + $CargoLockArgs + @(
             "-q", "-p", "edgehome-cli", "--",
             "--db-path", $DatabasePath,
-            "eval", "cases\zh-home.yaml", "--gate"
+            "eval", "cases\zh-home.yaml", "--gate", "--summary"
         ))
     }
 
