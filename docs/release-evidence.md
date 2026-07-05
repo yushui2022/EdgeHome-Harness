@@ -94,6 +94,10 @@ The demo smoke bundle currently contains:
 | `09-low-memory-pressure.json` | Runtime pressure fallback decisions. |
 | `10-backend-readiness.json` | Read-only adapter readiness checks. |
 | `11-output-governor-test.txt` | Focused output-governor test output. |
+| `12-evidence-manifest.json` | Machine-readable manifest with git commit, dirty flag, file sizes, SHA-256 hashes, and claim boundary. |
+
+The demo script verifies that each expected artifact exists, is non-empty, and
+matches the SHA-256 hash recorded in `12-evidence-manifest.json`.
 
 ## Current Gate Thresholds
 

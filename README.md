@@ -165,7 +165,7 @@ powershell -ExecutionPolicy Bypass -File scripts\demo.ps1 -DatabasePath edgehome
 
 The output directory is ignored by git and contains a Markdown report plus JSON
 evidence for the release gate, dry-runs, trace export, memory examples, backend
-readiness checks, and OutputGovernor focused test.
+readiness checks, OutputGovernor focused test, and a SHA-256 evidence manifest.
 
 Check backend routes and adapter configs without touching devices:
 
@@ -574,7 +574,8 @@ git diff --check
 The same commands plus backend readiness checks and repository hygiene checks
 are wrapped by `scripts\release-check.ps1`. Add `-WithDemoSmoke` when preparing
 public demo material or a release announcement; it runs the same checks and
-generates a git-ignored evidence bundle under `artifacts\release-demo-smoke`.
+generates a git-ignored evidence bundle with a SHA-256 manifest under
+`artifacts\release-demo-smoke`.
 
 The same checks run in GitHub Actions for pushes and pull requests to `main`.
 

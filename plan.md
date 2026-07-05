@@ -1,6 +1,6 @@
 # EdgeHome Harness Commercial-Grade Completion Plan
 
-Last updated: 2026-07-04
+Last updated: 2026-07-05
 
 This file is the handoff plan for future Codex/context-compressed sessions. Read
 it before continuing work.
@@ -51,6 +51,9 @@ Current backend status:
 | Execute trace freshness | Implemented | CLI execute rejects dry-run traces older than 600 seconds before any backend call and records rejection evidence |
 | Execute trace one-shot guard | Implemented | CLI execute rejects a trace after real execution has completed once, preventing repeat backend calls from the same dry-run evidence |
 | Local release check script | Implemented | Runs fmt, clippy, tests, eval gate, backend checks, diff check, and repository hygiene scan |
+| Release evidence smoke | Implemented | `scripts/release-check.ps1 -WithDemoSmoke` generates a git-ignored public demo evidence bundle |
+| Demo evidence manifest | Implemented | Demo bundles include `12-evidence-manifest.json` with git commit, dirty flag, file sizes, SHA-256 hashes, and claim boundary |
+| Eval summary output | Implemented | `edgehome-cli eval --summary` keeps release logs concise while preserving gate metrics and failing cases |
 
 Important implemented files:
 
@@ -78,8 +81,11 @@ docs/schemas/bridge-response.schema.json
 docs/home-assistant-gateway.md
 docs/home-assistant-golden-payloads.md
 docs/real-minicpm-eval-report.md
+docs/release-evidence.md
+scripts/demo.ps1
 scripts/run-real-minicpm-eval.ps1
 scripts/release-check.ps1
+.github/workflows/ci.yml
 ```
 
 ## 2. Non-Negotiable Safety Rule
@@ -157,7 +163,7 @@ powershell -ExecutionPolicy Bypass -File scripts\release-check.ps1
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
-cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-release-gate.sqlite" eval cases\zh-home.yaml --gate
+cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-release-gate.sqlite" eval cases\zh-home.yaml --gate --summary
 cargo run -q -p edgehome-cli -- backend check --backend home_assistant --registry configs\devices.home_assistant.example.yaml
 cargo run -q -p edgehome-cli -- backend check --backend mqtt --registry configs\devices.mqtt.example.yaml
 cargo run -q -p edgehome-cli -- backend check --backend miot --registry configs\devices.miot.example.yaml
@@ -223,6 +229,7 @@ No stale "future target" language for implemented bridge adapters
 No claim that real execution is default-on
 ExecutorResponse evidence is redacted/summarized before trace storage
 CLI execute tests cover Mock, Home Assistant, MQTT, MIoT bridge, Matter bridge, stale-trace rejection, and duplicate-trace rejection
+Demo evidence smoke writes all expected artifacts and validates manifest hashes
 No committed secrets
 ```
 

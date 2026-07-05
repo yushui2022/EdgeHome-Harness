@@ -97,6 +97,140 @@ try {
         }) | Out-Null
     }
 
+    function Invoke-GitText {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string[]]$Arguments
+        )
+
+        $process = New-Object System.Diagnostics.Process
+        $process.StartInfo.FileName = "git"
+        $process.StartInfo.Arguments = $Arguments -join " "
+        $process.StartInfo.UseShellExecute = $false
+        $process.StartInfo.RedirectStandardOutput = $true
+        $process.StartInfo.RedirectStandardError = $true
+        $process.StartInfo.CreateNoWindow = $true
+
+        $process.Start() | Out-Null
+        $stdout = $process.StandardOutput.ReadToEnd()
+        $process.StandardError.ReadToEnd() | Out-Null
+        $process.WaitForExit()
+
+        if ($process.ExitCode -ne 0) {
+            return $null
+        }
+
+        return $stdout.Trim()
+    }
+
+    function Get-DemoFileHash {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$FileName
+        )
+
+        $path = Join-Path $ResolvedOutputDir $FileName
+        if (-not (Test-Path -LiteralPath $path)) {
+            throw "expected demo artifact was not written: $FileName"
+        }
+
+        $item = Get-Item -LiteralPath $path
+        if ($item.Length -le 0) {
+            throw "demo artifact is empty: $FileName"
+        }
+
+        return [pscustomobject]@{
+            file = $FileName
+            bytes = $item.Length
+            sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $path).Hash.ToLowerInvariant()
+        }
+    }
+
+    function New-DemoEvidenceManifest {
+        param(
+            [Parameter(Mandatory = $true)]
+            [string]$ReportFileName
+        )
+
+        $gitStatus = Invoke-GitText @("status", "--short", "--untracked-files=no")
+        $trackedDirty = -not [string]::IsNullOrWhiteSpace($gitStatus)
+        $artifactEntries = New-Object System.Collections.Generic.List[object]
+
+        foreach ($artifact in $Artifacts) {
+            $fileHash = Get-DemoFileHash $artifact.File
+            $artifactEntries.Add([pscustomobject]@{
+                file = $fileHash.file
+                description = $artifact.Description
+                bytes = $fileHash.bytes
+                sha256 = $fileHash.sha256
+            }) | Out-Null
+        }
+
+        $reportHash = Get-DemoFileHash $ReportFileName
+        $artifactEntries.Add([pscustomobject]@{
+            file = $reportHash.file
+            description = "Human-readable demo evidence report."
+            bytes = $reportHash.bytes
+            sha256 = $reportHash.sha256
+        }) | Out-Null
+
+        return [ordered]@{
+            schema_version = "edgehome.demo_evidence_manifest.v1"
+            generated_at_utc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+            git_commit = Invoke-GitText @("rev-parse", "HEAD")
+            git_branch = Invoke-GitText @("rev-parse", "--abbrev-ref", "HEAD")
+            tracked_worktree_dirty = $trackedDirty
+            database_path = $DatabasePath
+            model_mode = "mock"
+            real_device_execution = "disabled_by_default"
+            artifact_count = $artifactEntries.Count
+            artifacts = $artifactEntries
+            claim_boundary = "Mock/default evidence proves harness pipeline, gates, trace/replay, eval gate, and adapter readiness boundaries; it does not prove universal smart-home support, real Xiaomi validation, real Matter validation, or default-on execution."
+        }
+    }
+
+    function Assert-DemoEvidenceBundle {
+        param(
+            [Parameter(Mandatory = $true)]
+            $Manifest,
+            [Parameter(Mandatory = $true)]
+            [string]$ManifestFileName
+        )
+
+        $expectedFiles = @(
+            "01-release-gate.json",
+            "02-ordinary-dry-run.json",
+            "03-slot-dry-run.json",
+            "04-replay-summary.json",
+            "05-trace-frame.json",
+            "06-short-memory.json",
+            "07-long-memory.json",
+            "08-dangerous-blocked.json",
+            "09-low-memory-pressure.json",
+            "10-backend-readiness.json",
+            "11-output-governor-test.txt",
+            "public-demo-report.md",
+            $ManifestFileName
+        )
+
+        foreach ($fileName in $expectedFiles) {
+            $path = Join-Path $ResolvedOutputDir $fileName
+            if (-not (Test-Path -LiteralPath $path)) {
+                throw "demo evidence bundle is missing expected file: $fileName"
+            }
+            if ((Get-Item -LiteralPath $path).Length -le 0) {
+                throw "demo evidence bundle contains empty file: $fileName"
+            }
+        }
+
+        foreach ($artifact in $Manifest.artifacts) {
+            $actualHash = (Get-FileHash -Algorithm SHA256 -LiteralPath (Join-Path $ResolvedOutputDir $artifact.file)).Hash.ToLowerInvariant()
+            if ($actualHash -ne $artifact.sha256) {
+                throw "demo evidence manifest hash mismatch for $($artifact.file)"
+            }
+        }
+    }
+
     function Add-ReportLine {
         param([string]$Line = "")
         $ReportLines.Add($Line) | Out-Null
@@ -393,6 +527,7 @@ try {
         foreach ($artifact in $Artifacts) {
             Add-ReportLine "| ``$($artifact.File)`` | $($artifact.Description) |"
         }
+        Add-ReportLine "| ``12-evidence-manifest.json`` | Machine-readable SHA-256 manifest for this evidence bundle. |"
         Add-ReportLine ""
         Add-ReportLine "## Claim Boundary"
         Add-ReportLine ""
@@ -405,6 +540,12 @@ try {
 
         $reportPath = Join-Path $ResolvedOutputDir "public-demo-report.md"
         $ReportLines -join "`n" | Set-Content -Encoding UTF8 -LiteralPath $reportPath
+
+        $manifestFileName = "12-evidence-manifest.json"
+        $manifest = New-DemoEvidenceManifest "public-demo-report.md"
+        ConvertTo-DemoJson $manifest | Set-Content -Encoding UTF8 -LiteralPath (Join-Path $ResolvedOutputDir $manifestFileName)
+        Assert-DemoEvidenceBundle $manifest $manifestFileName
+
         Write-Host ""
         Write-Host "Demo evidence written to: $ResolvedOutputDir" -ForegroundColor Green
     }
