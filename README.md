@@ -1,3 +1,5 @@
+
+
 <div align="center">
   <img src="docs/assets/edgehome-logo.svg" width="128" alt="EdgeHome Harness logo" />
   <h1>EdgeHome Harness</h1>
@@ -113,6 +115,11 @@ Run a deterministic mock dry-run:
 
 ```powershell
 cargo run -q -p edgehome-cli -- --db-path edgehome-demo.sqlite dry-run --mock "把客厅灯打开"
+```
+
+Linux / WSL alternative:
+```bash
+CARGO_TARGET_DIR=/tmp/edgehome-target cargo run -q -p edgehome-cli -- --db-path edgehome-demo.sqlite dry-run --mock "把客厅灯打开"
 ```
 
 Expected shape:
