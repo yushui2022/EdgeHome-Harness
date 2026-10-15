@@ -165,6 +165,13 @@ try {
         "-q", "-p", "edgehome-agent", "--example", "bounded_agent", "--", "--execute-mock"
     ))
 
+    Invoke-Native "SDK tool preview example" (@("cargo", "run") + $CargoLockArgs + @(
+        "-q", "-p", "edgehome-inference", "--example", "document_agent"
+    ))
+    Invoke-Native "SDK document task example" (@("cargo", "run") + $CargoLockArgs + @(
+        "-q", "-p", "edgehome-inference", "--example", "document_agent", "--", "--execute-demo"
+    ))
+
     if (-not $SkipEval) {
         Invoke-Native "Release eval gate" (@(
             "cargo", "run"

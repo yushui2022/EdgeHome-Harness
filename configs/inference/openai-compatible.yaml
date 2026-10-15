@@ -1,0 +1,9 @@
+# This server must support the documented json_schema response_format contract.
+engine: open_ai_compatible
+base_url: http://127.0.0.1:8000/v1
+model: your-served-model
+# api_key_env: EDGEHOME_MODEL_API_KEY
+connect_timeout_ms: 2000
+request_timeout_ms: 15000
+max_response_bytes: 65536
+max_output_tokens: 256

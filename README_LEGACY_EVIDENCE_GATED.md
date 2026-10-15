@@ -2066,11 +2066,4 @@ Executor 只接受 ExecutionPlan。
 
 ## License
 
-License 尚未决定。
-
-候选：
-
-```text
-Apache-2.0
-MIT
-```
+本文为历史设计文档。项目当前采用 [MIT License](LICENSE)，以仓库根目录的许可证为准。

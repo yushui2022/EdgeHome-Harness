@@ -5,6 +5,25 @@ current claims.
 
 ## Current Baseline
 
+The reusable SDK now consists of `edgehome-runtime` and `edgehome-inference`:
+typed application tools, a host-driven bounded loop, configurable journals,
+Ollama and OpenAI-compatible transports, six engine presets, and a non-home
+document example. See the [SDK guide](edge-agent-sdk.md) and [engine validation
+boundary](inference-engines.md). This is separate from the smart-home reference.
+
+SDK priorities:
+
+1. Build a reproducible model-task matrix: valid arguments, appropriate
+   clarification, tool-result grounding, latency, and peak memory.
+2. Verify llama.cpp on a physical CPU/ARM target before making edge performance
+   claims; validate actual LM Studio and server versions beyond wire fixtures.
+3. Add narrowly scoped application examples and a minimal Go/Python RPC entry
+   point when the host protocol and cancellation semantics are specified.
+4. Establish persistent journal and restart-reconciliation contracts before
+   expanding to unattended, long-running tasks.
+
+The following baseline describes the existing smart-home reference.
+
 Implemented today:
 
 - MiniCPM/MiniCPM5-class local 1B model profile.

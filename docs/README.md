@@ -5,6 +5,9 @@ release evidence for EdgeHome Harness.
 
 Core documents:
 
+- [端侧 Agent SDK](edge-agent-sdk.md): domain-independent Rust tools, a bounded task loop, host approval, and integration steps.
+- [推理引擎接入](inference-engines.md): Ollama, llama.cpp, LM Studio, vLLM, SGLang, protocol limits, and configuration presets.
+- [SDK 模型验证记录](sdk-model-validation.md): actual model probes, failure cases, and the boundary between protocol compatibility and task success.
 - [受限 Agent 参考范式 / Bounded agent reference](agent-reference.md): embeddable runtime, resource budgets, host confirmation, execution outcomes, and a hardware-free example.
 
 ```text

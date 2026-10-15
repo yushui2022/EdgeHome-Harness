@@ -7,8 +7,23 @@ implemented code, tests, docs, and eval evidence.
 
 ## Unreleased
 
+### Licensing
+
+- Standardized the project license on MIT, with the full notice in `LICENSE`.
+  Updated all workspace package metadata and public license references;
+  third-party license and attribution notices remain in place.
+
 ### Added
 
+- `edgehome-runtime`: a domain-independent agent SDK with typed tools, host-owned
+  approval, bounded context and task loops, optional observation-before-answer
+  checks, and a bounded metadata journal without HTTP or SQLite dependencies.
+- `edgehome-inference`: bounded Ollama and OpenAI-compatible HTTP providers, with
+  presets for Ollama, llama.cpp, LM Studio, vLLM, SGLang, and compatible services.
+  Request deadlines, response-size caps, truncation/refusal errors, and local
+  transport fixtures are included; presets are not device certification.
+- A non-home document tool example, SDK integration and engine guides, and an
+  actual model probe report separate from the existing smart-home evaluation.
 - `edgehome-agent`: an embeddable, bounded single-action runtime with host-owned
   budgets, confirmation, private expiring plans, instance-local execution state,
   and explicit unknown-outcome handling without automatic execution retries.

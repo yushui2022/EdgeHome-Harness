@@ -1,333 +1,210 @@
 <p align="center">
-  <img src="docs/assets/edgehome-cover.png" width="1280" alt="EdgeHome Harness — Small model. Strong boundaries. Concept artwork of a warmly lit home connected to a local edge-computing module." />
+  <img src="docs/assets/edgehome-cover.png" width="1280" alt="EdgeHome Harness — Small model. Strong boundaries. Local edge-computing concept artwork." />
 </p>
 
 <p align="center">
-  <strong>Turn local model output into validated, traceable smart-home command plans.</strong>
+  <strong>A lightweight Rust foundation for local agents on resource-constrained devices.</strong><br />
+  Your models. Your tools. Controlled execution.
 </p>
 
 <p align="center">
   <a href="https://github.com/yushui2022/EdgeHome-Harness/actions/workflows/ci.yml"><img src="https://github.com/yushui2022/EdgeHome-Harness/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <img src="https://img.shields.io/badge/Rust-1.95%2B-101f2c?style=flat-square&amp;logo=rust&amp;logoColor=white" alt="Rust 1.95 or newer" />
-  <img src="https://img.shields.io/badge/mock%20eval-108%20cases-148364?style=flat-square" alt="Mock evaluation: 108 cases" />
-  <img src="https://img.shields.io/badge/execution-dry--run%20default-526871?style=flat-square" alt="Dry-run by default" />
-  <a href="#license"><img src="https://img.shields.io/badge/license-MIT%20%2F%20Apache--2.0-526871?style=flat-square" alt="MIT or Apache-2.0 license" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-526871?style=flat-square" alt="MIT license" /></a>
 </p>
 
 <p align="center">
-  <a href="#quick-start">Quick start</a> &nbsp; / &nbsp;
-  <a href="#architecture">Architecture</a> &nbsp; / &nbsp;
-  <a href="#backend-support-matrix">Backends</a> &nbsp; / &nbsp;
-  <a href="#release-gate-snapshot">Evaluation</a> &nbsp; / &nbsp;
-  <a href="#documentation">Documentation</a>
+  <a href="#quick-start">Quick start</a> &nbsp; · &nbsp;
+  <a href="#build-on-edgehome">Build on EdgeHome</a> &nbsp; · &nbsp;
+  <a href="#documentation">Docs</a>
 </p>
 
-## Why This Exists
+## Overview
 
-A small local model can extract a room, device, and action from a sentence. It can also invent identifiers, miss fields, or return malformed JSON. EdgeHome Harness gives that model a narrow role: **propose a command candidate**. Rust handles validation, device resolution, capability checks, policy gates, and execution planning.
+**EdgeHome Harness is an embeddable foundation for building small-model agents.** It connects local inference to application-defined tools through typed arguments, bounded task loops, explicit approval, and execution records.
 
-```text
-ModelOutput != Command
-```
+Developers bring their model, tools, and application. The SDK manages proposals, pending plans, tool observations, and continuation. Use it to build document utilities, device assistants, local service operators, or other focused agents without changing the runtime's domain types.
 
-This is an engineering prototype for MiniCPM / MiniCPM5-class local 1B models. Real-device execution is **disabled by default**; the first-run experience uses deterministic mocks and dry-run plans.
+The design takes inspiration from Pi's embeddable agent and tool-extension approach. This repository maintains an independent Rust implementation for constrained, short-task workflows. Smart-home control remains a separate reference application with its own device policies and evaluation suite.
 
-The project is also a **reference architecture for bounded agents on constrained devices**: keep model proposals separate from host-owned budgets, confirmation, and device execution. Smart-home commands are the concrete domain used to demonstrate that pattern.
+**Models propose actions. The host application controls execution.**
 
-## At A Glance
+## Core Capabilities
 
-| Validate | Control | Inspect |
-| --- | --- | --- |
-| Bounded model output and schema checks | Registry-owned device IDs and backend routes | SQLite trace, audit, and replay |
-| Semantic normalization and capability checks | Deterministic policy and confirmation gates | 108-case mock release gate |
-| Short-reference and explicit alias memory | Dry-run plans with opt-in backend execution | Exportable evidence with SHA-256 manifests |
+| Capability | Implementation |
+| --- | --- |
+| **Embeddable runtime** | A domain-independent `Agent`, typed tool registry, and configurable event journal |
+| **Interchangeable inference** | Bounded Ollama and OpenAI-compatible clients with six engine presets |
+| **Controlled execution** | Private expiring plans, host confirmation, repeated precondition checks, and one dispatch attempt per plan |
+| **Bounded task loops** | Per-instance model/tool budgets, context and output limits, and explicit continuation |
+| **Testable integration** | A document-tool example, fault-injection tests, HTTP fixtures, and a separate smart-home reference |
 
-## Reusable Agent Pattern
-
-The `edgehome-agent` crate provides an embeddable, single-action runtime with proposal/output/execution budgets, one private pending plan, host confirmation, a monotonic expiry, and explicit handling of unknown execution outcomes. It reuses the existing registry, gates, planner, executor, and trace components.
-
-Run the hardware-free reference example:
-
-```sh
-cargo run --locked -p edgehome-agent --example bounded_agent
-cargo run --locked -p edgehome-agent --example bounded_agent -- --execute-mock
-```
-
-The first command only proposes plans; the second explicitly enables simulated execution and demonstrates replay rejection. Both use a deterministic candidate source, not a real model. Replace `CandidateProvider` and `Executor` to integrate your model and device transport.
-
-Read the [agent reference guide / 受限 Agent 范式](docs/agent-reference.md) for ownership boundaries, failure semantics, integration steps, and limitations. This runtime is a Rust `std` / SQLite application component, not a bare-metal MCU runtime. The existing CLI remains the evaluation and backend-debugging path; its behavior is documented separately.
+The SDK uses Rust `std`. Its core has no HTTP, SQLite, or smart-home dependency; inference transport is an optional companion crate. Application-specific access control and tool implementation remain with the host.
 
 ## Quick Start
 
-Requires **Rust 1.95+**. The mock path needs no model download, credentials, or smart-home hardware.
+Requires **Rust 1.95+**. Start with a deterministic provider and an in-memory document tool. No model download, credentials, or device is required.
 
-### 1. Clone and run a safe command
+### 1. Preview a tool call
 
 ```sh
 git clone https://github.com/yushui2022/EdgeHome-Harness.git
 cd EdgeHome-Harness
-cargo run --locked -q -p edgehome-cli -- --db-path edgehome-demo.sqlite dry-run --mock "把客厅灯打开"
+cargo run --locked -p edgehome-inference --example document_agent
 ```
 
-The JSON output includes `policy_decision: "allow"`, a non-null `dry_run_plan` with `backend: "mock"`, and a `trace_id`. No physical device is controlled.
+The example proposes `document.stats` for the built-in `sample` document. Execution is disabled by default.
 
-### 2. Try a blocked action
+### 2. Complete the local task
 
 ```sh
-cargo run --locked -q -p edgehome-cli -- --db-path edgehome-demo.sqlite dry-run --mock "关闭燃气报警器"
+cargo run --locked -p edgehome-inference --example document_agent -- --execute-demo
 ```
 
-Expect `policy_decision: "deny"`, `dry_run_plan: null`, and a recorded trace explaining the rejection.
+The host approves this example's read-only fixture, receives **84 characters and 2 lines**, and passes the observation back to the provider for a final answer. The complete integration is in [`document_agent.rs`](crates/edgehome-inference/examples/document_agent.rs).
 
-### 3. Run the regression gate
+### 3. Connect a model
+
+Start your inference service, copy its [configuration preset](configs/inference/ollama.yaml), and replace `model` with the name actually served by that engine:
 
 ```sh
-cargo run --locked -q -p edgehome-cli -- --db-path edgehome-gate.sqlite eval cases/zh-home.yaml --gate --summary
+cargo run --locked -p edgehome-inference --example document_agent -- --config configs/inference/ollama.yaml --execute-demo
 ```
 
-A failed gate returns a nonzero exit code. For a guided walkthrough, see the [demo guide](docs/demo-walkthrough.md).
+The SDK sends a structured decision schema and validates the returned candidate again. Model quality, chat templates, and schema support affect task completion; see the [engine guide](docs/inference-engines.md) and [actual model probes](docs/sdk-model-validation.md).
+
+For tasks that need only the tool's authoritative result, add `--result-only` to stop after execution. The host can use the structured receipt directly, saving a second inference call and avoiding model-written restatement errors.
+
+## Build On EdgeHome
+
+Add the crates to your Cargo application through local path dependencies, then follow the [SDK integration guide / 端侧 Agent SDK](docs/edge-agent-sdk.md).
+
+| Component | What you configure or implement |
+| --- | --- |
+| [`edgehome-runtime`](crates/edgehome-runtime/src/lib.rs) | `AgentConfig`, instance lifetime, approval, and the host-driven task loop |
+| [`edgehome-inference`](crates/edgehome-inference/src/lib.rs) | Engine, endpoint, model name, and request budgets; built-in clients handle HTTP bounds |
+| [`TypedTool`](crates/edgehome-runtime/src/tool.rs) | A Rust argument type, semantic validator, and bounded execution handler |
+| [`Journal`](crates/edgehome-runtime/src/journal.rs) | Optional persistent event storage; the default retains bounded metadata in memory |
+
+Register a few narrowly scoped tools. Derive `Deserialize` and `JsonSchema` for their arguments, reject unknown fields, and validate permissions and current state in the validator. The same argument type supplies the model-facing schema and host-side deserialization.
+
+Drive the application through `prompt` → proposal → approved `execute` → `continue_run`. Each turn returns a tool proposal, final answer, or clarification. Tools receive a time and output budget; application handlers must enforce these during their own I/O.
+
+New domains do not require edits to the SDK's core types. The smart-home application can continue using its existing registry and adapters; these are not automatically imported into the generic tool registry.
+
+## Inference Engines
+
+| Preset | Intended role | Validation in this repository |
+| --- | --- | --- |
+| [Ollama](configs/inference/ollama.yaml) | Local development and model management | HTTP contract tests and documented real-model probes |
+| [llama.cpp](configs/inference/llama-cpp.yaml) | GGUF deployment on CPU/ARM and edge systems | HTTP contract tests; target-device qualification remains open |
+| [LM Studio](configs/inference/lm-studio.yaml) | Desktop model loading and local development | HTTP contract tests |
+| [vLLM](configs/inference/vllm.yaml) | Server-side inference for higher concurrency | HTTP contract tests |
+| [SGLang](configs/inference/sglang.yaml) | Optional high-throughput server backend | HTTP contract tests |
+| [OpenAI-compatible](configs/inference/openai-compatible.yaml) | Other services implementing the documented contract | Shared protocol tests; service-specific validation required |
+
+Ollama is the default development path; llama.cpp is the priority for edge deployment validation. These are engineering priorities, not a market-share ranking. You select one inference service for a deployment; the SDK does not require these engines to run together.
+
+Presets share two wire protocols: Ollama `/api/chat` and OpenAI-compatible `/chat/completions`. Both request schema-constrained JSON without relying on native tool-calling templates. The client enforces request deadlines and response-byte limits, including chunked responses, and reports truncation or refusal explicitly. See [protocol details and official sources](docs/inference-engines.md).
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    A[User command] --> B[Input guard\nMemory context]
-    B --> C[MiniCPM / Mock\nCandidate JSON]
-    C --> D[Output governance\nSchema + normalization]
-    D --> E[Device registry\nCapability + policy gates]
-    E --> F[Dry-run plan\nBackend adapter]
-    F -. Explicit opt-in .-> G[Backend executor]
-    D -.-> T[Trace / replay / eval]
-    E -.-> T
-    F -.-> T
-    G -.-> T
+    H[Host application] --> A[Agent runtime]
+    A <--> M[Model provider]
+    A --> V[Typed arguments and policy]
+    V --> P[Pending plan]
+    P --> H
+    H --> X[Approved execution]
+    X --> T[Registered tool]
+    T --> O[Bounded observation]
+    O --> A
+    A -.-> J[Event journal]
 ```
 
-**MiniCPM proposes. Rust decides. Adapters translate.**
+The host owns identity, approval, credentials, and domain policy. The runtime retains one private pending plan; previews cannot change it. A new prompt, cancellation, or expiry invalidates the old plan. Validation runs again before dispatch.
 
-- **Model:** proposes intent, room, device alias, action, and parameter slots. It does not own device IDs, backend routes, credentials, or risk policy.
-- **Harness:** validates the candidate, applies deterministic rule repair where available, resolves devices and memory references, and checks capabilities and policy.
-- **Adapters:** translate accepted plans into backend-specific payloads using configured routes.
-- **Observability:** records decisions and failures for replay and evaluation. Release evidence checks engineering quality.
+A plan permits at most one dispatch attempt within its instance. A failed handler, late response, or oversized tool result yields `OutcomeUnknown` and stops continuation. The runtime does not retry side effects. A start-event failure blocks dispatch; a completion-event failure is reported separately and cannot make the consumed plan reusable.
 
-See [Architecture V2](docs/architecture-v2.md) and the [command pipeline contract](docs/command-pipeline-contract.md) for the full design.
+Tasks requiring external facts can set `require_tool_observation: true` to reject final answers before a successful tool result. This establishes that an observation exists; answer correctness still needs application-level evaluation.
 
-## Command Contract
+## Resource Model
 
-| Stage | Type | Responsibility |
-| --- | --- | --- |
-| Candidate | `ModelCandidate` | Untrusted, backend-neutral model proposal |
-| Normalized command | `NormalizedCommand` | Parsed slots; still needs resolution and gates |
-| Gated command | `GatedCommand` | Gate evaluation paired with the command |
-| Plan | `ExecutionPlan` | Target, action, parameters, and policy for planning |
-| Adapter output | `DryRunPlan.payload` | Backend-specific payload derived from registry mappings |
+| SDK default | Limit |
+| --- | ---: |
+| Model calls / tool dispatches | 8 / 4 per instance |
+| Registered tools | 8 |
+| Input / model candidate / tool result | 2,048 / 4,096 / 4,096 bytes |
+| Serialized context and response schema | 16,384 bytes |
+| Model / tool call budget | 15 / 10 seconds |
+| Pending-plan lifetime | 30 seconds |
+| HTTP response body | 65,536 bytes |
+| In-memory journal | Latest 128 metadata events |
 
-### Example Pipeline
+Custom providers, tools, and journals are trusted synchronous code. The runtime checks results after callbacks return and cannot forcibly interrupt them. Built-in model transport enforces limits while receiving data. Byte budgets do not cap process memory, model weights, or KV cache.
 
-For `把走廊灯调到30%`, the candidate contains user-facing slots:
+The existing smart-home CLI has a separate `low_memory` profile and [2GB memory budget](docs/2gb-memory-budget.md). Its measurements and limits do not establish the generic SDK's footprint on a physical edge device.
 
-```json
-{
-  "intent": "control_device",
-  "room": "hallway",
-  "device_alias": "走廊灯",
-  "device_type": "light",
-  "action": "set_brightness",
-  "params": { "brightness": 30 }
-}
-```
+## Smart-Home Reference
 
-*Illustrative slot excerpt; see the [full schema contract](docs/command-pipeline-contract.md).*
-
-With a Home Assistant registry mapping, the adapter can produce a service-call payload:
-
-```json
-{
-  "entity_id": "light.hallway",
-  "brightness_pct": 30
-}
-```
-
-The adapter selects `light.turn_on`; `entity_id` comes from the registry. Neither is entrusted to the model. See [golden payload examples](docs/home-assistant-golden-payloads.md).
-
-## Backend Support Matrix
-
-| Backend | Implemented | Integration boundary |
-| --- | --- | --- |
-| **Mock** | Deterministic plans and simulated execution | Local demos and regression tests |
-| **Home Assistant** | Service payloads, opt-in REST execution, route checks, optional state readback | Configured HA instance and supported services |
-| **MQTT** | Topic/payload translation and guarded publish | Configured broker, routes, and downstream payload schema |
-| **MIoT / Xiaomi** | Bridge requests and opt-in bridge execution | Requires a private MIoT bridge and device mappings |
-| **Matter** | Controller-bridge requests and opt-in bridge execution | Requires a private Matter controller bridge |
-
-Backend execution paths have local transport-fixture tests. They do not establish universal device support or real Xiaomi/Matter hardware validation. Unsupported targets fail closed.
-
-Check routes and configuration without contacting devices:
+The original `edgehome-agent::AgentRuntime` and CLI remain available as a domain-specific reference. They include device registry resolution, capability and risk policies, SQLite traces, replay, and adapter payload translation.
 
 ```sh
-cargo run --locked -q -p edgehome-cli -- backend check --backend home_assistant --registry configs/devices.home_assistant.example.yaml
+cargo run --locked -p edgehome-agent --example bounded_agent
+cargo run --locked -p edgehome-agent --example bounded_agent -- --execute-mock
+cargo run --locked -q -p edgehome-cli -- --db-path edgehome-gate.sqlite eval cases/zh-home.yaml --gate --summary
 ```
 
-<details>
-<summary>Readiness commands for the other backend examples</summary>
+| Backend | Implemented boundary |
+| --- | --- |
+| Mock | Deterministic plans and simulated execution |
+| Home Assistant | Service payloads, opt-in REST execution, route checks, optional state readback |
+| MQTT | Topic/payload translation and guarded publish |
+| MIoT / Xiaomi | Bridge requests; requires a private bridge and device mappings |
+| Matter | Controller-bridge requests; requires a private controller bridge |
 
-```sh
-cargo run --locked -q -p edgehome-cli -- backend check --backend mqtt --registry configs/devices.mqtt.example.yaml
-cargo run --locked -q -p edgehome-cli -- backend check --backend miot --registry configs/devices.miot.example.yaml
-cargo run --locked -q -p edgehome-cli -- backend check --backend matter --registry configs/devices.matter.example.yaml
-```
+Backend fixtures establish transport behavior, not universal device compatibility. The reference rejects unsupported time-conditioned dispatch and keeps real execution disabled by default. See the [agent reference](docs/agent-reference.md), [adapter contract](docs/backend-adapter-contract.md), and [demo guide](docs/demo-walkthrough.md).
 
-These checks validate routes, configuration, execution switches, and secret availability. They never publish messages or contact bridges.
+## Verification
 
-</details>
+The generic SDK has runtime boundary tests, local HTTP contract tests, and a deterministic document example. Actual Ollama probes are recorded separately in the [SDK model validation report](docs/sdk-model-validation.md), including incomplete tasks and rejected candidates.
 
-### Home Assistant Boundary
-
-Model prompts do not include HA tokens, entity IDs, service paths, or private backend URLs. Registry and adapter configuration own routing. See the [gateway guide](docs/home-assistant-gateway.md) and [deployment modes](docs/deployment-modes.md).
-
-### Explicit Execute
-
-Real execution uses a fresh, previously recorded dry-run trace:
-
-```sh
-cargo run --locked -q -p edgehome-cli -- --db-path edgehome-demo.sqlite execute <trace_id> --confirm --backend-config private/backend.yaml
-```
-
-Replace `<trace_id>` with the returned ID. The CLI rejects traces older than 600 seconds and traces already marked as successfully executed, then applies confirmation/risk checks. Public configurations keep `execute_enabled: false`; a private backend configuration must explicitly enable execution. Keep credentials outside the repository.
-
-Backend responses and execution failures are recorded as redacted evidence. Home Assistant readback captures a state summary; it is not a guarantee that a physical device reached the requested state. Time conditions in command slots are not an implemented scheduler; the shared execution transaction rejects plans with `time_after` before dispatch.
-
-## Running With MiniCPM Through Ollama
-
-Make the configured model available in a running Ollama instance:
-
-```sh
-ollama pull openbmb/minicpm5:1b
-```
-
-If Ollama is not already running, start `ollama serve` in a separate terminal. Check `ollama list` and match `model_name` in your runtime profile to the installed tag.
-
-Run without `--mock`:
-
-```sh
-cargo run --locked -q -p edgehome-cli -- --db-path edgehome-ollama.sqlite dry-run "把客厅灯打开"
-```
-
-The real model goes through the same validation and policy pipeline, with output governance before normalization. Follow the [real-model evaluation workflow](docs/real-minicpm-eval-report.md) to measure model+harness behavior separately from mock regressions.
-
-## Release Gate Snapshot
-
-Two evaluations answer different questions:
-
-| | Deterministic mock gate | Recorded real-model run |
-| --- | --- | --- |
-| Purpose | Detect harness regressions | Measure MiniCPM + harness behavior |
-| Cases | 108 across 12 categories | 108 |
-| Passing | 108 / 108 | 104 / 108 |
-| False-allow rate | 0.0 | 0.0 |
-| Fail-closed rate | 1.0 | 1.0 |
-| Trace coverage | 1.0 | 1.0 |
-| Rule repair / fallback | Deterministic rule-generated candidates | 84 / 108 cases |
-| Source | [Release baseline](docs/public-release-baseline.md) | [2026-07-04 report](docs/real-minicpm-eval-report.md) |
-
-The mock gate also requires full schema validity and zero detected output loops. Coverage includes normal control, slots, air conditioners, short/long memory, rejected memory writes, high-risk policy, fail-closed behavior, capabilities, unknown devices, input guards, and backend boundaries.
-
-**These are harness evaluation results, not standalone model accuracy or proof of production readiness.** The real-model score includes deterministic repair/fallback and is a historical run, not a live benchmark.
-
-## Release Evidence Bundle
-
-Run the local release checks and generate a reproducible demo bundle with PowerShell:
-
-```powershell
-./scripts/release-check.ps1 -WithDemoSmoke
-```
-
-The git-ignored `artifacts/release-demo-smoke/` directory contains a Markdown report, JSON traces and evaluation output, backend readiness results, a focused output-governor test, and a SHA-256 manifest tied to the Git revision.
-
-Verify a bundle independently:
-
-```powershell
-./scripts/verify-demo-evidence.ps1 -EvidenceDir artifacts/release-demo-smoke -RequireCleanManifest
-```
-
-Strict verification requires a manifest generated from a clean tracked worktree. See the [evidence guide](docs/release-evidence.md) and [manifest schema](docs/schemas/demo-evidence-manifest.schema.json).
-
-## Customization Model
-
-Keep model JSON canonical; customize the deterministic layers below it:
-
-1. Add devices and aliases to the **registry**.
-2. Define supported **capabilities and value ranges**.
-3. Set device **risk levels** and review the policy behavior.
-4. Configure backend **routes and credentials** outside the prompt.
-5. Add adapter mappings with **golden payload and fail-closed tests**.
-
-Start with the [customization guide](docs/customization.md), [adapter contract](docs/backend-adapter-contract.md), and [bridge API contract](docs/bridge-api-contract.md).
-
-### Low-Memory Profile
-
-The default `low_memory` profile targets constrained **2GB–4GB** environments: 1,024 context tokens, up to 128 output tokens, three short-memory turns, and a 500-character context budget.
-
-```sh
-cargo run --locked -q -p edgehome-cli -- config show
-cargo run --locked -q -p edgehome-cli -- config pressure --free-memory-mb 256
-```
-
-The pressure command demonstrates the resource-policy decision; it does not establish continuous runtime memory monitoring. QEMU pre-validation is documented separately from physical hardware testing: [profile](docs/2gb-profile.md), [memory budget](docs/2gb-memory-budget.md), [QEMU report](docs/qemu-embedded-validation-report.md).
-
-## Not Claimed
-
-This project does not claim production smart-home gateway readiness, universal Xiaomi or Matter support, an embedded Matter controller, or long-running validation on a physical 2GB ARM board. It does not replace Home Assistant or Mi Home. Real-device execution remains explicit opt-in.
-
-## Repository Layout
-
-```text
-crates/
-  edgehome-agent      Embeddable bounded agent and reference example
-  edgehome-core       Command types and schemas
-  edgehome-config     Runtime profiles
-  edgehome-parser     Input guard, JSON parsing, normalization
-  edgehome-registry   Devices, aliases, capabilities
-  edgehome-gate       Policy and transition gates
-  edgehome-memory     Short references and long-term preferences
-  edgehome-ollama     Model adapter and output governor
-  edgehome-executor   Planning and backend adapters
-  edgehome-storage    SQLite storage
-  edgehome-trace      Trace, audit, replay
-  edgehome-eval       Metrics and release gates
-  edgehome-cli        Pipeline and command-line entry point
-cases/                Regression cases
-configs/              Runtime and device examples
-scripts/              Demo, release, and embedded validation
-docs/                 Architecture, contracts, and evidence guides
-```
-
-## Development Checks
+The smart-home reference has its own 108-case deterministic gate. Its [recorded MiniCPM run](docs/real-minicpm-eval-report.md) passed 104/108 cases with rule repair or fallback in 84 cases. Those figures describe the existing domain pipeline; they are not general SDK accuracy or standalone model scores.
 
 ```sh
 cargo fmt --all --check
 cargo clippy --locked --workspace --all-targets -- -D warnings
 cargo test --locked --workspace
-cargo run --locked -q -p edgehome-cli -- --db-path edgehome-gate.sqlite eval cases/zh-home.yaml --gate --summary
 git diff --check
 ```
 
-`./scripts/release-check.ps1` wraps these commands with repository hygiene, public-claim lint, schema syntax checks, and backend readiness checks. GitHub Actions runs the core Rust checks, mock gate, schema/hygiene checks, and backend checks on pushes and pull requests to `main`.
+`./scripts/release-check.ps1` also runs examples, repository hygiene, claim lint, schema checks, backend readiness, and the domain evaluation gate. Add `-WithDemoSmoke` to generate the existing smart-home [release evidence bundle](docs/release-evidence.md). GitHub Actions runs the core checks on pushes and pull requests to `main`.
+
+## Project Status
+
+EdgeHome is a reference SDK under active development. The current delivery is a Rust library and runnable examples for short, host-controlled agent tasks. APIs may evolve as integrations and hardware evidence improve.
+
+Go/Python RPC bindings, skill-package loading, process sandboxing, restart recovery, and sustained physical-device benchmarks remain future work. The implementation uses `std`; bare-metal MCU and `no_std` targets are outside the current scope. No Pi extension-package compatibility or production gateway qualification is claimed.
 
 ## Documentation
 
-| Explore | Read |
+| Area | Resources |
 | --- | --- |
-| Start here | [Documentation index](docs/README.md) · [Demo walkthrough](docs/demo-walkthrough.md) · [One-page overview](docs/waic-one-page.md) |
-| Embed the pattern | [Bounded agent reference](docs/agent-reference.md) · [Runnable example](crates/edgehome-agent/examples/bounded_agent.rs) |
-| Understand the design | [Architecture](docs/architecture-v2.md) · [Command contract](docs/command-pipeline-contract.md) · [Model parameters](docs/model-parameters.md) |
-| Connect a backend | [Home Assistant](docs/home-assistant-gateway.md) · [MQTT](docs/mqtt-guarded-publish.md) · [MIoT](docs/miot-bridge-adapter.md) · [Matter](docs/matter-bridge-adapter.md) |
-| Evaluate and release | [Real-model report](docs/real-minicpm-eval-report.md) · [Release evidence](docs/release-evidence.md) · [Release checklist](docs/release-checklist.md) |
+| Start building | [SDK guide / 中文](docs/edge-agent-sdk.md) · [Document example](crates/edgehome-inference/examples/document_agent.rs) |
+| Model integration | [Engines and configuration / 中文](docs/inference-engines.md) · [Model validation](docs/sdk-model-validation.md) |
+| Smart-home reference | [Agent reference](docs/agent-reference.md) · [Architecture](docs/architecture-v2.md) · [Customization](docs/customization.md) |
+| Devices | [Home Assistant](docs/home-assistant-gateway.md) · [MQTT](docs/mqtt-guarded-publish.md) · [MIoT](docs/miot-bridge-adapter.md) · [Matter](docs/matter-bridge-adapter.md) |
+| Engineering | [Documentation index](docs/README.md) · [Roadmap](docs/roadmap.md) · [Release checklist](docs/release-checklist.md) |
 
-### Roadmap And Governance
+## Contributing
 
-See the [roadmap](docs/roadmap.md) for next steps and the [public release baseline](docs/public-release-baseline.md) for evidence requirements. Contributions follow [CONTRIBUTING.md](CONTRIBUTING.md); changes are tracked in the [changelog](CHANGELOG.md). Report safety issues through the [security policy](SECURITY.md). Community discussions follow the [code of conduct](CODE_OF_CONDUCT.md).
+Contributions are welcome in application tools, inference compatibility, edge-device measurements, and reproducible model failures. Start with the [contribution guide](CONTRIBUTING.md). Changes are tracked in the [changelog](CHANGELOG.md); report security issues through the [security policy](SECURITY.md).
+
+Community participation follows the [code of conduct](CODE_OF_CONDUCT.md). Capability claims should match the tests and measurements described in the [public baseline](docs/public-release-baseline.md).
 
 ## License
 
-Dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your option. Brand asset typography uses SIL Open Font License fonts; see the [asset notes](docs/assets/README.md).
+Licensed under the [MIT License](LICENSE). You may use, modify, distribute, and sell the software, including in commercial and closed-source projects, provided you retain the copyright and license notice. The software is provided without warranty.
+
+Third-party dependencies and font materials retain their own licenses; see the [asset notes](docs/assets/README.md) for font attribution.

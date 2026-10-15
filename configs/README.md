@@ -4,6 +4,10 @@
 
 不要在本目录提交真实 secret。
 
+## 通用 Agent SDK
+
+`inference/` 提供 Ollama、llama.cpp、LM Studio、vLLM、SGLang 和 OpenAI-compatible 服务的模型配置预设。替换占位模型名后配合 `document_agent --config` 使用；详见[引擎接入说明](../docs/inference-engines.md)。这些预设供新 SDK 使用，与下面的家居 CLI profile 分开。
+
 ## 当前文件
 
 ```text

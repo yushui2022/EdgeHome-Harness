@@ -94,6 +94,11 @@ jobs:
           cargo run --locked -q -p edgehome-agent --example bounded_agent
           cargo run --locked -q -p edgehome-agent --example bounded_agent -- --execute-mock
 
+      - name: Domain-independent SDK examples
+        run: |
+          cargo run --locked -q -p edgehome-inference --example document_agent
+          cargo run --locked -q -p edgehome-inference --example document_agent -- --execute-demo
+
       - name: JSON schema syntax
         run: |
           python - <<'PY'

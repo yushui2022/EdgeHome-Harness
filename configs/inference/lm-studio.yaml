@@ -1,0 +1,8 @@
+# Load a model and start LM Studio's local server first.
+engine: lm_studio
+base_url: http://127.0.0.1:1234/v1
+model: your-loaded-model
+connect_timeout_ms: 2000
+request_timeout_ms: 15000
+max_response_bytes: 65536
+max_output_tokens: 256

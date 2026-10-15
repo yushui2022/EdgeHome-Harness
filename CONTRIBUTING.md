@@ -4,6 +4,12 @@ Thank you for improving EdgeHome Harness. This project is intentionally narrow:
 a small local model proposes backend-neutral smart-home command candidates, and
 Rust decides what is valid, safe, traceable, and translatable.
 
+## Contribution License
+
+Project contributions are provided under the [MIT License](LICENSE). Preserve
+existing copyright notices and include applicable license and attribution
+notices when adding third-party materials.
+
 ## Non-Negotiable Boundaries
 
 Every contribution must preserve these boundaries:

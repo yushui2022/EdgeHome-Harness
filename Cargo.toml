@@ -1,5 +1,7 @@
 [workspace]
 members = [
+    "crates/edgehome-runtime",
+    "crates/edgehome-inference",
     "crates/edgehome-agent",
     "crates/edgehome-core",
     "crates/edgehome-config",
@@ -19,7 +21,7 @@ resolver = "3"
 [workspace.package]
 edition = "2024"
 rust-version = "1.95"
-license = "MIT OR Apache-2.0"
+license = "MIT"
 repository = "https://github.com/yushui2022/EdgeHome-Harness"
 
 [workspace.dependencies]

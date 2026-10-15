@@ -1,0 +1,10 @@
+# Replace model with an installed name from `ollama list`.
+engine: ollama
+# For a thinking model that supports Ollama's toggle, optionally set think: false.
+base_url: http://127.0.0.1:11434
+model: your-installed-model
+connect_timeout_ms: 2000
+request_timeout_ms: 15000
+max_response_bytes: 65536
+max_output_tokens: 256
+context_tokens: 2048
