@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">EdgeHome symbol</title>
+  <desc id="desc">An architectural home mark with a green crossbar and threshold.</desc>
+<path d="M128 30 218 98V204a22 22 0 0 1-22 22h-43v-66h-50v66H60a22 22 0 0 1-22-22V98Z" fill="#101F2C"/>
+    <path d="M80 116h96v24H80z" fill="#159A73"/>
+    <path d="M116 180h24v24h-24z" fill="#159A73"/>
+</svg>
