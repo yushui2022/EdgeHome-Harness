@@ -1,8 +1,5 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/edgehome-banner-dark.svg" />
-    <img src="docs/assets/edgehome-banner.svg" width="1280" alt="EdgeHome Harness — Small model. Strong boundaries. A Rust safety harness for local home agents." />
-  </picture>
+  <img src="docs/assets/edgehome-cover.png" width="1280" alt="EdgeHome Harness — Small model. Strong boundaries. Concept artwork of a warmly lit home connected to a local edge-computing module." />
 </p>
 
 <p align="center">
