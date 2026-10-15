@@ -35,6 +35,8 @@ ModelOutput != Command
 
 This is an engineering prototype for MiniCPM / MiniCPM5-class local 1B models. Real-device execution is **disabled by default**; the first-run experience uses deterministic mocks and dry-run plans.
 
+The project is also a **reference architecture for bounded agents on constrained devices**: keep model proposals separate from host-owned budgets, confirmation, and device execution. Smart-home commands are the concrete domain used to demonstrate that pattern.
+
 ## At A Glance
 
 | Validate | Control | Inspect |
@@ -42,6 +44,21 @@ This is an engineering prototype for MiniCPM / MiniCPM5-class local 1B models. R
 | Bounded model output and schema checks | Registry-owned device IDs and backend routes | SQLite trace, audit, and replay |
 | Semantic normalization and capability checks | Deterministic policy and confirmation gates | 108-case mock release gate |
 | Short-reference and explicit alias memory | Dry-run plans with opt-in backend execution | Exportable evidence with SHA-256 manifests |
+
+## Reusable Agent Pattern
+
+The `edgehome-agent` crate provides an embeddable, single-action runtime with proposal/output/execution budgets, one private pending plan, host confirmation, a monotonic expiry, and explicit handling of unknown execution outcomes. It reuses the existing registry, gates, planner, executor, and trace components.
+
+Run the hardware-free reference example:
+
+```sh
+cargo run --locked -p edgehome-agent --example bounded_agent
+cargo run --locked -p edgehome-agent --example bounded_agent -- --execute-mock
+```
+
+The first command only proposes plans; the second explicitly enables simulated execution and demonstrates replay rejection. Both use a deterministic candidate source, not a real model. Replace `CandidateProvider` and `Executor` to integrate your model and device transport.
+
+Read the [agent reference guide / 受限 Agent 范式](docs/agent-reference.md) for ownership boundaries, failure semantics, integration steps, and limitations. This runtime is a Rust `std` / SQLite application component, not a bare-metal MCU runtime. The existing CLI remains the evaluation and backend-debugging path; its behavior is documented separately.
 
 ## Quick Start
 
@@ -181,7 +198,7 @@ cargo run --locked -q -p edgehome-cli -- --db-path edgehome-demo.sqlite execute 
 
 Replace `<trace_id>` with the returned ID. The CLI rejects traces older than 600 seconds and traces already marked as successfully executed, then applies confirmation/risk checks. Public configurations keep `execute_enabled: false`; a private backend configuration must explicitly enable execution. Keep credentials outside the repository.
 
-Backend responses and execution failures are recorded as redacted evidence. Home Assistant readback captures a state summary; it is not a guarantee that a physical device reached the requested state. Time conditions in command slots are not an implemented scheduler; use immediate commands for backend execution.
+Backend responses and execution failures are recorded as redacted evidence. Home Assistant readback captures a state summary; it is not a guarantee that a physical device reached the requested state. Time conditions in command slots are not an implemented scheduler; the shared execution transaction rejects plans with `time_after` before dispatch.
 
 ## Running With MiniCPM Through Ollama
 
@@ -269,6 +286,7 @@ This project does not claim production smart-home gateway readiness, universal X
 
 ```text
 crates/
+  edgehome-agent      Embeddable bounded agent and reference example
   edgehome-core       Command types and schemas
   edgehome-config     Runtime profiles
   edgehome-parser     Input guard, JSON parsing, normalization
@@ -304,6 +322,7 @@ git diff --check
 | Explore | Read |
 | --- | --- |
 | Start here | [Documentation index](docs/README.md) · [Demo walkthrough](docs/demo-walkthrough.md) · [One-page overview](docs/waic-one-page.md) |
+| Embed the pattern | [Bounded agent reference](docs/agent-reference.md) · [Runnable example](crates/edgehome-agent/examples/bounded_agent.rs) |
 | Understand the design | [Architecture](docs/architecture-v2.md) · [Command contract](docs/command-pipeline-contract.md) · [Model parameters](docs/model-parameters.md) |
 | Connect a backend | [Home Assistant](docs/home-assistant-gateway.md) · [MQTT](docs/mqtt-guarded-publish.md) · [MIoT](docs/miot-bridge-adapter.md) · [Matter](docs/matter-bridge-adapter.md) |
 | Evaluate and release | [Real-model report](docs/real-minicpm-eval-report.md) · [Release evidence](docs/release-evidence.md) · [Release checklist](docs/release-checklist.md) |

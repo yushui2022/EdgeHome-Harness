@@ -75,6 +75,9 @@ pub enum ExecutorError {
     #[error("execution plan is a duplicate of a recent plan")]
     DuplicatePlan,
 
+    #[error("time-conditioned execution requires a scheduler; immediate dispatch is rejected")]
+    UnsupportedTimeCondition,
+
     #[error("rate limit rejected execution plan")]
     RateLimited,
 
@@ -413,10 +416,16 @@ impl ExecutionTransaction {
         self.transition_gate
             .check(TransitionAction::Execute, &context)?;
 
+        if dry_run.plan.params.time_after.is_some() {
+            return Err(ExecutorError::UnsupportedTimeCondition);
+        }
+
         self.rate_limiter.check(&dry_run.plan, now)?;
         self.idempotency.remember_or_reject(&dry_run.plan)?;
 
-        let result = executor.execute(&dry_run.plan)?;
+        let mut execution_plan = dry_run.plan.clone();
+        execution_plan.dry_run = false;
+        let result = executor.execute(&execution_plan)?;
         if !self.post_state_verifier.verify(&dry_run.plan, &result) {
             return Err(ExecutorError::PostStateVerificationFailed);
         }
@@ -580,6 +589,11 @@ fn operation_name(action: &Action) -> &'static str {
 }
 
 fn plan_fingerprint(plan: &ExecutionPlan) -> String {
+    // A new approved trace is a new request, even if it repeats an earlier
+    // on/off action. Reusing an existing request ID must remain a duplicate.
+    if let Some(trace_id) = &plan.trace_id {
+        return format!("trace:{trace_id}");
+    }
     serde_json::to_string(&json!({
         "target": plan.target,
         "action": plan.action,
@@ -1126,6 +1140,31 @@ mod tests {
     }
 
     #[test]
+    fn transaction_rejects_time_condition_before_calling_executor() {
+        struct MustNotExecute;
+        impl Executor for MustNotExecute {
+            fn dry_run(&self, plan: &DryRunPlan) -> ExecutorResult<DryRunPlan> {
+                Ok(plan.clone())
+            }
+
+            fn execute(&self, _plan: &ExecutionPlan) -> ExecutorResult<ExecutionResult> {
+                panic!("time-conditioned plan must not reach backend");
+            }
+        }
+        let mut transaction = ExecutionTransaction::default();
+        let error = transaction
+            .execute(
+                &MustNotExecute,
+                &dry_run_plan(),
+                RiskLevel::Low,
+                true,
+                OffsetDateTime::now_utc(),
+            )
+            .expect_err("scheduler is not implemented");
+        assert!(matches!(error, ExecutorError::UnsupportedTimeCondition));
+    }
+
+    #[test]
     fn idempotency_checker_rejects_duplicate_plan() {
         let plan = dry_run_plan();
         let mut checker = IdempotencyChecker::default();
@@ -1139,6 +1178,22 @@ mod tests {
 
         assert!(matches!(error, ExecutorError::DuplicatePlan));
         assert_eq!(checker.len(), 1);
+    }
+
+    #[test]
+    fn idempotency_uses_request_identity_for_traced_plans() {
+        let mut plan = dry_run_plan().plan;
+        let mut checker = IdempotencyChecker::default();
+        checker.remember_or_reject(&plan).unwrap();
+        plan.action = Action::TurnOff;
+        assert!(matches!(
+            checker.remember_or_reject(&plan),
+            Err(ExecutorError::DuplicatePlan)
+        ));
+        plan.trace_id = Some("tr_new_request".to_owned());
+        checker
+            .remember_or_reject(&plan)
+            .expect("separately approved request");
     }
 
     #[test]

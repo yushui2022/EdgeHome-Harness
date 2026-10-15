@@ -3,6 +3,7 @@ param(
         "README.md",
         "CHANGELOG.md",
         "docs\README.md",
+        "docs\agent-reference.md",
         "docs\waic-one-page.md",
         "docs\roadmap.md",
         "docs\release-checklist.md",

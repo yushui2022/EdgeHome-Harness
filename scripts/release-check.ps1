@@ -158,6 +158,13 @@ try {
     Invoke-Native "Clippy" (@("cargo", "clippy") + $CargoLockArgs + @("--workspace", "--all-targets", "--", "-D", "warnings"))
     Invoke-Native "Workspace tests" (@("cargo", "test") + $CargoLockArgs + @("--workspace"))
 
+    Invoke-Native "Bounded agent preview example" (@("cargo", "run") + $CargoLockArgs + @(
+        "-q", "-p", "edgehome-agent", "--example", "bounded_agent"
+    ))
+    Invoke-Native "Bounded agent simulated execution example" (@("cargo", "run") + $CargoLockArgs + @(
+        "-q", "-p", "edgehome-agent", "--example", "bounded_agent", "--", "--execute-mock"
+    ))
+
     if (-not $SkipEval) {
         Invoke-Native "Release eval gate" (@(
             "cargo", "run"

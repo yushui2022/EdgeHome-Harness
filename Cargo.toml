@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "crates/edgehome-agent",
     "crates/edgehome-core",
     "crates/edgehome-config",
     "crates/edgehome-storage",

@@ -5,6 +5,8 @@ release evidence for EdgeHome Harness.
 
 Core documents:
 
+- [受限 Agent 参考范式 / Bounded agent reference](agent-reference.md): embeddable runtime, resource budgets, host confirmation, execution outcomes, and a hardware-free example.
+
 ```text
 architecture-v2.md
   V2 architecture: runtime memory, trace/replay/eval observability, and the main

@@ -89,6 +89,11 @@ jobs:
       - name: Tests
         run: cargo test --workspace --locked
 
+      - name: Bounded agent reference examples
+        run: |
+          cargo run --locked -q -p edgehome-agent --example bounded_agent
+          cargo run --locked -q -p edgehome-agent --example bounded_agent -- --execute-mock
+
       - name: JSON schema syntax
         run: |
           python - <<'PY'

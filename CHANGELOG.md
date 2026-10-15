@@ -9,6 +9,17 @@ implemented code, tests, docs, and eval evidence.
 
 ### Added
 
+- `edgehome-agent`: an embeddable, bounded single-action runtime with host-owned
+  budgets, confirmation, private expiring plans, instance-local execution state,
+  and explicit unknown-outcome handling without automatic execution retries.
+- Hardware-free agent example, fault-injection boundary tests, and a Chinese
+  reference guide for adapting the pattern to constrained-device applications.
+- Shared execution transaction rejects unsupported time-conditioned dispatch
+  before contacting a backend; dry-run slot extraction remains available.
+- Traced execution uses trace identity for idempotency, allowing separately
+  approved repeated actions after cooldown; dispatched plan copies are marked
+  as execution rather than dry-run.
+
 - GitHub Actions CI for formatting, Clippy, workspace tests, and the release
   eval gate.
 - Contributor, security, roadmap, release checklist, and GitHub issue/PR

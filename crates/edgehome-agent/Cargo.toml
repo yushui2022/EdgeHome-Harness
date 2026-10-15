@@ -1,0 +1,22 @@
+[package]
+name = "edgehome-agent"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Bounded, host-controlled agent runtime for the EdgeHome reference architecture"
+
+[dependencies]
+edgehome-core = { path = "../edgehome-core" }
+edgehome-executor = { path = "../edgehome-executor" }
+edgehome-gate = { path = "../edgehome-gate" }
+edgehome-ollama = { path = "../edgehome-ollama" }
+edgehome-parser = { path = "../edgehome-parser" }
+edgehome-registry = { path = "../edgehome-registry" }
+edgehome-storage = { path = "../edgehome-storage" }
+edgehome-trace = { path = "../edgehome-trace" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+time.workspace = true
