@@ -1,0 +1,16 @@
+# Replace this model name with one actually served by your local engine.
+inference:
+  engine: ollama
+  base_url: http://127.0.0.1:11434
+  model: your-installed-model
+  connect_timeout_ms: 2000
+  request_timeout_ms: 15000
+  max_response_bytes: 65536
+  max_output_tokens: 256
+  context_tokens: 2048
+  # think: false  # Only for supported Ollama thinking models.
+runtime:
+  max_model_calls: 8
+  max_tool_calls: 4
+  max_context_bytes: 16384
+  require_tool_observation: true

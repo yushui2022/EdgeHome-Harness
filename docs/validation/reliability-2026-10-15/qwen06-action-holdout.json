@@ -1,0 +1,4021 @@
+{
+  "cases": [
+    {
+      "category": "document",
+      "elapsed_ms": 427,
+      "id": "doc-paraphrase",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 84,
+            "lines": 2
+          },
+          "plan_id": "d82a3973-9caa-4989-aaea-e8c62f15a470",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "sample"
+            },
+            "plan_id": "d82a3973-9caa-4989-aaea-e8c62f15a470",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 426,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"sample\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 394,
+      "id": "doc-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document name or provide a value for the document.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 393,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"Please specify the document name or provide a value for the document.\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 398,
+      "id": "sensor-negation",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 18.0
+          },
+          "plan_id": "69adb687-d338-45f6-bb91-f10c21075c3a",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "outside"
+            },
+            "plan_id": "69adb687-d338-45f6-bb91-f10c21075c3a",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 397,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"outside\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 504,
+      "id": "length-zero",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "mm",
+            "value": 0.0
+          },
+          "plan_id": "864aafad-52bc-44b9-b632-67b5131f2ac5",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "m",
+              "to": "mm",
+              "value": 0
+            },
+            "plan_id": "864aafad-52bc-44b9-b632-67b5131f2ac5",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 504,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"m\",\n    \"to\": \"mm\",\n    \"value\": 0\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 381,
+      "id": "doc-zh-negation",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 84,
+            "lines": 2
+          },
+          "plan_id": "4129c73e-d360-4ac5-91be-820b928083bc",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "sample"
+            },
+            "plan_id": "4129c73e-d360-4ac5-91be-820b928083bc",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 380,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"sample\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 491,
+      "id": "length-unsupported",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "cm",
+            "value": 0.2
+          },
+          "plan_id": "7796f439-71e2-4c17-ab5c-fdbd337000ec",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "mm",
+              "to": "cm",
+              "value": 2
+            },
+            "plan_id": "7796f439-71e2-4c17-ab5c-fdbd337000ec",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "unexpected_proposal",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 490,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"mm\",\n    \"to\": \"cm\",\n    \"value\": 2\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": true
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 374,
+      "id": "sensor-paraphrase",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 22.5
+          },
+          "plan_id": "23996c1a-aed7-4716-ab14-5f2206b1c596",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "room"
+            },
+            "plan_id": "23996c1a-aed7-4716-ab14-5f2206b1c596",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 373,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"room\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 510,
+      "id": "length-negative",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "mm",
+            "value": -30.0
+          },
+          "plan_id": "001414ba-887b-4f9b-95c9-80f70948ff85",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "cm",
+              "to": "mm",
+              "value": -3
+            },
+            "plan_id": "001414ba-887b-4f9b-95c9-80f70948ff85",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 509,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"cm\",\n    \"to\": \"mm\",\n    \"value\": -3\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 394,
+      "id": "doc-en",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 0,
+            "lines": 0
+          },
+          "plan_id": "6babd789-5950-47e6-8fc3-bb5828d6d936",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "empty"
+            },
+            "plan_id": "6babd789-5950-47e6-8fc3-bb5828d6d936",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 393,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"empty\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 414,
+      "id": "sensor-unspecified",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify which temperature sensor you are reading; there is no default value.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 413,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"Please specify which temperature sensor you are reading; there is no default value.\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 375,
+      "id": "sensor-zh",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 22.5
+          },
+          "plan_id": "2fe54950-35a6-4717-bba8-5df0edc33642",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "room"
+            },
+            "plan_id": "2fe54950-35a6-4717-bba8-5df0edc33642",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 374,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"room\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 511,
+      "id": "length-missing-from",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "cm",
+            "value": 15.0
+          },
+          "plan_id": "56e96009-e687-4f78-a1c5-60927b327e90",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "cm",
+              "to": "cm",
+              "value": 15
+            },
+            "plan_id": "56e96009-e687-4f78-a1c5-60927b327e90",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "unexpected_proposal",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 510,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"cm\",\n    \"to\": \"cm\",\n    \"value\": 15\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": true
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 414,
+      "id": "sensor-en",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 18.0
+          },
+          "plan_id": "e31fea27-7063-425e-8a3e-c9c6de147850",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "outside"
+            },
+            "plan_id": "e31fea27-7063-425e-8a3e-c9c6de147850",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 414,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"outside\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 435,
+      "id": "sensor-zh-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type. The options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 435,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"Please specify the sensor type. The options are 'room' or 'outside'.\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 902,
+      "id": "doc-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 84,
+            "lines": 2
+          },
+          "plan_id": "b8d6c986-3c61-44f8-8986-8bd1dbf24770",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "sample"
+            },
+            "plan_id": "b8d6c986-3c61-44f8-8986-8bd1dbf24770",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "unexpected_proposal",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 901,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"sample\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": true
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 408,
+      "id": "sensor-unknown",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 22.5
+          },
+          "plan_id": "d00551e8-eb0f-4aca-9883-286bf6778e8f",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "room"
+            },
+            "plan_id": "d00551e8-eb0f-4aca-9883-286bf6778e8f",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "unexpected_proposal",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 407,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"room\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": true
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 407,
+      "id": "sensor-distractor",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 22.5
+          },
+          "plan_id": "617c53c4-977e-4bae-8143-a14762f88366",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "room"
+            },
+            "plan_id": "617c53c4-977e-4bae-8143-a14762f88366",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 405,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"room\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 419,
+      "id": "doc-unspecified",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify: document.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 419,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": null\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 685,
+      "id": "length-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "cm",
+            "value": 400.0
+          },
+          "plan_id": "365a28bb-c695-4dc9-8e20-968b482da90b",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "m",
+              "to": "cm",
+              "value": 4
+            },
+            "plan_id": "365a28bb-c695-4dc9-8e20-968b482da90b",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "unexpected_proposal",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 684,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"m\",\n    \"to\": \"cm\",\n    \"value\": 4\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": true
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 385,
+      "id": "doc-zh",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 84,
+            "lines": 2
+          },
+          "plan_id": "8a45a2da-c8ed-42e8-9b9a-8d82f74059f1",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "sample"
+            },
+            "plan_id": "8a45a2da-c8ed-42e8-9b9a-8d82f74059f1",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 385,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"sample\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 698,
+      "id": "sensor-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type. The options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 697,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"Please specify the sensor type. The options are 'room' or 'outside'.\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 393,
+      "id": "doc-correction",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 84,
+            "lines": 2
+          },
+          "plan_id": "172cb007-f94a-44e9-8d30-35c22d55f662",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "sample"
+            },
+            "plan_id": "172cb007-f94a-44e9-8d30-35c22d55f662",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 392,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"sample\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 536,
+      "id": "length-short",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "m",
+            "value": 2.5
+          },
+          "plan_id": "eb0fed01-298f-45ce-9e0d-11c1ff8fe351",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "mm",
+              "to": "m",
+              "value": 2500
+            },
+            "plan_id": "eb0fed01-298f-45ce-9e0d-11c1ff8fe351",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 535,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"mm\",\n    \"to\": \"m\",\n    \"value\": 2500\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 550,
+      "id": "length-missing-to",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "mm",
+            "value": 150.0
+          },
+          "plan_id": "a25f7597-3b8a-4368-8823-34a2af870f3e",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "cm",
+              "to": "mm",
+              "value": 15
+            },
+            "plan_id": "a25f7597-3b8a-4368-8823-34a2af870f3e",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "unexpected_proposal",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 549,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"cm\",\n    \"to\": \"mm\",\n    \"value\": 15\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": true
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 389,
+      "id": "sensor-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type (room or outside).",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 388,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"Please specify the sensor type (room or outside).\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 393,
+      "id": "doc-unknown",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document name you want to inspect.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 392,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"Please specify the document name you want to inspect.\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 377,
+      "id": "doc-distractor",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 0,
+            "lines": 0
+          },
+          "plan_id": "e322dbd1-769a-438b-af90-5129a6b2b6a1",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "empty"
+            },
+            "plan_id": "e322dbd1-769a-438b-af90-5129a6b2b6a1",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 376,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"empty\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 389,
+      "id": "doc-quoted",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 0,
+            "lines": 0
+          },
+          "plan_id": "c45f6674-8640-414e-82a6-0e612187d09f",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "empty"
+            },
+            "plan_id": "c45f6674-8640-414e-82a6-0e612187d09f",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 388,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"empty\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 539,
+      "id": "length-en",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "cm",
+            "value": 250.0
+          },
+          "plan_id": "72e9469a-67d4-4753-8f46-bd57c7f0168a",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "m",
+              "to": "cm",
+              "value": 2.5
+            },
+            "plan_id": "72e9469a-67d4-4753-8f46-bd57c7f0168a",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 538,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"m\",\n    \"to\": \"cm\",\n    \"value\": 2.5\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 435,
+      "id": "doc-zh-missing",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请告诉我您要统计的文档名称，例如 'sample' 或 'empty'。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 434,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"请告诉我您要统计的文档名称，例如 'sample' 或 'empty'。\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 522,
+      "id": "length-decimal",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "cm",
+            "value": 12.5
+          },
+          "plan_id": "08c25ae5-8141-4914-92e8-2f9e0909c9a1",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "mm",
+              "to": "cm",
+              "value": 125
+            },
+            "plan_id": "08c25ae5-8141-4914-92e8-2f9e0909c9a1",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 521,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"mm\",\n    \"to\": \"cm\",\n    \"value\": 125\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 526,
+      "id": "length-correction",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "cm",
+            "value": 500.0
+          },
+          "plan_id": "fb891562-388e-44c3-b0c0-6c712bc03d79",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "m",
+              "to": "cm",
+              "value": 5
+            },
+            "plan_id": "fb891562-388e-44c3-b0c0-6c712bc03d79",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 525,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"m\",\n    \"to\": \"cm\",\n    \"value\": 5\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 381,
+      "id": "sensor-quoted",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 18.0
+          },
+          "plan_id": "443b62d8-f3c3-48f6-81ab-8358755e5fc8",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "outside"
+            },
+            "plan_id": "443b62d8-f3c3-48f6-81ab-8358755e5fc8",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 380,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"outside\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 487,
+      "id": "length-distractor",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "mm",
+            "value": 70.0
+          },
+          "plan_id": "25787575-54e9-47e5-8d8d-c0c1dd8000d9",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "cm",
+              "to": "mm",
+              "value": 7
+            },
+            "plan_id": "25787575-54e9-47e5-8d8d-c0c1dd8000d9",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 486,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"cm\",\n    \"to\": \"mm\",\n    \"value\": 7\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 498,
+      "id": "length-missing-value",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify: value.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 497,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"m\",\n    \"to\": \"cm\",\n    \"value\": null\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 514,
+      "id": "length-zh",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "mm",
+            "value": 300.0
+          },
+          "plan_id": "7dd14858-bae9-430a-be14-d77c233dfe99",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "cm",
+              "to": "mm",
+              "value": 30
+            },
+            "plan_id": "7dd14858-bae9-430a-be14-d77c233dfe99",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 513,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"cm\",\n    \"to\": \"mm\",\n    \"value\": 30\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 384,
+      "id": "doc-correction",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 84,
+            "lines": 2
+          },
+          "plan_id": "e0ca7075-0fef-450e-be42-12c5b68cdb11",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "sample"
+            },
+            "plan_id": "e0ca7075-0fef-450e-be42-12c5b68cdb11",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 383,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"sample\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 371,
+      "id": "sensor-zh",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 22.5
+          },
+          "plan_id": "be4d981b-1f2a-48d9-b2bf-5e63a7afaaa2",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "room"
+            },
+            "plan_id": "be4d981b-1f2a-48d9-b2bf-5e63a7afaaa2",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 370,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"room\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 407,
+      "id": "doc-unspecified",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify: document.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 406,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": null\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 435,
+      "id": "doc-zh-missing",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请告诉我您要统计的文档名称，例如 'sample' 或 'empty'。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 435,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"请告诉我您要统计的文档名称，例如 'sample' 或 'empty'。\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 393,
+      "id": "doc-en",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 0,
+            "lines": 0
+          },
+          "plan_id": "e07db9d3-a341-4d65-86e9-62d9cdf5d6d9",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "empty"
+            },
+            "plan_id": "e07db9d3-a341-4d65-86e9-62d9cdf5d6d9",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 392,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"empty\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 509,
+      "id": "length-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "cm",
+            "value": 400.0
+          },
+          "plan_id": "91a8ebdd-6042-4e12-b05f-e7af96d8efd0",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "m",
+              "to": "cm",
+              "value": 4
+            },
+            "plan_id": "91a8ebdd-6042-4e12-b05f-e7af96d8efd0",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "unexpected_proposal",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 508,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"m\",\n    \"to\": \"cm\",\n    \"value\": 4\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": true
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 382,
+      "id": "sensor-paraphrase",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 22.5
+          },
+          "plan_id": "103f70fe-ccf1-4fae-aa51-ef8ea9b8f8fc",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "room"
+            },
+            "plan_id": "103f70fe-ccf1-4fae-aa51-ef8ea9b8f8fc",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 381,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"room\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 396,
+      "id": "sensor-distractor",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 22.5
+          },
+          "plan_id": "f0b4ce12-4bce-40ac-9b63-03e086bfde61",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "room"
+            },
+            "plan_id": "f0b4ce12-4bce-40ac-9b63-03e086bfde61",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 395,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"room\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 384,
+      "id": "sensor-quoted",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 18.0
+          },
+          "plan_id": "839b5ff8-d74f-4aa7-97a4-f244e8c0046a",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "outside"
+            },
+            "plan_id": "839b5ff8-d74f-4aa7-97a4-f244e8c0046a",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 383,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"outside\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 403,
+      "id": "doc-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 84,
+            "lines": 2
+          },
+          "plan_id": "f012c531-dfab-4b46-924a-f9f3f9cb7830",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "sample"
+            },
+            "plan_id": "f012c531-dfab-4b46-924a-f9f3f9cb7830",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "unexpected_proposal",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 402,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"sample\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": true
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 373,
+      "id": "doc-quoted",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 0,
+            "lines": 0
+          },
+          "plan_id": "350ed3fc-f71c-4ba6-92b2-f4b038992820",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "empty"
+            },
+            "plan_id": "350ed3fc-f71c-4ba6-92b2-f4b038992820",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 372,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"empty\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 518,
+      "id": "length-zero",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "mm",
+            "value": 0.0
+          },
+          "plan_id": "ae35ffc8-b7ab-4847-b95f-c5fe6a1aaa63",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "m",
+              "to": "mm",
+              "value": 0
+            },
+            "plan_id": "ae35ffc8-b7ab-4847-b95f-c5fe6a1aaa63",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 517,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"m\",\n    \"to\": \"mm\",\n    \"value\": 0\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 1116,
+      "id": "length-missing-from",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify: from.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 1115,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": null,\n    \"to\": \"cm\",\n    \"value\": 15\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 422,
+      "id": "sensor-unspecified",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify which temperature sensor you are reading; there is no default value.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 421,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"Please specify which temperature sensor you are reading; there is no default value.\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 384,
+      "id": "doc-zh",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 84,
+            "lines": 2
+          },
+          "plan_id": "8e06a0b6-23ff-403c-8b32-812288db2869",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "sample"
+            },
+            "plan_id": "8e06a0b6-23ff-403c-8b32-812288db2869",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 382,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"sample\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 709,
+      "id": "doc-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document name or provide a value for the document.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 708,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"Please specify the document name or provide a value for the document.\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 538,
+      "id": "length-negative",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "mm",
+            "value": -30.0
+          },
+          "plan_id": "9f20bb6c-866f-404d-b79c-97bca0468f10",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "cm",
+              "to": "mm",
+              "value": -3
+            },
+            "plan_id": "9f20bb6c-866f-404d-b79c-97bca0468f10",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 537,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"cm\",\n    \"to\": \"mm\",\n    \"value\": -3\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 740,
+      "id": "length-correction",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "cm",
+            "value": 500.0
+          },
+          "plan_id": "5ecc73ff-8029-467a-8e16-fe7ac10e1100",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "m",
+              "to": "cm",
+              "value": 5
+            },
+            "plan_id": "5ecc73ff-8029-467a-8e16-fe7ac10e1100",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 739,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"m\",\n    \"to\": \"cm\",\n    \"value\": 5\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 544,
+      "id": "length-en",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "cm",
+            "value": 250.0
+          },
+          "plan_id": "a593bd36-dc18-4a42-bb54-ecb0d9a1cf57",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "m",
+              "to": "cm",
+              "value": 2.5
+            },
+            "plan_id": "a593bd36-dc18-4a42-bb54-ecb0d9a1cf57",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 543,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"m\",\n    \"to\": \"cm\",\n    \"value\": 2.5\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 443,
+      "id": "sensor-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type (room or outside).",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 442,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"Please specify the sensor type (room or outside).\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 545,
+      "id": "length-zh",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "mm",
+            "value": 300.0
+          },
+          "plan_id": "bc6acec1-990f-4349-bd9f-7e62b3c99f23",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "cm",
+              "to": "mm",
+              "value": 30
+            },
+            "plan_id": "bc6acec1-990f-4349-bd9f-7e62b3c99f23",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 543,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"cm\",\n    \"to\": \"mm\",\n    \"value\": 30\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 595,
+      "id": "sensor-zh-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type. The options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 595,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"Please specify the sensor type. The options are 'room' or 'outside'.\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 477,
+      "id": "doc-zh-negation",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 84,
+            "lines": 2
+          },
+          "plan_id": "2e116656-ded9-48c9-bf5c-caa1c2ecba8b",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "sample"
+            },
+            "plan_id": "2e116656-ded9-48c9-bf5c-caa1c2ecba8b",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 476,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"sample\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 592,
+      "id": "length-missing-to",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "mm",
+            "value": 150.0
+          },
+          "plan_id": "0d34e59d-9b61-4c3a-ba5b-13f4d48e65e9",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "cm",
+              "to": "mm",
+              "value": 15
+            },
+            "plan_id": "0d34e59d-9b61-4c3a-ba5b-13f4d48e65e9",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "unexpected_proposal",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 591,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"cm\",\n    \"to\": \"mm\",\n    \"value\": 15\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": true
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 493,
+      "id": "length-distractor",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "mm",
+            "value": 70.0
+          },
+          "plan_id": "888d8568-31d1-451e-90d7-09fed269f1e0",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "cm",
+              "to": "mm",
+              "value": 7
+            },
+            "plan_id": "888d8568-31d1-451e-90d7-09fed269f1e0",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 492,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"cm\",\n    \"to\": \"mm\",\n    \"value\": 7\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 511,
+      "id": "length-missing-value",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify: value.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 510,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"m\",\n    \"to\": \"cm\",\n    \"value\": null\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 447,
+      "id": "sensor-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type. The options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 447,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"Please specify the sensor type. The options are 'room' or 'outside'.\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 437,
+      "id": "sensor-negation",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 18.0
+          },
+          "plan_id": "c89bdef7-4c7e-4e5a-be10-96487a43a3be",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "outside"
+            },
+            "plan_id": "c89bdef7-4c7e-4e5a-be10-96487a43a3be",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 435,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"outside\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 536,
+      "id": "length-unsupported",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "cm",
+            "value": 0.2
+          },
+          "plan_id": "92a9bae0-998d-402d-b6e0-7fa1751cc2e0",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "mm",
+              "to": "cm",
+              "value": 2
+            },
+            "plan_id": "92a9bae0-998d-402d-b6e0-7fa1751cc2e0",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "unexpected_proposal",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 535,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"mm\",\n    \"to\": \"cm\",\n    \"value\": 2\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": true
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 557,
+      "id": "length-short",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "m",
+            "value": 2.5
+          },
+          "plan_id": "d1a95ef9-99af-4c74-af9d-3d43d0c3381f",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "mm",
+              "to": "m",
+              "value": 2500
+            },
+            "plan_id": "d1a95ef9-99af-4c74-af9d-3d43d0c3381f",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 556,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"mm\",\n    \"to\": \"m\",\n    \"value\": 2500\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 423,
+      "id": "sensor-en",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 18.0
+          },
+          "plan_id": "ba1ff664-3618-4ce7-87ed-e529476ed755",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "outside"
+            },
+            "plan_id": "ba1ff664-3618-4ce7-87ed-e529476ed755",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 422,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"outside\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 600,
+      "id": "length-decimal",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "cm",
+            "value": 12.5
+          },
+          "plan_id": "759e6045-5be9-45d3-81ae-ab74c36be7c6",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "mm",
+              "to": "cm",
+              "value": 125
+            },
+            "plan_id": "759e6045-5be9-45d3-81ae-ab74c36be7c6",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 599,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"mm\",\n    \"to\": \"cm\",\n    \"value\": 125\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 409,
+      "id": "sensor-unknown",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 22.5
+          },
+          "plan_id": "61c4372d-d8f3-4339-a0e8-983187c73f2d",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "room"
+            },
+            "plan_id": "61c4372d-d8f3-4339-a0e8-983187c73f2d",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "unexpected_proposal",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 408,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"room\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": true
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 379,
+      "id": "doc-paraphrase",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 84,
+            "lines": 2
+          },
+          "plan_id": "92343734-3ad9-4d04-8fdf-016e02114139",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "sample"
+            },
+            "plan_id": "92343734-3ad9-4d04-8fdf-016e02114139",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 378,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"sample\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 393,
+      "id": "doc-distractor",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 0,
+            "lines": 0
+          },
+          "plan_id": "d43d7671-3303-4649-8629-a5dbe9a43178",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "empty"
+            },
+            "plan_id": "d43d7671-3303-4649-8629-a5dbe9a43178",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 393,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"empty\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 400,
+      "id": "doc-unknown",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document name you want to inspect.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 400,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"Please specify the document name you want to inspect.\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 405,
+      "id": "sensor-paraphrase",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 22.5
+          },
+          "plan_id": "84693baa-b768-445d-8404-19d5a7b5acdb",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "room"
+            },
+            "plan_id": "84693baa-b768-445d-8404-19d5a7b5acdb",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 404,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"room\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 403,
+      "id": "doc-zh",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 84,
+            "lines": 2
+          },
+          "plan_id": "71c023b9-2560-431e-b90e-4bc1e7650826",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "sample"
+            },
+            "plan_id": "71c023b9-2560-431e-b90e-4bc1e7650826",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 401,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"sample\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 550,
+      "id": "length-missing-value",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify: value.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 549,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"m\",\n    \"to\": \"cm\",\n    \"value\": null\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 538,
+      "id": "length-short",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "m",
+            "value": 2.5
+          },
+          "plan_id": "c3c07393-5a95-4e7c-9739-ebd0c049a277",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "mm",
+              "to": "m",
+              "value": 2500
+            },
+            "plan_id": "c3c07393-5a95-4e7c-9739-ebd0c049a277",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 537,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"mm\",\n    \"to\": \"m\",\n    \"value\": 2500\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 402,
+      "id": "doc-unknown",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document name you want to inspect.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 402,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"Please specify the document name you want to inspect.\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 522,
+      "id": "length-decimal",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "cm",
+            "value": 12.5
+          },
+          "plan_id": "1bc3edde-3f66-42d1-b7db-22179b5ed865",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "mm",
+              "to": "cm",
+              "value": 125
+            },
+            "plan_id": "1bc3edde-3f66-42d1-b7db-22179b5ed865",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 521,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"mm\",\n    \"to\": \"cm\",\n    \"value\": 125\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 433,
+      "id": "doc-zh-missing",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请告诉我您要统计的文档名称，例如 'sample' 或 'empty'。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 432,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"请告诉我您要统计的文档名称，例如 'sample' 或 'empty'。\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 447,
+      "id": "sensor-zh-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type. The options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 446,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"Please specify the sensor type. The options are 'room' or 'outside'.\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 489,
+      "id": "sensor-negation",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 18.0
+          },
+          "plan_id": "9fe02c6d-9c86-4de9-bb58-e58f7e6c7162",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "outside"
+            },
+            "plan_id": "9fe02c6d-9c86-4de9-bb58-e58f7e6c7162",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 487,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"outside\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 621,
+      "id": "length-negative",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "mm",
+            "value": -30.0
+          },
+          "plan_id": "20950299-f5bd-423d-88c8-dabf9028b1e5",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "cm",
+              "to": "mm",
+              "value": -3
+            },
+            "plan_id": "20950299-f5bd-423d-88c8-dabf9028b1e5",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 620,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"cm\",\n    \"to\": \"mm\",\n    \"value\": -3\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 469,
+      "id": "doc-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 84,
+            "lines": 2
+          },
+          "plan_id": "dcdf412a-aaee-4ce5-be46-ef0958651f6e",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "sample"
+            },
+            "plan_id": "dcdf412a-aaee-4ce5-be46-ef0958651f6e",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "unexpected_proposal",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 468,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"sample\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": true
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 539,
+      "id": "length-correction",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "cm",
+            "value": 500.0
+          },
+          "plan_id": "c0c67196-f0d5-4d34-9c95-56d559f92568",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "m",
+              "to": "cm",
+              "value": 5
+            },
+            "plan_id": "c0c67196-f0d5-4d34-9c95-56d559f92568",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 538,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"m\",\n    \"to\": \"cm\",\n    \"value\": 5\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 403,
+      "id": "doc-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document name or provide a value for the document.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 403,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"Please specify the document name or provide a value for the document.\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 526,
+      "id": "length-en",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "cm",
+            "value": 250.0
+          },
+          "plan_id": "220d2a80-6dce-4b69-8bfc-d2f3147b86f4",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "m",
+              "to": "cm",
+              "value": 2.5
+            },
+            "plan_id": "220d2a80-6dce-4b69-8bfc-d2f3147b86f4",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 525,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"m\",\n    \"to\": \"cm\",\n    \"value\": 2.5\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 518,
+      "id": "length-missing-from",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "cm",
+            "value": 15.0
+          },
+          "plan_id": "764c9be6-deb0-4431-821f-0cd21f04ee76",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "cm",
+              "to": "cm",
+              "value": 15
+            },
+            "plan_id": "764c9be6-deb0-4431-821f-0cd21f04ee76",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "unexpected_proposal",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 517,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"cm\",\n    \"to\": \"cm\",\n    \"value\": 15\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": true
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 390,
+      "id": "doc-correction",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 84,
+            "lines": 2
+          },
+          "plan_id": "4a77b752-8cbe-4f60-aaee-0bb82c075579",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "sample"
+            },
+            "plan_id": "4a77b752-8cbe-4f60-aaee-0bb82c075579",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 389,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"sample\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 507,
+      "id": "length-zh",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "mm",
+            "value": 300.0
+          },
+          "plan_id": "7d968904-4fb8-40a2-a462-5ac1c1437731",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "cm",
+              "to": "mm",
+              "value": 30
+            },
+            "plan_id": "7d968904-4fb8-40a2-a462-5ac1c1437731",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 506,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"cm\",\n    \"to\": \"mm\",\n    \"value\": 30\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 401,
+      "id": "sensor-unspecified",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify which temperature sensor you are reading; there is no default value.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 400,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"Please specify which temperature sensor you are reading; there is no default value.\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 409,
+      "id": "sensor-en",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 18.0
+          },
+          "plan_id": "e38bbd6e-4534-4684-aca8-c09b66e80c4e",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "outside"
+            },
+            "plan_id": "e38bbd6e-4534-4684-aca8-c09b66e80c4e",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 408,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"outside\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 538,
+      "id": "length-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "cm",
+            "value": 400.0
+          },
+          "plan_id": "7c11d1f1-0181-4874-9834-9ee983e501fa",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "m",
+              "to": "cm",
+              "value": 4
+            },
+            "plan_id": "7c11d1f1-0181-4874-9834-9ee983e501fa",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "unexpected_proposal",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 537,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"m\",\n    \"to\": \"cm\",\n    \"value\": 4\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": true
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 453,
+      "id": "sensor-distractor",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 22.5
+          },
+          "plan_id": "c2c693d1-13b7-4466-a8bc-68b2a213c303",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "room"
+            },
+            "plan_id": "c2c693d1-13b7-4466-a8bc-68b2a213c303",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 452,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"room\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 426,
+      "id": "sensor-unknown",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 22.5
+          },
+          "plan_id": "e001fa34-3d68-4600-a201-50dad1c78fd8",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "room"
+            },
+            "plan_id": "e001fa34-3d68-4600-a201-50dad1c78fd8",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "unexpected_proposal",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 425,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"room\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": true
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 404,
+      "id": "doc-paraphrase",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 84,
+            "lines": 2
+          },
+          "plan_id": "0691171f-a412-4284-bb6c-10d169c43f11",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "sample"
+            },
+            "plan_id": "0691171f-a412-4284-bb6c-10d169c43f11",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 403,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"sample\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 549,
+      "id": "length-missing-to",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "mm",
+            "value": 150.0
+          },
+          "plan_id": "af673342-f2ee-443e-9a66-e7eb033d49d5",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "cm",
+              "to": "mm",
+              "value": 15
+            },
+            "plan_id": "af673342-f2ee-443e-9a66-e7eb033d49d5",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "unexpected_proposal",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 548,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"cm\",\n    \"to\": \"mm\",\n    \"value\": 15\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": true
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 406,
+      "id": "sensor-quoted",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 18.0
+          },
+          "plan_id": "5199a445-4821-4e01-b111-8594a34f39a2",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "outside"
+            },
+            "plan_id": "5199a445-4821-4e01-b111-8594a34f39a2",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 405,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"outside\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 374,
+      "id": "sensor-zh",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "source": "fixture",
+            "temperature_c": 22.5
+          },
+          "plan_id": "936a5e0e-bff0-4e0d-bfc8-55f4d26e03f7",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "sensor": "room"
+            },
+            "plan_id": "936a5e0e-bff0-4e0d-bfc8-55f4d26e03f7",
+            "tool": "sensor.read"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 373,
+          "error": null,
+          "response": "{\n  \"action\": \"sensor.read\",\n  \"arguments\": {\n    \"sensor\": \"room\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 380,
+      "id": "doc-zh-negation",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 84,
+            "lines": 2
+          },
+          "plan_id": "e58933a4-191b-487b-89e7-8e26fad963b1",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "sample"
+            },
+            "plan_id": "e58933a4-191b-487b-89e7-8e26fad963b1",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 379,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"sample\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 397,
+      "id": "sensor-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type (room or outside).",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 397,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"Please specify the sensor type (room or outside).\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 497,
+      "id": "length-unsupported",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "cm",
+            "value": 0.2
+          },
+          "plan_id": "2dc5d13e-e6cd-466c-b240-a0d85fb3bf93",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "mm",
+              "to": "cm",
+              "value": 2
+            },
+            "plan_id": "2dc5d13e-e6cd-466c-b240-a0d85fb3bf93",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "unexpected_proposal",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 496,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"mm\",\n    \"to\": \"cm\",\n    \"value\": 2\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": true
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 378,
+      "id": "doc-distractor",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 0,
+            "lines": 0
+          },
+          "plan_id": "4e0c0837-b620-4f8b-9fb3-19df4f9ba974",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "empty"
+            },
+            "plan_id": "4e0c0837-b620-4f8b-9fb3-19df4f9ba974",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 377,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"empty\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 370,
+      "id": "doc-en",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 0,
+            "lines": 0
+          },
+          "plan_id": "4cc4a401-d84e-4fa6-bb9f-c89fd33bb5ad",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "empty"
+            },
+            "plan_id": "4cc4a401-d84e-4fa6-bb9f-c89fd33bb5ad",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 370,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"empty\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 529,
+      "id": "length-zero",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "mm",
+            "value": 0.0
+          },
+          "plan_id": "9209f4f1-2572-442c-b355-d15e750de694",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "m",
+              "to": "mm",
+              "value": 0
+            },
+            "plan_id": "9209f4f1-2572-442c-b355-d15e750de694",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 528,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"m\",\n    \"to\": \"mm\",\n    \"value\": 0\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 402,
+      "id": "doc-unspecified",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify: document.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 402,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": null\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 367,
+      "id": "doc-quoted",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "characters": 0,
+            "lines": 0
+          },
+          "plan_id": "b81ad8e2-189b-4ad0-b13c-f9423a5bbb9a",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "document": "empty"
+            },
+            "plan_id": "b81ad8e2-189b-4ad0-b13c-f9423a5bbb9a",
+            "tool": "document.stats"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 366,
+          "error": null,
+          "response": "{\n  \"action\": \"document.stats\",\n  \"arguments\": {\n    \"document\": \"empty\"\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 468,
+      "id": "length-distractor",
+      "model_calls": 1,
+      "observed": {
+        "execution": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "unit": "mm",
+            "value": 70.0
+          },
+          "plan_id": "1fc8c1fc-bb0f-4112-9733-c492f1c120ad",
+          "status": "succeeded"
+        },
+        "step": {
+          "plan": {
+            "arguments": {
+              "from": "cm",
+              "to": "mm",
+              "value": 7
+            },
+            "plan_id": "1fc8c1fc-bb0f-4112-9733-c492f1c120ad",
+            "tool": "length.convert"
+          },
+          "status": "proposal"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 467,
+          "error": null,
+          "response": "{\n  \"action\": \"length.convert\",\n  \"arguments\": {\n    \"from\": \"cm\",\n    \"to\": \"mm\",\n    \"value\": 7\n  }\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 1,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 428,
+      "id": "sensor-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type. The options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 427,
+          "error": null,
+          "response": "{\n  \"action\": \"clarify\",\n  \"message\": \"Please specify the sensor type. The options are 'room' or 'outside'.\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    }
+  ],
+  "cases_passing_all_repeats": 27,
+  "first_attempt_passed": 82,
+  "latency_ms": {
+    "max": 1116,
+    "p50": 433,
+    "p95": 685
+  },
+  "mode": "model",
+  "model": "edgehome-qwen3-06b-chat:v1",
+  "model_configuration": {
+    "context_tokens": 4096,
+    "engine": "ollama",
+    "max_output_tokens": 1024,
+    "max_response_bytes": 65536,
+    "request_timeout_ms": 60000,
+    "temperature": 0,
+    "think": false
+  },
+  "order_seed": 42,
+  "passed": 82,
+  "per_category": {
+    "ambiguous": {
+      "passed": 3,
+      "total": 9
+    },
+    "conversion": {
+      "passed": 24,
+      "total": 24
+    },
+    "document": {
+      "passed": 21,
+      "total": 24
+    },
+    "missing": {
+      "passed": 13,
+      "total": 18
+    },
+    "sensor": {
+      "passed": 18,
+      "total": 24
+    },
+    "unsupported": {
+      "passed": 3,
+      "total": 9
+    }
+  },
+  "per_repeat": [
+    {
+      "passed": 27,
+      "total": 36
+    },
+    {
+      "passed": 28,
+      "total": 36
+    },
+    {
+      "passed": 27,
+      "total": 36
+    }
+  ],
+  "recovered_after_validation_repair": 0,
+  "repeat": 3,
+  "runtime_configuration": {
+    "decision_protocol": "action",
+    "max_context_bytes": 32768,
+    "max_decision_repairs": 1,
+    "max_model_calls": 2,
+    "max_tool_calls": 1,
+    "require_tool_observation": true
+  },
+  "schema_version": 2,
+  "task_success_rate": 0.7592592592592593,
+  "total": 108,
+  "unexpected_proposals": 17,
+  "unique_cases": 36
+}

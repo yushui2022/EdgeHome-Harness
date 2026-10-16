@@ -6,6 +6,10 @@ use thiserror::Error;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum EventKind {
+    TaskStarted,
+    ModelStarted,
+    ModelCompleted,
+    ValidationRepair,
     Proposed,
     Cancelled,
     Rejected,
@@ -14,6 +18,31 @@ pub enum EventKind {
     OutcomeUnknown,
     Final,
     Clarification,
+    ClarificationAnswered,
+}
+
+/// Observe lifecycle metadata after the underlying journal accepts it. The
+/// listener runs synchronously and must remain fast; it is trusted host code.
+pub struct ObservedJournal<J, F> {
+    inner: J,
+    listener: F,
+}
+
+impl<J, F> ObservedJournal<J, F> {
+    pub fn new(inner: J, listener: F) -> Self {
+        Self { inner, listener }
+    }
+    pub fn inner(&self) -> &J {
+        &self.inner
+    }
+}
+
+impl<J: Journal, F: FnMut(&Event)> Journal for ObservedJournal<J, F> {
+    fn record(&mut self, event: Event) -> Result<(), JournalError> {
+        self.inner.record(event.clone())?;
+        (self.listener)(&event);
+        Ok(())
+    }
 }
 
 /// Metadata only: arguments, raw model text, and tool output are deliberately

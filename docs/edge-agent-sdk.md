@@ -6,16 +6,25 @@ EdgeHome 提供一个面向本地小模型的 Rust Agent 开发基座。应用�
 
 ## 模块与依赖
 
+需要多轮补充信息时，使用 `clarification()` 取得任务内的澄清 ID，调用
+`reply(id, text)` 保留上下文继续询问模型，或 `resolve(id, values)` 直接填充宿主确认的字段。
+后者保留其他草案参数、重新做类型和业务校验，不额外请求模型；两者均不执行工具。
+`Tool::preflight` / `GuardedTool` 支持允许、澄清、拒绝三种结果，并在执行前再次检查。
+完整接口、RPC 协议、边界及真实应用见[文件 Agent](file-agent.md)。
+
 | 模块 | 职责 | 依赖边界 |
 | --- | --- | --- |
 | `edgehome-runtime` | `Agent`、类型化工具、上下文预算、计划、事件 | 不依赖家居枚举、HTTP、SQLite 或推理引擎 |
 | `edgehome-inference` | `HttpProvider`、引擎配置、受限 HTTP 传输 | 原生 Ollama 与 OpenAI-compatible 两种协议 |
+| `edgehome-kit` | 项目模板、doctor/run/rpc/eval、事件日志 | 应用入口；具体业务工具留在生成项目中 |
 | 应用工具 | 文件、设备、服务或业务系统的实际操作 | 应用实现参数约束、权限、状态检查和 I/O 时限 |
 | 原有 `edgehome-agent` 与 CLI | 智能家居参考实现和已有评测 | 保留原设备注册表、门禁、SQLite、记忆和规则修复链路 |
 
 新项目优先使用 `edgehome_runtime::Agent`。原有 `edgehome_agent::AgentRuntime` 的保障和评测不能直接套用到新 SDK，反之亦然。当前通用工具注册不自动导入旧设备适配器；需要家居功能时可继续使用原参考实现，或显式包装为业务工具。
 
 ## 快速运行
+
+希望直接创建独立应用时，优先使用[开发工具指南](developer-kit.md)中的 `init`。以下是仓库内最小示例，适合阅读 SDK 接口。
 
 在仓库根目录运行，不需要模型或设备：
 
@@ -77,7 +86,11 @@ flowchart LR
 
 ## 循环、确认与结果
 
-候选协议有三个分支：`call` 包含工具名称与参数；`final` 包含回答；`clarify` 包含澄清问题。每轮最多一个调用，运行时不自动批准或调用工具。
+宿主可使用 `prompt_with_tools` 选择当前任务可见的工具；Schema 和本地调用检查同时应用该范围。普通 `prompt` 暴露全部注册工具。筛选不会提升模型理解能力，但可以缩小选择空间、减少无关描述和 Schema。
+
+默认候选协议有三个分支：`call` 包含工具名称与参数；`final` 包含回答；`clarify` 包含澄清问题。可显式选择 `DecisionProtocol::Action`，先生成 `action` 再生成参数，并支持用 null 表示明确非空的必填参数缺失；宿主随后返回澄清，工具类型不放宽。该协议保留 `clarify`、`final` 两个动作名称，不可用于业务工具名称。每轮最多一个调用，运行时不自动批准或调用工具。
+
+`max_decision_repairs` 默认为 0，可设置为 1 或 2，仅对无效决策、参数校验错误及缺少必需工具观察的最终回答增加有预算的纠错。每次都计入实例模型预算并记录 `ValidationRepair`；策略拒绝、传输错误和工具执行不重试。有效但选错的动作仍需应用识别。协议与模型实测见[可靠性指南](model-reliability.md)。
 
 `require_tool_observation: true` 可以要求当前任务先取得成功工具结果，才接受最终回答。这个限制同时体现在模型响应 Schema 和宿主校验中；澄清始终可用。它不能证明最终回答忠实于工具结果，也不能替代应用级事实核验。
 
@@ -104,12 +117,14 @@ flowchart LR
 
 默认 `MemoryJournal` 是有界内存记录，不提供持久审计。应用可实现 `Journal` 接入文件、数据库或现有日志系统。事件默认不保存原始输入、参数或模型文本；需要保留时由应用实现脱敏和保留策略。
 
+`ObservedJournal` 在底层日志接受事件后调用宿主监听器；监听器应保持快速。运行时增加任务与模型开始/结束事件，`usage()` 提供预算使用和计划状态。`cancellation_token()` 返回可在线程间共享的一次性取消信号；自定义 provider 可覆盖 `complete_cancellable`，工具通过 `ToolContext.cancellation` 检查它。取消后创建新实例，不能复活已消费的计划。
+
 ## 工程边界
 
 - 工具、模型客户端和日志接收器都是可信的同步 Rust 代码。运行时无法强制中断任意回调，也无法限制其内部内存分配；自定义工具必须遵守 `ToolContext` 并落实传输超时。内置 HTTP 模型客户端在传输阶段执行限额。
 - 字节预算不等于 token 预算或整个进程的内存配额。推理权重、KV cache、模型冷启动与系统资源隔离由部署负责。
 - 工具结果作为数据进入模型上下文。提示和预算不能保证模型不会受提示注入影响；工具白名单、业务校验和确认是独立约束。
-- 当前提供 Rust SDK 与示例；Go/Python 的常驻 HTTP/RPC 接口、技能包加载、沙箱、跨进程恢复和 UI 尚未实现。
+- 当前提供 Rust SDK、独立应用模板和顺序 stdio RPC，包含 Python 客户端示例；网络服务、专用语言 SDK、技能包加载、沙箱、跨进程恢复和 UI 尚未实现。
 - 这是参考 SDK，不是 Pi 的移植，也不声明成熟的无人值守执行或真机长稳能力。
 
 验证：`cargo test --locked -p edgehome-runtime -p edgehome-inference`。测试覆盖真实调用计数、故障日志、计划隔离、参数与权限拒绝、循环预算、结构化协议和本地 HTTP 传输限额。

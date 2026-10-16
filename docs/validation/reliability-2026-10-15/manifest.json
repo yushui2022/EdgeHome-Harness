@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "started_at": "2026-10-15T15:40:15.492728+00:00",
+  "git_base": "327bf726b8775c79b7019ebb2482086c63ba49bb",
+  "source_state": "working_tree",
+  "source_hash_encoding": "UTF-8 bytes with CRLF normalized to LF",
+  "sources": {
+    "Cargo.lock": "a18e9328dbc165e7fc44c0be960b7a6d5dbe9ee6d54b482fd2e08413bf32094b",
+    "Cargo.toml": "8f19f1c959584610bc85ce8f816abaf2eceb86e64f81ba178e7ec87d766b654e",
+    "cases/sdk-reliability-holdout.json": "fde538414c8a48969e55217c891f16695e27930cee1e21ba237bc0a1dece8596",
+    "cases/sdk-starter.json": "8fa0563936b684ff1cc1f1c6ec610eb434e409694f1201aff1bdf4cf9d906ccf",
+    "configs/reliability/minicpm-action.yaml": "067078815f0345e401492043257d1deea7453190da13c1d4b22339f74f2d1f93",
+    "configs/reliability/minicpm-tagged.yaml": "ccc9f9cee61cbdc262d028b348aa9f7223eb925489a2a545c0f9942c5abc1e4e",
+    "configs/reliability/qwen06-action.yaml": "bb186f61e52c373cc5fdd2a7d2638377361b0b08edadb2e34fa548105ae9e767",
+    "configs/reliability/qwen06-tagged.yaml": "2c602684f97ef246277e8aec1c6b0bffbb435196076e7e11e0496753dc902c4c",
+    "configs/reliability/qwen08-action.yaml": "2c88a7d03a3fe429bb53c4e50b5e2558e839274769d7f66c33ffbadb6b6bdde1",
+    "configs/reliability/qwen08-tagged.yaml": "d738948def37476f0324d6f1441f1ec8e65ac58880532de6794331ca24167965",
+    "crates/edgehome-inference/src/lib.rs": "6a4397d35a13bc3b2f82651defbce300266dace01a8ac4187638e29deb791446",
+    "crates/edgehome-inference/src/tests.rs": "48cb6c6b410b02785d6b078a2935a79e6a9954ceded91d52443681a028fe8d9d",
+    "crates/edgehome-kit/examples/reliability_lab.rs": "1c45b77df4c37e8d13c3adfcd608ac0b25cd682e126b6cba8687d8b5e4920e4f",
+    "crates/edgehome-kit/src/config.rs": "1ce970ac20b8f8be6a867f471240a0624731295ba57647222382ce225169b52c",
+    "crates/edgehome-kit/src/eval.rs": "351f87be895628eba70ae68fe369010a1a038d77845ad2f88cc2083e5d7cc922",
+    "crates/edgehome-kit/src/journal.rs": "65e3d9ef768440c80a1aba6d97ebca06409f9bce03d067e277f55e78e16dfe73",
+    "crates/edgehome-kit/src/lib.rs": "82d50ed915d958efdeecf8152940fd8b41c98b019cf862e83ff260441f97fc8a",
+    "crates/edgehome-kit/src/main.rs": "94b59e56ea1cf1cbf04376a369834a7dbb096f3aa51eccf94d81da5bc2297c0a",
+    "crates/edgehome-kit/src/probe.rs": "f91f92fa8b0895d4e0f953b33f4e602f07ce8b742bca61b9f7f1efb83c4a1eff",
+    "crates/edgehome-kit/src/reliability_tests.rs": "689f95675589ce38b653981fad2470cbf42992dc729b85fc7dabca4217ccba33",
+    "crates/edgehome-kit/src/rpc.rs": "cd4f938e8378e37c0fa7164be526957797ae06e8f59bc12ca70fc849781c7e0d",
+    "crates/edgehome-kit/src/scaffold.rs": "859fbf7bd0224ffab7b049f29661a295636c926124a4699222e79407a29bda31",
+    "crates/edgehome-kit/src/tests.rs": "a9e0d795e77bccc8cc757178b12a72d5cb14d4733e543530486840cf26ffa0a3",
+    "crates/edgehome-kit/templates/agent.yaml": "f1710c0eca08291250f699838f35c8efb6d308c5e8d0af748bc9ff10e767da8f",
+    "crates/edgehome-kit/templates/main.rs": "b9eb74d4880d9ec004d237f5c7634aa9a91620925d2b4b8f5082c8df2057149d",
+    "crates/edgehome-kit/templates/README.md": "d312eae7573e2a8c122c531df01e8691c741b69e249846e957f436d58a3f9de0",
+    "crates/edgehome-kit/templates/tools.rs": "4998685676a6043a81b253eb0b3aef393cba25a21120bf5f4fd7e4707278350c",
+    "crates/edgehome-runtime/src/cancellation.rs": "079ab6bec7daa5dac36cfbcafa19dc1b3cb59187fd1ab14a0c065c38ac8dedaa",
+    "crates/edgehome-runtime/src/journal.rs": "043498568a65c29b8d1a00c708b7ace51bb4571199d3e0ea8db1ba1a2a7ba9de",
+    "crates/edgehome-runtime/src/lib.rs": "aeefe3adc87b43a2efd4d9e82323ab75813c6fc63ee9b11594d3e352f0d9788e",
+    "crates/edgehome-runtime/src/model.rs": "4608b1482fa60da1a175f272f924ce4ee1d8c4060eb7ce317830e0ae59e1e354",
+    "crates/edgehome-runtime/src/reliability_tests.rs": "83df385ebed6eb4b55554db7e26d6c55ef3e61c90b344e9405efbeedbea6c1c1",
+    "crates/edgehome-runtime/src/tests.rs": "27d8afa3774c1c929f98be6efd91a1faf397745da35261f7d802a5ee0fcbfad8",
+    "crates/edgehome-runtime/src/tool.rs": "6de24376ef9b7803887f5b7e7897468e2c939f4bb34a9c68d92d0d5bac5df04a",
+    "scripts/evaluate-sdk-reliability.py": "30bc9389c2e37500d8327f6c1a4b6fd29a1f32762c4cd2102d87af6916b6ee8b"
+  },
+  "binary_sha256": "77763f6736afd44120985966099defe80ee6454fa42f6afe2d48876ab4db244e",
+  "platform": "Windows-10-10.0.26200-SP0",
+  "processor": "Intel64 Family 6 Model 154 Stepping 3, GenuineIntel",
+  "python": "3.11.1 (tags/v3.11.1:a7a450f, Dec  6 2022, 19:58:39) [MSC v.1934 64 bit (AMD64)]",
+  "rustc": "rustc 1.95.0 (59807616e 2026-04-14)\nbinary: rustc\ncommit-hash: 59807616e1fa2540724bfbac14d7976d7e4a3860\ncommit-date: 2026-04-14\nhost: x86_64-pc-windows-gnu\nrelease: 1.95.0\nLLVM version: 22.1.2\n",
+  "ollama_version": {
+    "version": "0.18.3"
+  },
+  "design": {
+    "development_cases": 8,
+    "holdout_cases": 36,
+    "repetitions": 3,
+    "order_seed": 42,
+    "per_repeat_success_min": 0.9,
+    "per_category_success_min": 0.9,
+    "unexpected_proposals_max": 0,
+    "execution": "All allowlisted proposals execute in side-effect-free test tools before scoring; no oracle in runtime.",
+    "scope": "One decision and tool receipt or a relevant clarification; no final-answer or long-horizon claim.",
+    "warmup": "Two unscored system-role probes per profile; no per-case retry outside bounded runtime repairs.",
+    "statistics": "Temperature zero repetitions measure consistency, not independent samples or statistical significance."
+  },
+  "models": {
+    "qwen06": {
+      "name": "edgehome-qwen3-06b-chat:v1",
+      "digest": "d4c1b4d3b3b523d777a98e1ebaf821f6a22de4255902e8458651080d0a2793a2",
+      "template": "{{ range .Messages }}<|im_start|>{{ .Role }}\n{{ .Content }}<|im_end|>\n{{ end }}<|im_start|>assistant\n<think>\n\n</think>\n\n",
+      "parameters": "stop                           \"<|im_end|>\"\ntemperature                    0",
+      "details": {
+        "format": "gguf",
+        "family": "qwen3",
+        "families": [
+          "qwen3"
+        ],
+        "parameter_size": "751.63M",
+        "quantization_level": "Q4_K_M"
+      },
+      "capabilities": [
+        "completion"
+      ],
+      "renderer_parser": []
+    },
+    "qwen08": {
+      "name": "qwen3.5:0.8b",
+      "digest": "f3817196d142eaf72ce79dfebe53dcb20bd21da87ce13e138a8f8e10a866b3a4",
+      "template": "{{ .Prompt }}",
+      "parameters": "presence_penalty               1.5\ntemperature                    1\ntop_k                          20\ntop_p                          0.95",
+      "details": {
+        "format": "gguf",
+        "family": "qwen35",
+        "families": [
+          "qwen35"
+        ],
+        "parameter_size": "873.44M",
+        "quantization_level": "Q8_0"
+      },
+      "capabilities": [
+        "completion",
+        "vision",
+        "tools",
+        "thinking"
+      ],
+      "renderer_parser": [
+        "RENDERER qwen3.5",
+        "PARSER qwen3.5"
+      ]
+    },
+    "minicpm": {
+      "name": "openbmb/minicpm5:latest",
+      "digest": "08239e8f70e09fc079ff3b5c4f011fd846d452ae9ba4e4b4c40e526bd4950ded",
+      "template": "<s>{{ if .System }}<|im_start|>system\n{{ .System }}<|im_end|>\n{{ end }}{{ range .Messages }}<|im_start|>{{ .Role }}\n{{ .Content }}<|im_end|>\n{{ end }}<|im_start|>assistant\n",
+      "parameters": "stop                           \"<|im_end|>\"\nstop                           \"<|endoftext|>\"\ntemperature                    0.7\ntop_p                          0.8",
+      "details": {
+        "format": "gguf",
+        "family": "llama",
+        "families": [
+          "llama"
+        ],
+        "parameter_size": "1.1B",
+        "quantization_level": "Q4_K_M"
+      },
+      "capabilities": [
+        "completion"
+      ],
+      "renderer_parser": []
+    }
+  },
+  "results": [
+    {
+      "name": "qwen06-tagged-development",
+      "started_at": "2026-10-15T15:40:19.659593+00:00",
+      "finished_at": "2026-10-15T15:40:31.679109+00:00",
+      "passed": 6,
+      "total": 24,
+      "preflight_passed": true,
+      "gate_passed": false,
+      "report_sha256": "6bbd3850845e93d87fde814ff1a5426f743e950d528cf0ce43593b6cf77c8069"
+    },
+    {
+      "name": "qwen06-tagged-holdout",
+      "started_at": "2026-10-15T15:40:31.680518+00:00",
+      "finished_at": "2026-10-15T15:41:19.816567+00:00",
+      "passed": 36,
+      "total": 108,
+      "preflight_passed": true,
+      "gate_passed": false,
+      "report_sha256": "6c2299dd56ee902fd548b41ab0c161de5193e3310d8f54ccdc5ff8f3cbadb27b"
+    },
+    {
+      "name": "qwen06-action-development",
+      "started_at": "2026-10-15T15:41:20.480327+00:00",
+      "finished_at": "2026-10-15T15:41:29.709440+00:00",
+      "passed": 24,
+      "total": 24,
+      "preflight_passed": true,
+      "gate_passed": true,
+      "report_sha256": "69e89e8d17a10e5107b59a1463aea39c6e85ee2432644b6abce4bc02399dcd95"
+    },
+    {
+      "name": "qwen06-action-holdout",
+      "started_at": "2026-10-15T15:41:29.709440+00:00",
+      "finished_at": "2026-10-15T15:42:20.774342+00:00",
+      "passed": 82,
+      "total": 108,
+      "preflight_passed": true,
+      "gate_passed": false,
+      "report_sha256": "63db3730ef1861b21c74f2da01c320f9f7b49754708a1ba47d535d48f8228477"
+    },
+    {
+      "name": "qwen08-tagged-development",
+      "started_at": "2026-10-15T15:42:26.390742+00:00",
+      "finished_at": "2026-10-15T15:43:30.958824+00:00",
+      "passed": 6,
+      "total": 24,
+      "preflight_passed": true,
+      "gate_passed": false,
+      "report_sha256": "a57d8412a04bb2b974d71220f22903c5449db158694b40bfd9cc77e597f32f92"
+    },
+    {
+      "name": "qwen08-tagged-holdout",
+      "started_at": "2026-10-15T15:43:30.960831+00:00",
+      "finished_at": "2026-10-15T15:54:51.504917+00:00",
+      "passed": 24,
+      "total": 108,
+      "preflight_passed": true,
+      "gate_passed": false,
+      "report_sha256": "b2da84e18da02829120b4a872f56d05e44be4bb6bafe69db293995b661a81c4f"
+    },
+    {
+      "name": "qwen08-action-development",
+      "started_at": "2026-10-15T15:54:53.182178+00:00",
+      "finished_at": "2026-10-15T15:55:23.359188+00:00",
+      "passed": 21,
+      "total": 24,
+      "preflight_passed": true,
+      "gate_passed": false,
+      "report_sha256": "7bb1f70c3f09a4b1aae4ec0224cc789be2a82cb25e70d9a7c72839c36542d510"
+    },
+    {
+      "name": "qwen08-action-holdout",
+      "started_at": "2026-10-15T15:55:23.362188+00:00",
+      "finished_at": "2026-10-15T15:58:17.654883+00:00",
+      "passed": 75,
+      "total": 108,
+      "preflight_passed": true,
+      "gate_passed": false,
+      "report_sha256": "67b4ab4bca273ee7dfed3a34e3cbdf2cda33f87f7859a5b9ff35ad12c1af3568"
+    },
+    {
+      "name": "minicpm-tagged-development",
+      "started_at": "2026-10-15T15:58:21.183464+00:00",
+      "finished_at": "2026-10-15T15:58:52.565041+00:00",
+      "passed": 15,
+      "total": 24,
+      "preflight_passed": false,
+      "gate_passed": false,
+      "report_sha256": "a83aa3d5e6d0cdd45d1f21eee2c4fcd47800062263939646d72137aaa9a6e043"
+    },
+    {
+      "name": "minicpm-tagged-holdout",
+      "started_at": "2026-10-15T15:58:52.566179+00:00",
+      "finished_at": "2026-10-15T16:01:19.963780+00:00",
+      "passed": 66,
+      "total": 108,
+      "preflight_passed": false,
+      "gate_passed": false,
+      "report_sha256": "283c75d91d43b8ba25507f327e84c5e9093ed43db6e7518d966e405209a0a0f4"
+    },
+    {
+      "name": "minicpm-action-development",
+      "started_at": "2026-10-15T16:01:21.048864+00:00",
+      "finished_at": "2026-10-15T16:01:39.305822+00:00",
+      "passed": 24,
+      "total": 24,
+      "preflight_passed": false,
+      "gate_passed": false,
+      "report_sha256": "b7bc83cdeee7de2a69ccf3803e1e4901980eb7ad78dd059375424e68c79be07c"
+    },
+    {
+      "name": "minicpm-action-holdout",
+      "started_at": "2026-10-15T16:01:39.306353+00:00",
+      "finished_at": "2026-10-15T16:03:35.453179+00:00",
+      "passed": 78,
+      "total": 108,
+      "preflight_passed": false,
+      "gate_passed": false,
+      "report_sha256": "fd0b1fcdc14d331f2794eea66b5d8bd388325a746b92d45a72342931dd730482"
+    }
+  ],
+  "source_changed_during_run": [],
+  "finished_at": "2026-10-15T16:03:35.473132+00:00",
+  "publication_note": "Reviewed copy: removed upstream exporter filesystem path from model details; trial reports are byte-identical to local evidence."
+}

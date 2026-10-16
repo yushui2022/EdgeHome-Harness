@@ -1,0 +1,14 @@
+# Reuse the already imported Qwen3 0.6B weights; creates a separate local alias.
+# ChatML roles and the non-thinking assistant prefix follow Qwen's tokenizer_config.json.
+# This template is for this Qwen3 text model, not Qwen3.5 or other model families.
+FROM mayulu/qwen3-0.6B-Q4_K_M:latest
+TEMPLATE """{{ range .Messages }}<|im_start|>{{ .Role }}
+{{ .Content }}<|im_end|>
+{{ end }}<|im_start|>assistant
+<think>
+
+</think>
+
+"""
+PARAMETER stop <|im_end|>
+PARAMETER temperature 0

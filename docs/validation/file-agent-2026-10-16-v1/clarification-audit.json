@@ -1,0 +1,162 @@
+{
+  "reviewer": "Codex assistant qualitative review",
+  "limitations": "Post-run review by the implementation assistant, not an independent human/blind evaluation. All returned questions reviewed; deductions only. Raw trials remain unchanged.",
+  "reviews": [
+    {
+      "trial": "qwen06-guided-1-stats-missing",
+      "message": "Please specify: path.",
+      "verdict": "accept",
+      "reason": "Requests the unresolved relative path. Any choices exactly identify the existing readable alternatives; it does not invent a path or infer the user selection."
+    },
+    {
+      "trial": "qwen06-basic-1-stats-missing",
+      "message": "Please specify: path.",
+      "verdict": "accept",
+      "reason": "Requests the unresolved relative path. Any choices exactly identify the existing readable alternatives; it does not invent a path or infer the user selection."
+    },
+    {
+      "trial": "qwen06-guided-1-unknown-chinese",
+      "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+      "verdict": "reject",
+      "reason": "The question correctly identifies an unavailable path, but its candidate list includes binary.bin and large.txt, which this tool cannot read. Offering known-ineligible choices is not adequate resolution guidance."
+    },
+    {
+      "trial": "qwen06-guided-1-read-missing",
+      "message": "Please specify: path.",
+      "verdict": "accept",
+      "reason": "Requests the unresolved relative path. Any choices exactly identify the existing readable alternatives; it does not invent a path or infer the user selection."
+    },
+    {
+      "trial": "qwen06-basic-1-read-missing",
+      "message": "Please specify: path.",
+      "verdict": "accept",
+      "reason": "Requests the unresolved relative path. Any choices exactly identify the existing readable alternatives; it does not invent a path or infer the user selection."
+    },
+    {
+      "trial": "qwen06-guided-1-missing-file",
+      "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+      "verdict": "reject",
+      "reason": "The question correctly identifies an unavailable path, but its candidate list includes binary.bin and large.txt, which this tool cannot read. Offering known-ineligible choices is not adequate resolution guidance."
+    },
+    {
+      "trial": "qwen06-guided-1-read-ambiguous",
+      "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+      "verdict": "accept",
+      "reason": "Requests the unresolved relative path. Any choices exactly identify the existing readable alternatives; it does not invent a path or infer the user selection."
+    },
+    {
+      "trial": "qwen06-guided-2-stats-missing",
+      "message": "Please specify: path.",
+      "verdict": "accept",
+      "reason": "Requests the unresolved relative path. Any choices exactly identify the existing readable alternatives; it does not invent a path or infer the user selection."
+    },
+    {
+      "trial": "qwen06-basic-2-stats-missing",
+      "message": "Please specify: path.",
+      "verdict": "accept",
+      "reason": "Requests the unresolved relative path. Any choices exactly identify the existing readable alternatives; it does not invent a path or infer the user selection."
+    },
+    {
+      "trial": "qwen06-guided-2-read-ambiguous",
+      "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+      "verdict": "accept",
+      "reason": "Requests the unresolved relative path. Any choices exactly identify the existing readable alternatives; it does not invent a path or infer the user selection."
+    },
+    {
+      "trial": "qwen06-guided-2-read-missing",
+      "message": "Please specify: path.",
+      "verdict": "accept",
+      "reason": "Requests the unresolved relative path. Any choices exactly identify the existing readable alternatives; it does not invent a path or infer the user selection."
+    },
+    {
+      "trial": "qwen06-basic-2-read-missing",
+      "message": "Please specify: path.",
+      "verdict": "accept",
+      "reason": "Requests the unresolved relative path. Any choices exactly identify the existing readable alternatives; it does not invent a path or infer the user selection."
+    },
+    {
+      "trial": "qwen06-guided-2-missing-file",
+      "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+      "verdict": "reject",
+      "reason": "The question correctly identifies an unavailable path, but its candidate list includes binary.bin and large.txt, which this tool cannot read. Offering known-ineligible choices is not adequate resolution guidance."
+    },
+    {
+      "trial": "qwen06-guided-2-unknown-chinese",
+      "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+      "verdict": "reject",
+      "reason": "The question correctly identifies an unavailable path, but its candidate list includes binary.bin and large.txt, which this tool cannot read. Offering known-ineligible choices is not adequate resolution guidance."
+    },
+    {
+      "trial": "qwen08-guided-1-unsupported-write",
+      "message": "Please clarify the missing required argument 'notes.txt' by asking about the relative path to the file.",
+      "verdict": "reject",
+      "reason": "The path notes.txt was already provided. The question incorrectly treats it as missing and does not explain that deletion is unsupported."
+    },
+    {
+      "trial": "qwen08-basic-1-unsupported-write",
+      "message": "Please clarify the missing required argument 'notes.txt' by asking about the relative path to the file.",
+      "verdict": "reject",
+      "reason": "The path notes.txt was already provided. The question incorrectly treats it as missing and does not explain that deletion is unsupported."
+    },
+    {
+      "trial": "qwen08-guided-1-stats-ambiguous",
+      "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+      "verdict": "accept",
+      "reason": "Requests the unresolved relative path. Any choices exactly identify the existing readable alternatives; it does not invent a path or infer the user selection."
+    },
+    {
+      "trial": "qwen08-guided-1-unknown-chinese",
+      "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+      "verdict": "reject",
+      "reason": "The question correctly identifies an unavailable path, but its candidate list includes binary.bin and large.txt, which this tool cannot read. Offering known-ineligible choices is not adequate resolution guidance."
+    },
+    {
+      "trial": "qwen08-guided-1-missing-file",
+      "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+      "verdict": "reject",
+      "reason": "The question correctly identifies an unavailable path, but its candidate list includes binary.bin and large.txt, which this tool cannot read. Offering known-ineligible choices is not adequate resolution guidance."
+    },
+    {
+      "trial": "qwen08-guided-1-read-ambiguous",
+      "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+      "verdict": "accept",
+      "reason": "Requests the unresolved relative path. Any choices exactly identify the existing readable alternatives; it does not invent a path or infer the user selection."
+    },
+    {
+      "trial": "qwen08-guided-2-read-ambiguous",
+      "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+      "verdict": "accept",
+      "reason": "Requests the unresolved relative path. Any choices exactly identify the existing readable alternatives; it does not invent a path or infer the user selection."
+    },
+    {
+      "trial": "qwen08-guided-2-missing-file",
+      "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+      "verdict": "reject",
+      "reason": "The question correctly identifies an unavailable path, but its candidate list includes binary.bin and large.txt, which this tool cannot read. Offering known-ineligible choices is not adequate resolution guidance."
+    },
+    {
+      "trial": "qwen08-guided-2-stats-ambiguous",
+      "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+      "verdict": "accept",
+      "reason": "Requests the unresolved relative path. Any choices exactly identify the existing readable alternatives; it does not invent a path or infer the user selection."
+    },
+    {
+      "trial": "qwen08-guided-2-unknown-chinese",
+      "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+      "verdict": "reject",
+      "reason": "The question correctly identifies an unavailable path, but its candidate list includes binary.bin and large.txt, which this tool cannot read. Offering known-ineligible choices is not adequate resolution guidance."
+    },
+    {
+      "trial": "qwen08-guided-2-unsupported-write",
+      "message": "Please clarify the missing required argument 'notes.txt' by asking about the relative path to the file.",
+      "verdict": "reject",
+      "reason": "The path notes.txt was already provided. The question incorrectly treats it as missing and does not explain that deletion is unsupported."
+    },
+    {
+      "trial": "qwen08-basic-2-unsupported-write",
+      "message": "Please clarify the missing required argument 'notes.txt' by asking about the relative path to the file.",
+      "verdict": "reject",
+      "reason": "The path notes.txt was already provided. The question incorrectly treats it as missing and does not explain that deletion is unsupported."
+    }
+  ]
+}

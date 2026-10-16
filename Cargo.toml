@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "crates/edgehome-kit",
     "crates/edgehome-runtime",
     "crates/edgehome-inference",
     "crates/edgehome-agent",

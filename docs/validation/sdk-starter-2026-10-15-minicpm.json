@@ -1,0 +1,74 @@
+{
+  "cases": [
+    {
+      "elapsed_ms": 5772,
+      "id": "document-sample",
+      "model_calls": 1,
+      "outcome": "passed",
+      "tool_calls": 1
+    },
+    {
+      "elapsed_ms": 1250,
+      "id": "document-empty",
+      "model_calls": 1,
+      "outcome": "unexpected_clarification",
+      "tool_calls": 0
+    },
+    {
+      "elapsed_ms": 1176,
+      "id": "document-selection",
+      "model_calls": 1,
+      "outcome": "unexpected_clarification",
+      "tool_calls": 0
+    },
+    {
+      "elapsed_ms": 2390,
+      "id": "sensor-room",
+      "model_calls": 1,
+      "outcome": "unexpected_clarification",
+      "tool_calls": 0
+    },
+    {
+      "elapsed_ms": 1270,
+      "id": "sensor-outside",
+      "model_calls": 1,
+      "outcome": "unexpected_clarification",
+      "tool_calls": 0
+    },
+    {
+      "elapsed_ms": 1575,
+      "id": "sensor-selection",
+      "model_calls": 1,
+      "outcome": "unexpected_clarification",
+      "tool_calls": 0
+    },
+    {
+      "elapsed_ms": 850,
+      "id": "document-missing",
+      "model_calls": 1,
+      "outcome": "passed",
+      "tool_calls": 0
+    },
+    {
+      "elapsed_ms": 797,
+      "id": "sensor-missing",
+      "model_calls": 1,
+      "outcome": "passed",
+      "tool_calls": 0
+    }
+  ],
+  "mode": "model",
+  "model": "openbmb/minicpm5:latest",
+  "model_configuration": {
+    "context_tokens": 2048,
+    "engine": "ollama",
+    "max_output_tokens": 256,
+    "max_response_bytes": 65536,
+    "request_timeout_ms": 60000,
+    "think": null
+  },
+  "passed": 3,
+  "schema_version": 1,
+  "task_success_rate": 0.375,
+  "total": 8
+}

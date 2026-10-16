@@ -36,6 +36,7 @@ The design takes inspiration from Pi's embeddable agent and tool-extension appro
 | **Embeddable runtime** | A domain-independent `Agent`, typed tool registry, and configurable event journal |
 | **Interchangeable inference** | Bounded Ollama and OpenAI-compatible clients with six engine presets |
 | **Controlled execution** | Private expiring plans, host confirmation, repeated precondition checks, and one dispatch attempt per plan |
+| **Resumable clarification** | Task-local questions, retained draft arguments, user-supplied fields, and application policy that can allow, ask, or deny |
 | **Bounded task loops** | Per-instance model/tool budgets, context and output limits, and explicit continuation |
 | **Testable integration** | A document-tool example, fault-injection tests, HTTP fixtures, and a separate smart-home reference |
 
@@ -43,7 +44,35 @@ The SDK uses Rust `std`. Its core has no HTTP, SQLite, or smart-home dependency;
 
 ## Quick Start
 
-Requires **Rust 1.95+**. Start with a deterministic provider and an in-memory document tool. No model download, credentials, or device is required.
+Requires **Rust 1.95+**. Create your own application with two replaceable tools:
+
+```sh
+git clone https://github.com/yushui2022/EdgeHome-Harness.git
+cd EdgeHome-Harness
+cargo run --locked -p edgehome-kit -- init ../my-edge-agent --name my-edge-agent
+cd ../my-edge-agent
+cargo run -- doctor --mock
+cargo run -- run --mock --prompt "Count the sample document" --tool document.stats --allow document.stats
+```
+
+The generated project owns its tool code and references the SDK through local path dependencies. It includes a configuration file, document and sensor fixtures, task cases, and a Python client. No model, credentials, or device is needed for `--mock`.
+
+| Command | Purpose |
+| --- | --- |
+| `init` | Generate an independent application without overwriting existing files |
+| `doctor` | Validate configuration; `--probe` checks two system-only instructions |
+| `run` | Preview a task; `--allow TOOL` authorizes execution of named tools |
+| `rpc` | Host the same tools over bounded stdio for another application |
+| `eval` | Check tool selection, arguments, and actual results against fixed cases |
+
+Start with the [developer guide / 开发入口](docs/developer-kit.md). Execution returns the tool receipt by default; `--loop` enables further model turns. `--events` emits lifecycle metadata, and `--journal` creates a bounded session log. The log does not restore execution.
+
+For an application using actual local data, follow the [read-only file agent](docs/file-agent.md). It demonstrates explicit directory access, ambiguous-path clarification, user replies over RPC, and execution-time policy checks. Model-selected arguments still require application review; these checks do not establish general intent accuracy.
+
+<details>
+<summary>Run the smaller SDK example directly inside the repository</summary>
+
+Start with a deterministic provider and an in-memory document tool. No model download, credentials, or device is required.
 
 ### 1. Preview a tool call
 
@@ -71,9 +100,11 @@ Start your inference service, copy its [configuration preset](configs/inference/
 cargo run --locked -p edgehome-inference --example document_agent -- --config configs/inference/ollama.yaml --execute-demo
 ```
 
-The SDK sends a structured decision schema and validates the returned candidate again. Model quality, chat templates, and schema support affect task completion; see the [engine guide](docs/inference-engines.md) and [actual model probes](docs/sdk-model-validation.md).
+The SDK sends a structured decision schema and validates the returned candidate again. An experimental, opt-in action-first protocol supports explicit missing values and bounded validation repair. Model quality, chat templates, and schema support affect task completion; see the [reliability study](docs/model-reliability.md) and [engine guide](docs/inference-engines.md).
 
 For tasks that need only the tool's authoritative result, add `--result-only` to stop after execution. The host can use the structured receipt directly, saving a second inference call and avoiding model-written restatement errors.
+
+</details>
 
 ## Build On EdgeHome
 
@@ -81,6 +112,7 @@ Add the crates to your Cargo application through local path dependencies, then f
 
 | Component | What you configure or implement |
 | --- | --- |
+| [`edgehome-kit`](crates/edgehome-kit/src/lib.rs) | Shared `doctor/run/rpc/eval` entry points; keep your application's tools in its own source files |
 | [`edgehome-runtime`](crates/edgehome-runtime/src/lib.rs) | `AgentConfig`, instance lifetime, approval, and the host-driven task loop |
 | [`edgehome-inference`](crates/edgehome-inference/src/lib.rs) | Engine, endpoint, model name, and request budgets; built-in clients handle HTTP bounds |
 | [`TypedTool`](crates/edgehome-runtime/src/tool.rs) | A Rust argument type, semantic validator, and bounded execution handler |
@@ -90,7 +122,11 @@ Register a few narrowly scoped tools. Derive `Deserialize` and `JsonSchema` for 
 
 Drive the application through `prompt` → proposal → approved `execute` → `continue_run`. Each turn returns a tool proposal, final answer, or clarification. Tools receive a time and output budget; application handlers must enforce these during their own I/O.
 
+Resume clarification with `reply` for natural-language input or `resolve` for host-supplied fields. `Tool::preflight` and `GuardedTool` let applications request missing information or reject a proposal using their own state. Neither clarification method executes a tool or resets the instance's call budgets.
+
 New domains do not require edits to the SDK's core types. The smart-home application can continue using its existing registry and adapters; these are not automatically imported into the generic tool registry.
+
+Use `prompt_with_tools` to expose only the relevant tools for a task. The runtime also rejects out-of-scope calls locally. Lifecycle events, usage counters, and a cooperative cancellation token let hosts observe and stop work; blocking callbacks still require their own deadlines.
 
 ## Inference Engines
 
@@ -168,7 +204,11 @@ Backend fixtures establish transport behavior, not universal device compatibilit
 
 ## Verification
 
-The generic SDK has runtime boundary tests, local HTTP contract tests, and a deterministic document example. Actual Ollama probes are recorded separately in the [SDK model validation report](docs/sdk-model-validation.md), including incomplete tasks and rejected candidates.
+The generic SDK has runtime boundary tests, local HTTP contract tests, and a deterministic document example. The [real-model reliability study](docs/model-reliability.md) uses a separate 36-case acceptance suite, repeated paired runs, raw decisions and receipts, and an independent scorer. Failed cases and quality gates remain visible. Earlier probes are preserved in the [validation history](docs/sdk-model-validation.md).
+
+The three tested model profiles have not passed the task qualification gate. Higher completion rates still include incorrect proposals, so these results do not establish readiness for preauthorized unattended execution.
+
+The [onboarding check](scripts/check-sdk-onboarding.py) generates and builds an application outside this repository, exercises both tools and the Python RPC client, and runs the [eight-case starter gate](cases/sdk-starter.json). This gate checks structured tool tasks and clarification branches, not open-ended planning or hardware performance.
 
 The smart-home reference has its own 108-case deterministic gate. Its [recorded MiniCPM run](docs/real-minicpm-eval-report.md) passed 104/108 cases with rule repair or fallback in 84 cases. Those figures describe the existing domain pipeline; they are not general SDK accuracy or standalone model scores.
 
@@ -185,13 +225,14 @@ git diff --check
 
 EdgeHome is a reference SDK under active development. The current delivery is a Rust library and runnable examples for short, host-controlled agent tasks. APIs may evolve as integrations and hardware evidence improve.
 
-Go/Python RPC bindings, skill-package loading, process sandboxing, restart recovery, and sustained physical-device benchmarks remain future work. The implementation uses `std`; bare-metal MCU and `no_std` targets are outside the current scope. No Pi extension-package compatibility or production gateway qualification is claimed.
+The stdio protocol supports external hosts and includes a Python example. Dynamic skill-package loading, process sandboxing, restart recovery, dedicated language SDKs, and sustained physical-device benchmarks remain future work. The implementation uses `std`; bare-metal MCU and `no_std` targets are outside the current scope. No Pi extension-package compatibility or production gateway qualification is claimed.
 
 ## Documentation
 
 | Area | Resources |
 | --- | --- |
 | Start building | [SDK guide / 中文](docs/edge-agent-sdk.md) · [Document example](crates/edgehome-inference/examples/document_agent.rs) |
+| Application workflow | [Developer kit / 中文](docs/developer-kit.md) · [Python client](examples/python/agent_client.py) · [Starter cases](cases/sdk-starter.json) |
 | Model integration | [Engines and configuration / 中文](docs/inference-engines.md) · [Model validation](docs/sdk-model-validation.md) |
 | Smart-home reference | [Agent reference](docs/agent-reference.md) · [Architecture](docs/architecture-v2.md) · [Customization](docs/customization.md) |
 | Devices | [Home Assistant](docs/home-assistant-gateway.md) · [MQTT](docs/mqtt-guarded-publish.md) · [MIoT](docs/miot-bridge-adapter.md) · [Matter](docs/matter-bridge-adapter.md) |

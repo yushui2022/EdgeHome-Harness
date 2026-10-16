@@ -1,0 +1,751 @@
+{
+  "schema_version": 2,
+  "cases": [
+    {
+      "id": "doc-en",
+      "input": "How many characters and lines does the empty document contain?",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "document",
+      "expect": {
+        "kind": "tool",
+        "tool": "document.stats",
+        "arguments": {
+          "document": "empty"
+        },
+        "output": {
+          "characters": 0,
+          "lines": 0
+        }
+      }
+    },
+    {
+      "id": "doc-zh",
+      "input": "请统计 sample 文档的字符数和行数。",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "document",
+      "expect": {
+        "kind": "tool",
+        "tool": "document.stats",
+        "arguments": {
+          "document": "sample"
+        },
+        "output": {
+          "characters": 84,
+          "lines": 2
+        }
+      }
+    },
+    {
+      "id": "doc-negation",
+      "input": "Inspect empty, not sample. I mean the document.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "document",
+      "expect": {
+        "kind": "tool",
+        "tool": "document.stats",
+        "arguments": {
+          "document": "empty"
+        },
+        "output": {
+          "characters": 0,
+          "lines": 0
+        }
+      }
+    },
+    {
+      "id": "doc-correction",
+      "input": "Count the empty document. Correction: use the sample document instead.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "document",
+      "expect": {
+        "kind": "tool",
+        "tool": "document.stats",
+        "arguments": {
+          "document": "sample"
+        },
+        "output": {
+          "characters": 84,
+          "lines": 2
+        }
+      }
+    },
+    {
+      "id": "doc-paraphrase",
+      "input": "Give me the size and line count of the sample document.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "document",
+      "expect": {
+        "kind": "tool",
+        "tool": "document.stats",
+        "arguments": {
+          "document": "sample"
+        },
+        "output": {
+          "characters": 84,
+          "lines": 2
+        }
+      }
+    },
+    {
+      "id": "doc-quoted",
+      "input": "The document to inspect is named \"empty\".",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "document",
+      "expect": {
+        "kind": "tool",
+        "tool": "document.stats",
+        "arguments": {
+          "document": "empty"
+        },
+        "output": {
+          "characters": 0,
+          "lines": 0
+        }
+      }
+    },
+    {
+      "id": "doc-zh-negation",
+      "input": "不要统计 empty 文档，请统计 sample 文档。",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "document",
+      "expect": {
+        "kind": "tool",
+        "tool": "document.stats",
+        "arguments": {
+          "document": "sample"
+        },
+        "output": {
+          "characters": 84,
+          "lines": 2
+        }
+      }
+    },
+    {
+      "id": "doc-distractor",
+      "input": "I already read the room sensor. Now count the empty document.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "document",
+      "expect": {
+        "kind": "tool",
+        "tool": "document.stats",
+        "arguments": {
+          "document": "empty"
+        },
+        "output": {
+          "characters": 0,
+          "lines": 0
+        }
+      }
+    },
+    {
+      "id": "sensor-en",
+      "input": "What temperature does the outside sensor report?",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "sensor",
+      "expect": {
+        "kind": "tool",
+        "tool": "sensor.read",
+        "arguments": {
+          "sensor": "outside"
+        },
+        "output": {
+          "temperature_c": 18,
+          "source": "fixture"
+        }
+      }
+    },
+    {
+      "id": "sensor-zh",
+      "input": "读取 room 传感器的温度。",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "sensor",
+      "expect": {
+        "kind": "tool",
+        "tool": "sensor.read",
+        "arguments": {
+          "sensor": "room"
+        },
+        "output": {
+          "temperature_c": 22.5,
+          "source": "fixture"
+        }
+      }
+    },
+    {
+      "id": "sensor-negation",
+      "input": "Read outside, not room. I am asking about the temperature sensor.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "sensor",
+      "expect": {
+        "kind": "tool",
+        "tool": "sensor.read",
+        "arguments": {
+          "sensor": "outside"
+        },
+        "output": {
+          "temperature_c": 18,
+          "source": "fixture"
+        }
+      }
+    },
+    {
+      "id": "sensor-correction",
+      "input": "Read the room sensor. Actually, read the outside sensor instead.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "sensor",
+      "expect": {
+        "kind": "tool",
+        "tool": "sensor.read",
+        "arguments": {
+          "sensor": "outside"
+        },
+        "output": {
+          "temperature_c": 18,
+          "source": "fixture"
+        }
+      }
+    },
+    {
+      "id": "sensor-paraphrase",
+      "input": "Fetch the Celsius reading from the room sensor.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "sensor",
+      "expect": {
+        "kind": "tool",
+        "tool": "sensor.read",
+        "arguments": {
+          "sensor": "room"
+        },
+        "output": {
+          "temperature_c": 22.5,
+          "source": "fixture"
+        }
+      }
+    },
+    {
+      "id": "sensor-quoted",
+      "input": "Please check the sensor named \"outside\".",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "sensor",
+      "expect": {
+        "kind": "tool",
+        "tool": "sensor.read",
+        "arguments": {
+          "sensor": "outside"
+        },
+        "output": {
+          "temperature_c": 18,
+          "source": "fixture"
+        }
+      }
+    },
+    {
+      "id": "sensor-zh-negation",
+      "input": "不要读 outside 传感器，读取 room 的温度。",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "sensor",
+      "expect": {
+        "kind": "tool",
+        "tool": "sensor.read",
+        "arguments": {
+          "sensor": "room"
+        },
+        "output": {
+          "temperature_c": 22.5,
+          "source": "fixture"
+        }
+      }
+    },
+    {
+      "id": "sensor-distractor",
+      "input": "The sample document was counted earlier. Now read the room sensor.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "sensor",
+      "expect": {
+        "kind": "tool",
+        "tool": "sensor.read",
+        "arguments": {
+          "sensor": "room"
+        },
+        "output": {
+          "temperature_c": 22.5,
+          "source": "fixture"
+        }
+      }
+    },
+    {
+      "id": "length-en",
+      "input": "Convert 2.5 meters to centimeters.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "conversion",
+      "expect": {
+        "kind": "tool",
+        "tool": "length.convert",
+        "arguments": {
+          "value": 2.5,
+          "from": "m",
+          "to": "cm"
+        },
+        "output": {
+          "value": 250,
+          "unit": "cm"
+        }
+      }
+    },
+    {
+      "id": "length-zh",
+      "input": "把 30 厘米换算为毫米。",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "conversion",
+      "expect": {
+        "kind": "tool",
+        "tool": "length.convert",
+        "arguments": {
+          "value": 30,
+          "from": "cm",
+          "to": "mm"
+        },
+        "output": {
+          "value": 300,
+          "unit": "mm"
+        }
+      }
+    },
+    {
+      "id": "length-decimal",
+      "input": "Convert 125 millimeters into centimeters.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "conversion",
+      "expect": {
+        "kind": "tool",
+        "tool": "length.convert",
+        "arguments": {
+          "value": 125,
+          "from": "mm",
+          "to": "cm"
+        },
+        "output": {
+          "value": 12.5,
+          "unit": "cm"
+        }
+      }
+    },
+    {
+      "id": "length-zero",
+      "input": "Convert zero meters to millimeters.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "conversion",
+      "expect": {
+        "kind": "tool",
+        "tool": "length.convert",
+        "arguments": {
+          "value": 0,
+          "from": "m",
+          "to": "mm"
+        },
+        "output": {
+          "value": 0,
+          "unit": "mm"
+        }
+      }
+    },
+    {
+      "id": "length-negative",
+      "input": "Convert -3 centimeters to millimeters.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "conversion",
+      "expect": {
+        "kind": "tool",
+        "tool": "length.convert",
+        "arguments": {
+          "value": -3,
+          "from": "cm",
+          "to": "mm"
+        },
+        "output": {
+          "value": -30,
+          "unit": "mm"
+        }
+      }
+    },
+    {
+      "id": "length-correction",
+      "input": "Convert 5 m to mm. Correction: the destination is cm.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "conversion",
+      "expect": {
+        "kind": "tool",
+        "tool": "length.convert",
+        "arguments": {
+          "value": 5,
+          "from": "m",
+          "to": "cm"
+        },
+        "output": {
+          "value": 500,
+          "unit": "cm"
+        }
+      }
+    },
+    {
+      "id": "length-short",
+      "input": "2500 mm -> m",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "conversion",
+      "expect": {
+        "kind": "tool",
+        "tool": "length.convert",
+        "arguments": {
+          "value": 2500,
+          "from": "mm",
+          "to": "m"
+        },
+        "output": {
+          "value": 2.5,
+          "unit": "m"
+        }
+      }
+    },
+    {
+      "id": "length-distractor",
+      "input": "Ignore the document and temperature readings. Convert 7 cm to mm.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "conversion",
+      "expect": {
+        "kind": "tool",
+        "tool": "length.convert",
+        "arguments": {
+          "value": 7,
+          "from": "cm",
+          "to": "mm"
+        },
+        "output": {
+          "value": 70,
+          "unit": "mm"
+        }
+      }
+    },
+    {
+      "id": "doc-unspecified",
+      "input": "I need the document's character count, but I haven't picked a document.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "missing",
+      "expect": {
+        "kind": "clarify",
+        "message_contains_any": [
+          "document",
+          "文档"
+        ]
+      }
+    },
+    {
+      "id": "sensor-unspecified",
+      "input": "Get a temperature reading; I have not chosen a sensor yet.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "missing",
+      "expect": {
+        "kind": "clarify",
+        "message_contains_any": [
+          "sensor",
+          "传感器"
+        ]
+      }
+    },
+    {
+      "id": "doc-unknown",
+      "input": "Inspect the report document, not sample or empty.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "unsupported",
+      "expect": {
+        "kind": "clarify",
+        "message_contains_any": [
+          "document",
+          "report",
+          "文档"
+        ]
+      }
+    },
+    {
+      "id": "sensor-unknown",
+      "input": "Read the basement temperature sensor.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "unsupported",
+      "expect": {
+        "kind": "clarify",
+        "message_contains_any": [
+          "sensor",
+          "basement",
+          "传感器",
+          "地下"
+        ]
+      }
+    },
+    {
+      "id": "doc-ambiguous",
+      "input": "Count either the sample or empty document; I haven't decided which.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "ambiguous",
+      "expect": {
+        "kind": "clarify",
+        "message_contains_any": [
+          "document",
+          "which",
+          "文档"
+        ]
+      }
+    },
+    {
+      "id": "sensor-ambiguous",
+      "input": "Read one of room or outside; ask me to choose first.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "ambiguous",
+      "expect": {
+        "kind": "clarify",
+        "message_contains_any": [
+          "sensor",
+          "which",
+          "choose",
+          "传感器",
+          "选择"
+        ]
+      }
+    },
+    {
+      "id": "length-missing-value",
+      "input": "Convert meters to centimeters; I have not provided the quantity.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "missing",
+      "expect": {
+        "kind": "clarify",
+        "message_contains_any": [
+          "value",
+          "quantity",
+          "number",
+          "值",
+          "数量"
+        ]
+      }
+    },
+    {
+      "id": "length-missing-to",
+      "input": "Convert 15 centimeters. Ask me for the destination unit.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "missing",
+      "expect": {
+        "kind": "clarify",
+        "message_contains_any": [
+          "to",
+          "destination",
+          "unit",
+          "单位"
+        ]
+      }
+    },
+    {
+      "id": "length-missing-from",
+      "input": "Convert 15 to centimeters. The original unit is not specified.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "missing",
+      "expect": {
+        "kind": "clarify",
+        "message_contains_any": [
+          "from",
+          "source",
+          "original",
+          "unit",
+          "单位"
+        ]
+      }
+    },
+    {
+      "id": "length-unsupported",
+      "input": "Convert 2 inches to centimeters.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "unsupported",
+      "expect": {
+        "kind": "clarify",
+        "message_contains_any": [
+          "inch",
+          "unit",
+          "supported",
+          "英寸",
+          "单位"
+        ]
+      }
+    },
+    {
+      "id": "length-ambiguous",
+      "input": "Convert 4 meters to either centimeters or millimeters; ask me which destination.",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "ambiguous",
+      "expect": {
+        "kind": "clarify",
+        "message_contains_any": [
+          "to",
+          "destination",
+          "which",
+          "unit",
+          "单位",
+          "选择"
+        ]
+      }
+    },
+    {
+      "id": "doc-zh-missing",
+      "input": "帮我统计文档，还没决定选哪个，请先问我。",
+      "tools": [
+        "document.stats",
+        "sensor.read",
+        "length.convert"
+      ],
+      "category": "missing",
+      "expect": {
+        "kind": "clarify",
+        "message_contains_any": [
+          "document",
+          "文档"
+        ]
+      }
+    }
+  ]
+}

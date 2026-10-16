@@ -2,6 +2,13 @@
 
 This checklist keeps public releases aligned with implemented code and evidence.
 
+The file application has separate [acceptance and regression evidence](file-agent-results.md).
+The release script verifies both archives and scorer tamper detection; it does not
+declare their model profiles qualified. For a current-source deployment check,
+run `verify-file-evidence.py EVIDENCE --require-gate qwen06-guided` without
+`--skip-source-check`. Clarification reviews must be present. Preserve failed
+gates, wrong execution requests and previous experiments when iterating.
+
 ## 1. Scope Review
 
 Before every release, confirm these statements are still true:
@@ -72,6 +79,20 @@ input_guard_flag_accuracy >= 1.0
 ```
 
 ## 3. Documentation Review
+
+The deterministic smart-home gate above does not qualify generic SDK models.
+CI audits the integrity of archived [real-model evidence](model-reliability.md)
+without requiring a local inference server. That audit may pass while the model
+qualification gates fail. A current model-readiness claim additionally requires
+a fresh paired run, matching source fingerprints, and an explicit gate:
+
+```sh
+python scripts/evaluate-sdk-reliability.py --output /path/to/new-evidence
+python scripts/verify-sdk-evidence.py /path/to/new-evidence --require-gate qwen06-action-holdout
+```
+
+Do not use `--skip-source-check` to qualify a changed runtime, or present an
+integrity audit as evidence that a model passed its task gate.
 
 Check:
 

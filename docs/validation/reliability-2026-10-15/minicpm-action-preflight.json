@@ -1,0 +1,12 @@
+{
+  "command": [
+    "G:\\DevCache\\CargoTarget\\debug\\examples\\reliability_lab.exe",
+    "doctor",
+    "--config",
+    "G:\\Projects\\edgehome\\configs\\reliability\\minicpm-action.yaml",
+    "--probe"
+  ],
+  "exit_code": 1,
+  "stdout": "",
+  "stderr": "Error: model role probe failed; check the chat template and model instruction following\n"
+}

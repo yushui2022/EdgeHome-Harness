@@ -1,0 +1,14 @@
+inference:
+  engine: ollama
+  model: edgehome-qwen3-06b-chat:v1
+  request_timeout_ms: 60000
+  max_output_tokens: 1024
+  context_tokens: 4096
+  think: false
+runtime:
+  decision_protocol: tagged
+  max_decision_repairs: 0
+  max_model_calls: 2
+  max_tool_calls: 1
+  max_context_bytes: 32768
+  require_tool_observation: true

@@ -1,0 +1,76 @@
+{
+  "id": "stats-empty",
+  "category": "direct",
+  "model": "qwen06",
+  "arm": "basic",
+  "repeat": 1,
+  "elapsed_ms": 516,
+  "log": [
+    {
+      "response": {
+        "capabilities": [
+          "clarification_reply",
+          "clarification_resolve"
+        ],
+        "max_request_bytes": 8192,
+        "protocol": 1,
+        "type": "ready"
+      }
+    },
+    {
+      "request": {
+        "id": 1,
+        "command": {
+          "method": "prompt",
+          "input": "Count the bytes, characters and lines in empty.txt.",
+          "tools": [
+            "file.list",
+            "file.read",
+            "file.stats"
+          ]
+        }
+      }
+    },
+    {
+      "response": {
+        "clarification": null,
+        "code": "tool_rejected",
+        "id": 1,
+        "message": "tool precondition rejected: tool policy or current precondition rejected the call",
+        "type": "error"
+      }
+    },
+    {
+      "request": {
+        "id": 2,
+        "command": {
+          "method": "status"
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 2,
+        "result": {
+          "cancelled": false,
+          "continuation_available": false,
+          "model_calls": 1,
+          "pending_clarification": null,
+          "pending_plan": null,
+          "tool_calls": 0
+        },
+        "type": "result"
+      }
+    }
+  ],
+  "process": {
+    "exit_code": 0,
+    "stderr": ""
+  },
+  "driver_error": null,
+  "passed": false,
+  "clarified": false,
+  "wrong_proposals": 0,
+  "wrong_execution_requests": 0,
+  "execution_requests": 0
+}

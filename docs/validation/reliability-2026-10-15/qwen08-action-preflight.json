@@ -1,0 +1,12 @@
+{
+  "command": [
+    "G:\\DevCache\\CargoTarget\\debug\\examples\\reliability_lab.exe",
+    "doctor",
+    "--config",
+    "G:\\Projects\\edgehome\\configs\\reliability\\qwen08-action.yaml",
+    "--probe"
+  ],
+  "exit_code": 0,
+  "stdout": "{\"mode\":\"model\",\"note\":\"Configuration readiness does not establish task accuracy or hardware performance.\",\"probe\":\"passed\",\"status\":\"ready\",\"tools\":[\"document.stats\",\"length.convert\",\"sensor.read\"]}\n",
+  "stderr": ""
+}

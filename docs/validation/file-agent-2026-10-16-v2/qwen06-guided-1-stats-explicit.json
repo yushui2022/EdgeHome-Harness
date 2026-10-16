@@ -1,0 +1,111 @@
+{
+  "id": "stats-explicit",
+  "category": "direct",
+  "model": "qwen06",
+  "arm": "guided",
+  "repeat": 1,
+  "elapsed_ms": 797,
+  "log": [
+    {
+      "response": {
+        "capabilities": [
+          "clarification_reply",
+          "clarification_resolve"
+        ],
+        "max_request_bytes": 8192,
+        "protocol": 1,
+        "type": "ready"
+      }
+    },
+    {
+      "request": {
+        "id": 1,
+        "command": {
+          "method": "prompt",
+          "input": "Give byte, character and line counts for alpha/report.txt.",
+          "tools": [
+            "file.list",
+            "file.read",
+            "file.stats"
+          ]
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 1,
+        "result": {
+          "plan": {
+            "arguments": {
+              "path": "alpha/report.txt"
+            },
+            "plan_id": "f315fb4b-8ca8-4762-ba73-d15bf09c7f06",
+            "tool": "file.stats"
+          },
+          "status": "proposal"
+        },
+        "type": "result"
+      }
+    },
+    {
+      "request": {
+        "id": 2,
+        "command": {
+          "method": "execute",
+          "plan_id": "f315fb4b-8ca8-4762-ba73-d15bf09c7f06",
+          "approved": true
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 2,
+        "result": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "bytes": 13,
+            "characters": 13,
+            "lines": 1,
+            "path": "alpha/report.txt"
+          },
+          "plan_id": "f315fb4b-8ca8-4762-ba73-d15bf09c7f06",
+          "status": "succeeded"
+        },
+        "type": "result"
+      }
+    },
+    {
+      "request": {
+        "id": 3,
+        "command": {
+          "method": "status"
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 3,
+        "result": {
+          "cancelled": false,
+          "continuation_available": true,
+          "model_calls": 1,
+          "pending_clarification": null,
+          "pending_plan": null,
+          "tool_calls": 1
+        },
+        "type": "result"
+      }
+    }
+  ],
+  "process": {
+    "exit_code": 0,
+    "stderr": ""
+  },
+  "driver_error": null,
+  "passed": true,
+  "clarified": false,
+  "wrong_proposals": 0,
+  "wrong_execution_requests": 0,
+  "execution_requests": 1
+}

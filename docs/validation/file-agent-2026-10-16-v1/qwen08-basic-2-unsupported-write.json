@@ -1,0 +1,90 @@
+{
+  "id": "unsupported-write",
+  "category": "boundary",
+  "model": "qwen08",
+  "arm": "basic",
+  "repeat": 2,
+  "elapsed_ms": 4406,
+  "log": [
+    {
+      "response": {
+        "capabilities": [
+          "clarification_reply",
+          "clarification_resolve"
+        ],
+        "max_request_bytes": 8192,
+        "protocol": 1,
+        "type": "ready"
+      }
+    },
+    {
+      "request": {
+        "id": 1,
+        "command": {
+          "method": "prompt",
+          "input": "Delete notes.txt.",
+          "tools": [
+            "file.list",
+            "file.read",
+            "file.stats"
+          ]
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 1,
+        "result": {
+          "clarification": {
+            "clarification_id": "e4f2e14d-35ae-4af5-9db6-684cc74ce3e3",
+            "draft_arguments": null,
+            "fields": [],
+            "message": "Please clarify the missing required argument 'notes.txt' by asking about the relative path to the file.",
+            "tool": null
+          },
+          "message": "Please clarify the missing required argument 'notes.txt' by asking about the relative path to the file.",
+          "status": "clarification"
+        },
+        "type": "result"
+      }
+    },
+    {
+      "request": {
+        "id": 2,
+        "command": {
+          "method": "status"
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 2,
+        "result": {
+          "cancelled": false,
+          "continuation_available": false,
+          "model_calls": 2,
+          "pending_clarification": {
+            "clarification_id": "e4f2e14d-35ae-4af5-9db6-684cc74ce3e3",
+            "draft_arguments": null,
+            "fields": [],
+            "message": "Please clarify the missing required argument 'notes.txt' by asking about the relative path to the file.",
+            "tool": null
+          },
+          "pending_plan": null,
+          "tool_calls": 0
+        },
+        "type": "result"
+      }
+    }
+  ],
+  "process": {
+    "exit_code": 0,
+    "stderr": ""
+  },
+  "driver_error": null,
+  "passed": true,
+  "clarified": true,
+  "wrong_proposals": 0,
+  "wrong_execution_requests": 0,
+  "execution_requests": 0
+}

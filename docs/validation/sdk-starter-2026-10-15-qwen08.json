@@ -1,0 +1,74 @@
+{
+  "cases": [
+    {
+      "elapsed_ms": 7477,
+      "id": "document-sample",
+      "model_calls": 1,
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "tool_calls": 0
+    },
+    {
+      "elapsed_ms": 1477,
+      "id": "document-empty",
+      "model_calls": 1,
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "tool_calls": 0
+    },
+    {
+      "elapsed_ms": 1518,
+      "id": "document-selection",
+      "model_calls": 1,
+      "outcome": "unexpected_clarification",
+      "tool_calls": 0
+    },
+    {
+      "elapsed_ms": 1532,
+      "id": "sensor-room",
+      "model_calls": 1,
+      "outcome": "unexpected_clarification",
+      "tool_calls": 0
+    },
+    {
+      "elapsed_ms": 1743,
+      "id": "sensor-outside",
+      "model_calls": 1,
+      "outcome": "unexpected_clarification",
+      "tool_calls": 0
+    },
+    {
+      "elapsed_ms": 1360,
+      "id": "sensor-selection",
+      "model_calls": 1,
+      "outcome": "unexpected_clarification",
+      "tool_calls": 0
+    },
+    {
+      "elapsed_ms": 1304,
+      "id": "document-missing",
+      "model_calls": 1,
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "tool_calls": 0
+    },
+    {
+      "elapsed_ms": 1446,
+      "id": "sensor-missing",
+      "model_calls": 1,
+      "outcome": "passed",
+      "tool_calls": 0
+    }
+  ],
+  "mode": "model",
+  "model": "qwen3.5:0.8b",
+  "model_configuration": {
+    "context_tokens": 2048,
+    "engine": "ollama",
+    "max_output_tokens": 256,
+    "max_response_bytes": 65536,
+    "request_timeout_ms": 60000,
+    "think": false
+  },
+  "passed": 1,
+  "schema_version": 1,
+  "task_success_rate": 0.125,
+  "total": 8
+}

@@ -1,0 +1,111 @@
+{
+  "id": "stats-empty",
+  "category": "direct",
+  "model": "qwen08",
+  "arm": "basic",
+  "repeat": 1,
+  "elapsed_ms": 1594,
+  "log": [
+    {
+      "response": {
+        "capabilities": [
+          "clarification_reply",
+          "clarification_resolve"
+        ],
+        "max_request_bytes": 8192,
+        "protocol": 1,
+        "type": "ready"
+      }
+    },
+    {
+      "request": {
+        "id": 1,
+        "command": {
+          "method": "prompt",
+          "input": "Count the bytes, characters and lines in empty.txt.",
+          "tools": [
+            "file.list",
+            "file.read",
+            "file.stats"
+          ]
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 1,
+        "result": {
+          "plan": {
+            "arguments": {
+              "path": "empty.txt"
+            },
+            "plan_id": "d90ebe0a-717d-446b-a524-34f6d098bf5f",
+            "tool": "file.stats"
+          },
+          "status": "proposal"
+        },
+        "type": "result"
+      }
+    },
+    {
+      "request": {
+        "id": 2,
+        "command": {
+          "method": "execute",
+          "plan_id": "d90ebe0a-717d-446b-a524-34f6d098bf5f",
+          "approved": true
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 2,
+        "result": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "bytes": 0,
+            "characters": 0,
+            "lines": 0,
+            "path": "empty.txt"
+          },
+          "plan_id": "d90ebe0a-717d-446b-a524-34f6d098bf5f",
+          "status": "succeeded"
+        },
+        "type": "result"
+      }
+    },
+    {
+      "request": {
+        "id": 3,
+        "command": {
+          "method": "status"
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 3,
+        "result": {
+          "cancelled": false,
+          "continuation_available": true,
+          "model_calls": 1,
+          "pending_clarification": null,
+          "pending_plan": null,
+          "tool_calls": 1
+        },
+        "type": "result"
+      }
+    }
+  ],
+  "process": {
+    "exit_code": 0,
+    "stderr": ""
+  },
+  "driver_error": null,
+  "passed": true,
+  "clarified": false,
+  "wrong_proposals": 0,
+  "wrong_execution_requests": 0,
+  "execution_requests": 1
+}

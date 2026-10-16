@@ -172,6 +172,22 @@ try {
         "-q", "-p", "edgehome-inference", "--example", "document_agent", "--", "--execute-demo"
     ))
 
+    Invoke-Native "Independent SDK application and RPC smoke" @("python", (Join-Path $PSScriptRoot "check-sdk-onboarding.py"))
+
+    Invoke-Native "Recorded model evidence integrity (not model qualification)" @(
+        "python", (Join-Path $PSScriptRoot "verify-sdk-evidence.py"),
+        "docs/validation/reliability-2026-10-15", "--skip-source-check", "--self-test"
+    )
+
+    Invoke-Native "Initial file application evidence integrity" @(
+        "python", (Join-Path $PSScriptRoot "verify-file-evidence.py"),
+        "docs/validation/file-agent-2026-10-16-v1", "--skip-source-check"
+    )
+    Invoke-Native "File application regression integrity and scorer checks" @(
+        "python", (Join-Path $PSScriptRoot "verify-file-evidence.py"),
+        "docs/validation/file-agent-2026-10-16-v2", "--skip-source-check", "--self-test"
+    )
+
     if (-not $SkipEval) {
         Invoke-Native "Release eval gate" (@(
             "cargo", "run"

@@ -15,6 +15,26 @@ implemented code, tests, docs, and eval evidence.
 
 ### Added
 
+- Resumable, bounded clarification with task-local IDs, free-text replies and
+  host-supplied field resolution. Application preflight can allow, clarify or deny;
+  execution repeats it and consumes an approved plan if conditions change.
+- A real read-only filesystem application with bounded UTF-8 reads and traversal,
+  path/link checks, RPC integration, and a frozen 20-task paired evaluation. Raw
+  model traces require an explicit new output file; metadata logs remain separate.
+- Opt-in action-first decisions, missing-value clarification, and bounded validation
+  repair without automatic tool retries. Added system-role probes to detect model
+  template/instruction problems that constant-only JSON checks miss.
+- A 36-case multilingual reliability suite with a real length-conversion tool,
+  repeated paired model runs, opt-in raw evidence, and independent Python rescoring.
+  Wrong allowlisted proposals execute in test tools and remain scored as failures;
+  evaluation no longer uses the answer key as an execution guard.
+- `edgehome-kit`: independent application scaffolding, configuration/model
+  diagnostics, tool-scoped run commands, sequential bounded stdio RPC, and a
+  Python host example. Optional metadata journals use fresh files and byte caps.
+- Task-scoped tool exposure enforced in prompts and host dispatch, lifecycle
+  observers, usage counters, and cooperative cancellation in the generic runtime.
+- Eight starter task cases across document and sensor fixtures, plus an external
+  generated-application build and RPC smoke check. Model results remain separate.
 - `edgehome-runtime`: a domain-independent agent SDK with typed tools, host-owned
   approval, bounded context and task loops, optional observation-before-answer
   checks, and a bounded metadata journal without HTTP or SQLite dependencies.

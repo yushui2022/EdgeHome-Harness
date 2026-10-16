@@ -1,0 +1,13 @@
+{
+  "schema_version": 2,
+  "cases": [
+    {"id":"document-sample","input":"Count characters and lines in the sample document.","tools":["document.stats"],"expect":{"kind":"tool","tool":"document.stats","arguments":{"document":"sample"},"output":{"characters":84,"lines":2}}},
+    {"id":"document-empty","input":"Count the empty document.","tools":["document.stats"],"expect":{"kind":"tool","tool":"document.stats","arguments":{"document":"empty"},"output":{"characters":0,"lines":0}}},
+    {"id":"document-selection","input":"Use document.stats to inspect the sample document.","tools":["document.stats","sensor.read"],"expect":{"kind":"tool","tool":"document.stats","arguments":{"document":"sample"},"output":{"characters":84,"lines":2}}},
+    {"id":"sensor-room","input":"Read the room sensor temperature.","tools":["sensor.read"],"expect":{"kind":"tool","tool":"sensor.read","arguments":{"sensor":"room"},"output":{"temperature_c":22.5,"source":"fixture"}}},
+    {"id":"sensor-outside","input":"Read the outside sensor temperature.","tools":["sensor.read"],"expect":{"kind":"tool","tool":"sensor.read","arguments":{"sensor":"outside"},"output":{"temperature_c":18.0,"source":"fixture"}}},
+    {"id":"sensor-selection","input":"Use sensor.read to inspect the outside sensor.","tools":["document.stats","sensor.read"],"expect":{"kind":"tool","tool":"sensor.read","arguments":{"sensor":"outside"},"output":{"temperature_c":18.0,"source":"fixture"}}},
+    {"id":"document-missing","input":"Count the document. Ask me which document if it is unspecified.","tools":["document.stats"],"expect":{"kind":"clarify","message_contains_any":["document","文档"]}},
+    {"id":"sensor-missing","input":"Read the sensor. Ask me which sensor if it is unspecified.","tools":["sensor.read"],"expect":{"kind":"clarify","message_contains_any":["sensor","传感器"]}}
+  ]
+}

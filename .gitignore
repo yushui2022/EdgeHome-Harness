@@ -9,4 +9,6 @@
 .env.*
 !/configs/*.example.*
 /artifacts/
+__pycache__/
+*.pyc
 

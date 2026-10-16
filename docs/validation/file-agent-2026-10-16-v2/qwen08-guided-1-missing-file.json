@@ -1,0 +1,151 @@
+{
+  "id": "missing-file",
+  "category": "clarification",
+  "model": "qwen08",
+  "arm": "guided",
+  "repeat": 1,
+  "elapsed_ms": 1187,
+  "log": [
+    {
+      "response": {
+        "capabilities": [
+          "clarification_reply",
+          "clarification_resolve"
+        ],
+        "max_request_bytes": 8192,
+        "protocol": 1,
+        "type": "ready"
+      }
+    },
+    {
+      "request": {
+        "id": 1,
+        "command": {
+          "method": "prompt",
+          "input": "Read missing.txt.",
+          "tools": [
+            "file.list",
+            "file.read",
+            "file.stats"
+          ]
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 1,
+        "result": {
+          "clarification": {
+            "clarification_id": "a821dad3-5bf2-429d-b3d1-d956b24ee38e",
+            "draft_arguments": {},
+            "fields": [
+              {
+                "choices": [
+                  "alpha/report.txt",
+                  "beta/report.txt",
+                  "empty.txt",
+                  "notes.txt",
+                  "payload.json",
+                  "资料.txt"
+                ],
+                "name": "path",
+                "prompt": "Choose an existing relative file path."
+              }
+            ],
+            "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+            "tool": "file.read"
+          },
+          "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+          "status": "clarification"
+        },
+        "type": "result"
+      }
+    },
+    {
+      "request": {
+        "id": 2,
+        "command": {
+          "method": "resolve",
+          "clarification_id": "a821dad3-5bf2-429d-b3d1-d956b24ee38e",
+          "values": {
+            "path": "payload.json"
+          }
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 2,
+        "result": {
+          "plan": {
+            "arguments": {
+              "path": "payload.json"
+            },
+            "plan_id": "0e58fba4-ce26-4d65-a2a6-79f98465bb4c",
+            "tool": "file.read"
+          },
+          "status": "proposal"
+        },
+        "type": "result"
+      }
+    },
+    {
+      "request": {
+        "id": 3,
+        "command": {
+          "method": "execute",
+          "plan_id": "0e58fba4-ce26-4d65-a2a6-79f98465bb4c",
+          "approved": true
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 3,
+        "result": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "path": "payload.json",
+            "text": "{\"ok\":true}\n"
+          },
+          "plan_id": "0e58fba4-ce26-4d65-a2a6-79f98465bb4c",
+          "status": "succeeded"
+        },
+        "type": "result"
+      }
+    },
+    {
+      "request": {
+        "id": 4,
+        "command": {
+          "method": "status"
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 4,
+        "result": {
+          "cancelled": false,
+          "continuation_available": true,
+          "model_calls": 1,
+          "pending_clarification": null,
+          "pending_plan": null,
+          "tool_calls": 1
+        },
+        "type": "result"
+      }
+    }
+  ],
+  "process": {
+    "exit_code": 0,
+    "stderr": ""
+  },
+  "driver_error": null,
+  "passed": true,
+  "clarified": true,
+  "wrong_proposals": 0,
+  "wrong_execution_requests": 0,
+  "execution_requests": 1
+}

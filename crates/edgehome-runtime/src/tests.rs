@@ -8,7 +8,155 @@ use std::{
     thread,
 };
 
-struct FixtureProvider {
+#[test]
+fn scoped_tools_are_enforced_by_the_host_and_hidden_from_the_model() {
+    let mut f = fixture(vec![
+        json!({"kind":"call","tool":"other.read","arguments":{"amount":1}}).to_string(),
+    ]);
+    f.tools
+        .register(TypedTool::<Args, _, _>::new(
+            "other.read",
+            "Private tool",
+            |_| Ok(()),
+            |_, _| Ok(json!(null)),
+        ))
+        .unwrap();
+    let mut agent = Agent::new(f.provider, f.tools, enabled()).unwrap();
+    assert!(matches!(
+        agent.prompt_with_tools("add", &["counter.add"]),
+        Err(AgentError::Decision)
+    ));
+    let requests = f.requests.borrow();
+    let request = serde_json::to_string(&requests[0]).unwrap();
+    assert!(!request.contains("other.read"));
+    assert!(!request.contains("Private tool"));
+    assert_eq!(f.count.get(), 0);
+    assert!(matches!(
+        agent.prompt_with_tools("add", &["absent"]),
+        Err(AgentError::Configuration)
+    ));
+}
+
+#[test]
+fn cancellation_before_dispatch_revokes_plan_and_never_resets_budgets() {
+    let f = fixture(vec![call(1)]);
+    let mut agent = Agent::new(f.provider, f.tools, enabled()).unwrap();
+    let p = plan(agent.prompt("add").unwrap());
+    agent.cancellation_token().cancel();
+    assert!(matches!(
+        agent.execute(&p.plan_id, true),
+        Err(AgentError::Cancelled)
+    ));
+    assert!(agent.usage().pending_plan.is_none());
+    assert_eq!(agent.usage().model_calls, 1);
+    assert_eq!(agent.usage().tool_calls, 0);
+    assert!(matches!(agent.prompt("again"), Err(AgentError::Cancelled)));
+    assert_eq!(f.count.get(), 0);
+}
+
+#[test]
+fn boxed_provider_can_cooperatively_stop_and_never_publish_a_late_plan() {
+    struct StopProvider;
+    impl ModelProvider for StopProvider {
+        fn complete(&mut self, _: &ModelRequest, _: ModelLimits) -> Result<String, ModelError> {
+            panic!("cancellable override must be used")
+        }
+        fn complete_cancellable(
+            &mut self,
+            _: &ModelRequest,
+            _: ModelLimits,
+            cancel: &CancellationToken,
+        ) -> Result<String, ModelError> {
+            cancel.cancel();
+            Ok(call(1))
+        }
+    }
+    let f = fixture(vec![]);
+    let provider: Box<dyn ModelProvider> = Box::new(StopProvider);
+    let mut agent = Agent::new(provider, f.tools, enabled()).unwrap();
+    assert!(matches!(agent.prompt("add"), Err(AgentError::Cancelled)));
+    assert!(agent.usage().pending_plan.is_none());
+    assert_eq!(f.count.get(), 0);
+}
+
+#[test]
+fn lifecycle_listener_sees_ordered_events_without_sensitive_payloads() {
+    let f = fixture(vec![call(1)]);
+    let events = Rc::new(RefCell::new(Vec::new()));
+    let sink = events.clone();
+    let journal = ObservedJournal::new(MemoryJournal::default(), move |event: &Event| {
+        sink.borrow_mut().push(event.clone())
+    });
+    let mut agent = Agent::with_journal(f.provider, f.tools, enabled(), journal).unwrap();
+    let p = plan(agent.prompt("private input").unwrap());
+    agent.execute(&p.plan_id, true).unwrap();
+    let events = events.borrow();
+    assert_eq!(
+        events.iter().map(|e| e.kind).collect::<Vec<_>>(),
+        vec![
+            EventKind::TaskStarted,
+            EventKind::ModelStarted,
+            EventKind::ModelCompleted,
+            EventKind::Proposed,
+            EventKind::DispatchStarted,
+            EventKind::Completed
+        ]
+    );
+    assert!(
+        !serde_json::to_string(&*events)
+            .unwrap()
+            .contains("private input")
+    );
+}
+
+#[test]
+fn cancellation_during_a_tool_returns_unknown_and_consumes_the_plan() {
+    let mut f = fixture(vec![call(1)]);
+    let count = f.count.clone();
+    f.tools = ToolRegistry::new();
+    f.tools
+        .register(TypedTool::<Args, _, _>::new(
+            "counter.add",
+            "Cancelling fixture",
+            |_| Ok(()),
+            move |_, context| {
+                count.set(count.get() + 1);
+                context.cancellation.cancel();
+                Ok(json!({"count":count.get()}))
+            },
+        ))
+        .unwrap();
+    let mut agent = Agent::new(f.provider, f.tools, enabled()).unwrap();
+    let p = plan(agent.prompt("add").unwrap());
+    let receipt = agent.execute(&p.plan_id, true).unwrap();
+    assert_eq!(receipt.status, ExecutionStatus::OutcomeUnknown);
+    assert!(!receipt.continuation_available);
+    assert_eq!(f.count.get(), 1);
+    assert!(agent.usage().pending_plan.is_none());
+}
+
+#[test]
+fn cancellation_from_a_dispatch_event_prevents_handler_entry() {
+    let f = fixture(vec![call(1)]);
+    let slot = Rc::new(RefCell::new(None::<CancellationToken>));
+    let signal = slot.clone();
+    let journal = ObservedJournal::new(MemoryJournal::default(), move |event: &Event| {
+        if event.kind == EventKind::DispatchStarted {
+            signal.borrow().as_ref().unwrap().cancel();
+        }
+    });
+    let mut agent = Agent::with_journal(f.provider, f.tools, enabled(), journal).unwrap();
+    *slot.borrow_mut() = Some(agent.cancellation_token());
+    let p = plan(agent.prompt("add").unwrap());
+    assert!(matches!(
+        agent.execute(&p.plan_id, true),
+        Err(AgentError::Cancelled)
+    ));
+    assert_eq!(f.count.get(), 0);
+    assert_eq!(agent.usage().tool_calls, 0);
+}
+
+pub(super) struct FixtureProvider {
     outputs: VecDeque<Result<String, ModelError>>,
     requests: Rc<RefCell<Vec<ModelRequest>>>,
 }
@@ -31,15 +179,15 @@ fn call(amount: u32) -> String {
     json!({"kind":"call","tool":"counter.add","arguments":{"amount":amount}}).to_string()
 }
 
-struct Fixture {
-    provider: FixtureProvider,
-    tools: ToolRegistry,
-    count: Rc<Cell<u32>>,
-    allowed: Rc<Cell<bool>>,
-    requests: Rc<RefCell<Vec<ModelRequest>>>,
+pub(super) struct Fixture {
+    pub(super) provider: FixtureProvider,
+    pub(super) tools: ToolRegistry,
+    pub(super) count: Rc<Cell<u32>>,
+    pub(super) allowed: Rc<Cell<bool>>,
+    pub(super) requests: Rc<RefCell<Vec<ModelRequest>>>,
 }
 
-fn fixture(outputs: Vec<String>) -> Fixture {
+pub(super) fn fixture(outputs: Vec<String>) -> Fixture {
     let requests = Rc::new(RefCell::new(Vec::new()));
     let count = Rc::new(Cell::new(0));
     let allowed = Rc::new(Cell::new(true));
@@ -77,13 +225,13 @@ fn fixture(outputs: Vec<String>) -> Fixture {
     }
 }
 
-fn enabled() -> AgentConfig {
+pub(super) fn enabled() -> AgentConfig {
     AgentConfig {
         execute_enabled: true,
         ..AgentConfig::default()
     }
 }
-fn plan(step: Step) -> PlanPreview {
+pub(super) fn plan(step: Step) -> PlanPreview {
     match step {
         Step::Proposal { plan } => plan,
         _ => panic!("expected proposal"),

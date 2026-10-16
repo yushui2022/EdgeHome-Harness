@@ -1,0 +1,144 @@
+{
+  "id": "stats-missing",
+  "category": "clarification",
+  "model": "qwen06",
+  "arm": "basic",
+  "repeat": 2,
+  "elapsed_ms": 875,
+  "log": [
+    {
+      "response": {
+        "capabilities": [
+          "clarification_reply",
+          "clarification_resolve"
+        ],
+        "max_request_bytes": 8192,
+        "protocol": 1,
+        "type": "ready"
+      }
+    },
+    {
+      "request": {
+        "id": 1,
+        "command": {
+          "method": "prompt",
+          "input": "统计文件的字节数、字符数和行数。",
+          "tools": [
+            "file.list",
+            "file.read",
+            "file.stats"
+          ]
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 1,
+        "result": {
+          "clarification": {
+            "clarification_id": "9aa45b7f-3fd9-478d-9ec1-6684ddbcc278",
+            "draft_arguments": {},
+            "fields": [
+              {
+                "choices": [],
+                "name": "path",
+                "prompt": "Please specify path."
+              }
+            ],
+            "message": "Please specify: path.",
+            "tool": "file.stats"
+          },
+          "message": "Please specify: path.",
+          "status": "clarification"
+        },
+        "type": "result"
+      }
+    },
+    {
+      "request": {
+        "id": 2,
+        "command": {
+          "method": "reply",
+          "clarification_id": "9aa45b7f-3fd9-478d-9ec1-6684ddbcc278",
+          "input": "使用资料.txt。"
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 2,
+        "result": {
+          "plan": {
+            "arguments": {
+              "path": "资料.txt"
+            },
+            "plan_id": "45688d4c-6c2a-4665-92a8-7a007011a9de",
+            "tool": "file.stats"
+          },
+          "status": "proposal"
+        },
+        "type": "result"
+      }
+    },
+    {
+      "request": {
+        "id": 3,
+        "command": {
+          "method": "execute",
+          "plan_id": "45688d4c-6c2a-4665-92a8-7a007011a9de",
+          "approved": true
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 3,
+        "result": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "bytes": 13,
+            "characters": 5,
+            "lines": 1,
+            "path": "资料.txt"
+          },
+          "plan_id": "45688d4c-6c2a-4665-92a8-7a007011a9de",
+          "status": "succeeded"
+        },
+        "type": "result"
+      }
+    },
+    {
+      "request": {
+        "id": 4,
+        "command": {
+          "method": "status"
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 4,
+        "result": {
+          "cancelled": false,
+          "continuation_available": true,
+          "model_calls": 2,
+          "pending_clarification": null,
+          "pending_plan": null,
+          "tool_calls": 1
+        },
+        "type": "result"
+      }
+    }
+  ],
+  "process": {
+    "exit_code": 0,
+    "stderr": ""
+  },
+  "driver_error": null,
+  "passed": true,
+  "clarified": true,
+  "wrong_proposals": 0,
+  "wrong_execution_requests": 0,
+  "execution_requests": 1
+}

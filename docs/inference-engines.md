@@ -56,7 +56,7 @@ cargo run --locked -p edgehome-inference --example document_agent -- --config co
 
 应用还应分别记录：模型有效候选率、参数正确率、工具选择、澄清率、任务完成率、冷/热启动延迟及整机峰值内存。原有家居 CLI 的 108 条评测不作为通用 SDK 的成功率。
 
-本轮实际 Ollama 探测结果保存在 [SDK 模型验证记录](sdk-model-validation.md)。仅覆盖文档统计任务，不能推广成通用模型排名或生产可用性结论。
+早期文档统计探针和 8 题单轮测试保存在 [SDK 模型验证历史](sdk-model-validation.md)。后续[可靠性验证](model-reliability.md)固定生成预算，使用 36 题独立用例、三次重复和协议对照，包含真实纯计算工具及原始失败记录。它仍不构成通用模型排名、开放式多步能力或真机性能验证。
 
 ## 官方资料
 

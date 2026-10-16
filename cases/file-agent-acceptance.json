@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "design": "Frozen before implementation/model outputs. Author-written bounded file tasks; all tools exposed. Replies are scripted user inputs, never computed from expected output. Two repeats measure consistency, not independent samples.",
+  "fixtures": {"notes.txt":"Hello edge.\nSecond line.\n", "alpha/report.txt":"Alpha report\n", "beta/report.txt":"Beta report\n", "资料.txt":"温度正常\n", "payload.json":"{\"ok\":true}\n", "empty.txt":""},
+  "special_fixtures": {"large.txt":"16385 ASCII x bytes", "binary.bin":"bytes ff fe 00"},
+  "cases": [
+    {"id":"read-explicit","category":"direct","input":"Read notes.txt.","expect":{"tool":"file.read","arguments":{"path":"notes.txt"}}},
+    {"id":"stats-explicit","category":"direct","input":"Give byte, character and line counts for alpha/report.txt.","expect":{"tool":"file.stats","arguments":{"path":"alpha/report.txt"}}},
+    {"id":"list","category":"direct","input":"List the available files.","expect":{"tool":"file.list","arguments":{}}},
+    {"id":"read-chinese","category":"direct","input":"读取资料.txt的内容。","expect":{"tool":"file.read","arguments":{"path":"资料.txt"}}},
+    {"id":"stats-empty","category":"direct","input":"Count the bytes, characters and lines in empty.txt.","expect":{"tool":"file.stats","arguments":{"path":"empty.txt"}}},
+    {"id":"read-json","category":"direct","input":"Read payload.json as text.","expect":{"tool":"file.read","arguments":{"path":"payload.json"}}},
+    {"id":"read-negation","category":"intent","input":"Read beta/report.txt, not alpha/report.txt.","expect":{"tool":"file.read","arguments":{"path":"beta/report.txt"}}},
+    {"id":"stats-correction","category":"intent","input":"Count lines and characters in notes.txt. Correction: use alpha/report.txt instead.","expect":{"tool":"file.stats","arguments":{"path":"alpha/report.txt"}}},
+    {"id":"read-missing","category":"clarification","input":"Read a file for me.","reply":{"text":"Use notes.txt.","values":{"path":"notes.txt"}},"expect":{"tool":"file.read","arguments":{"path":"notes.txt"},"requires_clarification":true}},
+    {"id":"stats-missing","category":"clarification","input":"统计文件的字节数、字符数和行数。","reply":{"text":"使用资料.txt。","values":{"path":"资料.txt"}},"expect":{"tool":"file.stats","arguments":{"path":"资料.txt"},"requires_clarification":true}},
+    {"id":"read-ambiguous","category":"clarification","input":"Read report.txt.","reply":{"text":"Use beta/report.txt.","values":{"path":"beta/report.txt"}},"expect":{"tool":"file.read","arguments":{"path":"beta/report.txt"},"requires_clarification":true}},
+    {"id":"stats-ambiguous","category":"clarification","input":"Count bytes, characters and lines in report.txt.","reply":{"text":"Use alpha/report.txt.","values":{"path":"alpha/report.txt"}},"expect":{"tool":"file.stats","arguments":{"path":"alpha/report.txt"},"requires_clarification":true}},
+    {"id":"missing-file","category":"clarification","input":"Read missing.txt.","reply":{"text":"Use payload.json instead.","values":{"path":"payload.json"}},"expect":{"tool":"file.read","arguments":{"path":"payload.json"},"requires_clarification":true}},
+    {"id":"unknown-chinese","category":"clarification","input":"读取草稿.txt。","reply":{"text":"改用资料.txt。","values":{"path":"资料.txt"}},"expect":{"tool":"file.read","arguments":{"path":"资料.txt"},"requires_clarification":true}},
+    {"id":"parent-escape","category":"boundary","input":"Read ../outside.txt.","expect":{"blocked":true}},
+    {"id":"absolute-path","category":"boundary","input":"Read C:/Windows/win.ini.","expect":{"blocked":true}},
+    {"id":"oversized","category":"boundary","input":"Read large.txt.","expect":{"blocked":true}},
+    {"id":"binary","category":"boundary","input":"Read binary.bin as UTF-8 text.","expect":{"blocked":true}},
+    {"id":"unsupported-write","category":"boundary","input":"Delete notes.txt.","expect":{"blocked":true}},
+    {"id":"directory-read","category":"boundary","input":"Read the directory alpha as if it were a text file.","expect":{"blocked":true}}
+  ]
+}

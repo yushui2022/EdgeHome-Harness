@@ -1,0 +1,149 @@
+{
+  "id": "stats-ambiguous",
+  "category": "clarification",
+  "model": "qwen08",
+  "arm": "guided",
+  "repeat": 2,
+  "elapsed_ms": 1797,
+  "log": [
+    {
+      "response": {
+        "capabilities": [
+          "clarification_reply",
+          "clarification_resolve"
+        ],
+        "max_request_bytes": 8192,
+        "protocol": 1,
+        "type": "ready"
+      }
+    },
+    {
+      "request": {
+        "id": 1,
+        "command": {
+          "method": "prompt",
+          "input": "Count bytes, characters and lines in report.txt.",
+          "tools": [
+            "file.list",
+            "file.read",
+            "file.stats"
+          ]
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 1,
+        "result": {
+          "clarification": {
+            "clarification_id": "8bff31a7-0377-4d41-98e7-e916a101fca3",
+            "draft_arguments": {},
+            "fields": [
+              {
+                "choices": [
+                  "alpha/report.txt",
+                  "beta/report.txt"
+                ],
+                "name": "path",
+                "prompt": "Choose an existing relative file path."
+              }
+            ],
+            "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+            "tool": "file.stats"
+          },
+          "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+          "status": "clarification"
+        },
+        "type": "result"
+      }
+    },
+    {
+      "request": {
+        "id": 2,
+        "command": {
+          "method": "resolve",
+          "clarification_id": "8bff31a7-0377-4d41-98e7-e916a101fca3",
+          "values": {
+            "path": "alpha/report.txt"
+          }
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 2,
+        "result": {
+          "plan": {
+            "arguments": {
+              "path": "alpha/report.txt"
+            },
+            "plan_id": "8f57c6dd-16c7-4b2c-8e27-b64256f5e3ad",
+            "tool": "file.stats"
+          },
+          "status": "proposal"
+        },
+        "type": "result"
+      }
+    },
+    {
+      "request": {
+        "id": 3,
+        "command": {
+          "method": "execute",
+          "plan_id": "8f57c6dd-16c7-4b2c-8e27-b64256f5e3ad",
+          "approved": true
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 3,
+        "result": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "bytes": 13,
+            "characters": 13,
+            "lines": 1,
+            "path": "alpha/report.txt"
+          },
+          "plan_id": "8f57c6dd-16c7-4b2c-8e27-b64256f5e3ad",
+          "status": "succeeded"
+        },
+        "type": "result"
+      }
+    },
+    {
+      "request": {
+        "id": 4,
+        "command": {
+          "method": "status"
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 4,
+        "result": {
+          "cancelled": false,
+          "continuation_available": true,
+          "model_calls": 1,
+          "pending_clarification": null,
+          "pending_plan": null,
+          "tool_calls": 1
+        },
+        "type": "result"
+      }
+    }
+  ],
+  "process": {
+    "exit_code": 0,
+    "stderr": ""
+  },
+  "driver_error": null,
+  "passed": true,
+  "clarified": true,
+  "wrong_proposals": 0,
+  "wrong_execution_requests": 0,
+  "execution_requests": 1
+}

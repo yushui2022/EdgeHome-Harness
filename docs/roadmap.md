@@ -5,20 +5,31 @@ current claims.
 
 ## Current Baseline
 
-The reusable SDK now consists of `edgehome-runtime` and `edgehome-inference`:
+The reusable SDK now consists of `edgehome-runtime`, `edgehome-inference`, and
+the optional `edgehome-kit` developer entry points:
 typed application tools, a host-driven bounded loop, configurable journals,
 Ollama and OpenAI-compatible transports, six engine presets, and a non-home
-document example. See the [SDK guide](edge-agent-sdk.md) and [engine validation
+document example, independent app templates, scoped tools, cooperative cancellation,
+metadata events, stdio RPC, and fixed starter task evaluation. Optional action-first
+decisions, bounded validation repair, system-role probes, and repeated real-model
+task evaluation are documented in the [reliability study](model-reliability.md). See the
+[developer kit](developer-kit.md), [SDK guide](edge-agent-sdk.md), and [engine validation
 boundary](inference-engines.md). This is separate from the smart-home reference.
 
 SDK priorities:
 
-1. Build a reproducible model-task matrix: valid arguments, appropriate
-   clarification, tool-result grounding, latency, and peak memory.
+The [read-only file application](file-agent.md) now exercises resumable questions,
+structured host input, real filesystem state and dispatch-time policy checks.
+Its bounded acceptance evidence remains separate from hardware qualification and
+unattended semantic reliability.
+
+1. Expand the fixed model-task matrix to independent application datasets,
+   semantic clarification checks, tool-result grounding, and peak memory. Keep
+   remaining ambiguity/unsupported-input failures visible in release decisions.
 2. Verify llama.cpp on a physical CPU/ARM target before making edge performance
    claims; validate actual LM Studio and server versions beyond wire fixtures.
-3. Add narrowly scoped application examples and a minimal Go/Python RPC entry
-   point when the host protocol and cancellation semantics are specified.
+3. Extend the starter fixtures into real application integrations, validate more
+   task sets, and improve RPC cancellation beyond its documented sequential mode.
 4. Establish persistent journal and restart-reconciliation contracts before
    expanding to unattended, long-running tasks.
 

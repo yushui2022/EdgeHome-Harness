@@ -99,7 +99,23 @@ jobs:
           cargo run --locked -q -p edgehome-inference --example document_agent
           cargo run --locked -q -p edgehome-inference --example document_agent -- --execute-demo
 
-      - name: JSON schema syntax
+      - name: Independent SDK application and RPC smoke
+        # The generated app uses only dependencies already built by workspace tests.
+        # It runs from an independent temporary workspace with the same target cache.
+        run: python scripts/check-sdk-onboarding.py
+
+      - name: Audit recorded model evidence and scorer tamper detection
+        # Historical evidence integrity is separate from model qualification.
+        # No inference server or model download is required for this audit.
+        run: python scripts/verify-sdk-evidence.py docs/validation/reliability-2026-10-15 --skip-source-check --self-test
+
+      - name: Audit file application evidence and scorer tamper detection
+        # Historical integrity is separate from model qualification.
+        run: |
+          python scripts/verify-file-evidence.py docs/validation/file-agent-2026-10-16-v1 --skip-source-check
+          python scripts/verify-file-evidence.py docs/validation/file-agent-2026-10-16-v2 --skip-source-check --self-test
+
+      - name: JSON schema syntax validation
         run: |
           python - <<'PY'
           import json

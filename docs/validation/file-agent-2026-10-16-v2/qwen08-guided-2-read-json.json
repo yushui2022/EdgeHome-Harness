@@ -1,0 +1,76 @@
+{
+  "id": "read-json",
+  "category": "direct",
+  "model": "qwen08",
+  "arm": "guided",
+  "repeat": 2,
+  "elapsed_ms": 4734,
+  "log": [
+    {
+      "response": {
+        "capabilities": [
+          "clarification_reply",
+          "clarification_resolve"
+        ],
+        "max_request_bytes": 8192,
+        "protocol": 1,
+        "type": "ready"
+      }
+    },
+    {
+      "request": {
+        "id": 1,
+        "command": {
+          "method": "prompt",
+          "input": "Read payload.json as text.",
+          "tools": [
+            "file.list",
+            "file.read",
+            "file.stats"
+          ]
+        }
+      }
+    },
+    {
+      "response": {
+        "clarification": null,
+        "code": "invalid_decision",
+        "id": 1,
+        "message": "model decision is invalid or names an unregistered tool",
+        "type": "error"
+      }
+    },
+    {
+      "request": {
+        "id": 2,
+        "command": {
+          "method": "status"
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 2,
+        "result": {
+          "cancelled": false,
+          "continuation_available": false,
+          "model_calls": 2,
+          "pending_clarification": null,
+          "pending_plan": null,
+          "tool_calls": 0
+        },
+        "type": "result"
+      }
+    }
+  ],
+  "process": {
+    "exit_code": 0,
+    "stderr": ""
+  },
+  "driver_error": null,
+  "passed": false,
+  "clarified": false,
+  "wrong_proposals": 0,
+  "wrong_execution_requests": 0,
+  "execution_requests": 0
+}

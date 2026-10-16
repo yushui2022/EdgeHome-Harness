@@ -1,0 +1,635 @@
+{
+  "cases": [
+    {
+      "category": "general",
+      "elapsed_ms": 477,
+      "id": "document-sample",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document name to proceed.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 477,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document name to proceed.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 446,
+      "id": "sensor-room",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type (room or outside) to read the temperature.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 446,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type (room or outside) to read the temperature.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 716,
+      "id": "document-missing",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document you want to count, either 'sample' or 'empty'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 715,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document you want to count, either 'sample' or 'empty'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 411,
+      "id": "sensor-missing",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify which sensor you want to read. The available sensors are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 411,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify which sensor you want to read. The available sensors are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 541,
+      "id": "sensor-outside",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type (room or outside) to read the temperature.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 541,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type (room or outside) to read the temperature.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 459,
+      "id": "sensor-selection",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type for the outside sensor. The available options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 458,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type for the outside sensor. The available options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 479,
+      "id": "document-selection",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the document name to use the document.stats tool. For example, 'sample' or 'empty'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 479,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the document name to use the document.stats tool. For example, 'sample' or 'empty'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 353,
+      "id": "document-empty",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document name you want to count.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 352,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document name you want to count.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 369,
+      "id": "document-empty",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document name you want to count.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 369,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document name you want to count.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 1041,
+      "id": "sensor-room",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type (room or outside) to read the temperature.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 1041,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type (room or outside) to read the temperature.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 416,
+      "id": "document-sample",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document name to proceed.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 416,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document name to proceed.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 412,
+      "id": "sensor-missing",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify which sensor you want to read. The available sensors are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 412,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify which sensor you want to read. The available sensors are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 414,
+      "id": "document-missing",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document you want to count, either 'sample' or 'empty'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 414,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document you want to count, either 'sample' or 'empty'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 375,
+      "id": "sensor-outside",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type (room or outside) to read the temperature.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 375,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type (room or outside) to read the temperature.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 420,
+      "id": "sensor-selection",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type for the outside sensor. The available options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 420,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type for the outside sensor. The available options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 830,
+      "id": "document-selection",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the document name to use the document.stats tool. For example, 'sample' or 'empty'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 830,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the document name to use the document.stats tool. For example, 'sample' or 'empty'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 391,
+      "id": "document-selection",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the document name to use the document.stats tool.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 390,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the document name to use the document.stats tool.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 399,
+      "id": "document-empty",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document name you want to count.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 399,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document name you want to count.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 886,
+      "id": "document-sample",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document name to proceed with the count.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 885,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document name to proceed with the count.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 414,
+      "id": "document-missing",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document you want to count, such as 'sample' or 'empty'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 414,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document you want to count, such as 'sample' or 'empty'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 408,
+      "id": "sensor-selection",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type for the outside sensor. The available options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 408,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type for the outside sensor. The available options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 442,
+      "id": "sensor-room",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type (room or outside) to read the temperature.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 441,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type (room or outside) to read the temperature.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 430,
+      "id": "sensor-outside",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type (room or outside) to read the temperature.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 429,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type (room or outside) to read the temperature.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 402,
+      "id": "sensor-missing",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify which sensor you want to read. The available sensors are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 402,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify which sensor you want to read. The available sensors are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    }
+  ],
+  "cases_passing_all_repeats": 2,
+  "first_attempt_passed": 6,
+  "latency_ms": {
+    "max": 1041,
+    "p50": 416,
+    "p95": 886
+  },
+  "mode": "model",
+  "model": "edgehome-qwen3-06b-chat:v1",
+  "model_configuration": {
+    "context_tokens": 4096,
+    "engine": "ollama",
+    "max_output_tokens": 1024,
+    "max_response_bytes": 65536,
+    "request_timeout_ms": 60000,
+    "temperature": 0,
+    "think": false
+  },
+  "order_seed": 42,
+  "passed": 6,
+  "per_category": {
+    "general": {
+      "passed": 6,
+      "total": 24
+    }
+  },
+  "per_repeat": [
+    {
+      "passed": 2,
+      "total": 8
+    },
+    {
+      "passed": 2,
+      "total": 8
+    },
+    {
+      "passed": 2,
+      "total": 8
+    }
+  ],
+  "recovered_after_validation_repair": 0,
+  "repeat": 3,
+  "runtime_configuration": {
+    "decision_protocol": "tagged",
+    "max_context_bytes": 32768,
+    "max_decision_repairs": 0,
+    "max_model_calls": 2,
+    "max_tool_calls": 1,
+    "require_tool_observation": true
+  },
+  "schema_version": 2,
+  "task_success_rate": 0.25,
+  "total": 24,
+  "unexpected_proposals": 0,
+  "unique_cases": 8
+}

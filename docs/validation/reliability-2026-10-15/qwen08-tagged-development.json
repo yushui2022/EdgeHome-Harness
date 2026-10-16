@@ -1,0 +1,617 @@
+{
+  "cases": [
+    {
+      "category": "general",
+      "elapsed_ms": 4951,
+      "id": "document-sample",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 4950,
+          "error": null,
+          "response": "{\n  \"kind\":\"final\",\"message\":\"The user is asking to count characters and lines in a sample document. However, no specific document was provided in the prompt. The available tool, `document.stats`, requires a `document` parameter with an enum value of either 'sample' or 'empty'. Since no document was specified, I cannot perform the count. I need to ask the user to provide the document name or content.\",\n  \"kind\":\"clarify\",\"message\":\"Could you please specify the name of the document or provide the content of the document you would like me to count characters and lines in? The tool requires a document parameter.\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 2624,
+      "id": "sensor-room",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2624,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which specific room sensor temperature you would like me to read. The tool requires specifying the 'sensor' name, which can be either 'room' or 'outside'. Please specify which one you want.\",\"kind\":\"clarify\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 2521,
+      "id": "document-missing",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which document would you like me to count? Please specify the name of the document (e.g., 'sample', 'empty', or a custom name) or let me know if you want me to count the 'sample' document.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2521,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which document would you like me to count? Please specify the name of the document (e.g., 'sample', 'empty', or a custom name) or let me know if you want me to count the 'sample' document.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 1542,
+      "id": "sensor-missing",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which sensor would you like to read? Please specify 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 1542,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which sensor would you like to read? Please specify 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 1944,
+      "id": "sensor-outside",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which specific sensor is being referred to? Is it the 'room' sensor or the 'outside' sensor? Please specify the sensor name to proceed with reading the temperature.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 1944,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which specific sensor is being referred to? Is it the 'room' sensor or the 'outside' sensor? Please specify the sensor name to proceed with reading the temperature.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 2294,
+      "id": "sensor-selection",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to know which specific sensor is being referred to in the request. The tool requires a 'sensor' parameter with an enum of ['room', 'outside']. Please specify which sensor you want to inspect.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2293,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which specific sensor is being referred to in the request. The tool requires a 'sensor' parameter with an enum of ['room', 'outside']. Please specify which sensor you want to inspect.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 2848,
+      "id": "document-selection",
+      "model_calls": 1,
+      "observed": {
+        "error": "observation_required",
+        "message": "a successful tool observation is required before a final answer"
+      },
+      "outcome": "observation_required: a successful tool observation is required before a final answer",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2847,
+          "error": null,
+          "response": "{\"kind\":\"final\",\"message\":\"The user wants to inspect the sample document using the document.stats tool. However, the tool requires a specific document name as a parameter (e.g., 'sample' or 'empty'). Since the user did not specify which document to inspect, I need to ask for clarification on the document name.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 1835,
+      "id": "document-empty",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which document would you like me to count? Please specify the name of the document (e.g., 'sample', 'empty').",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 1835,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which document would you like me to count? Please specify the name of the document (e.g., 'sample', 'empty').\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 1711,
+      "id": "document-empty",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which document would you like me to count? Please specify the name of the document (e.g., 'sample', 'empty').",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 1710,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which document would you like me to count? Please specify the name of the document (e.g., 'sample', 'empty').\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 2405,
+      "id": "sensor-room",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2404,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which specific room sensor temperature you would like me to read. The tool requires specifying the 'sensor' name, which can be either 'room' or 'outside'. Please specify which one you want.\",\"kind\":\"clarify\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 5383,
+      "id": "document-sample",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 5383,
+          "error": null,
+          "response": "{\n  \"kind\":\"final\",\"message\":\"The user is asking to count characters and lines in a sample document. However, no specific document was provided in the prompt. The available tool, `document.stats`, requires a `document` parameter with an enum value of either 'sample' or 'empty'. Since no document was specified, I cannot perform the count. I need to ask the user to provide the document name or content.\",\n  \"kind\":\"clarify\",\"message\":\"Could you please specify the name of the document or provide the content of the document you would like me to count characters and lines in? The tool requires a document parameter.\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 1595,
+      "id": "sensor-missing",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which sensor would you like to read? Please specify 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 1595,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which sensor would you like to read? Please specify 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 2356,
+      "id": "document-missing",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which document would you like me to count? Please specify the name of the document (e.g., 'sample', 'empty', or a custom name) or let me know if you want me to count the 'sample' document.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2356,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which document would you like me to count? Please specify the name of the document (e.g., 'sample', 'empty', or a custom name) or let me know if you want me to count the 'sample' document.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 2077,
+      "id": "sensor-outside",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which specific sensor is being referred to? Is it the 'room' sensor or the 'outside' sensor? Please specify the sensor name to proceed with reading the temperature.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2077,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which specific sensor is being referred to? Is it the 'room' sensor or the 'outside' sensor? Please specify the sensor name to proceed with reading the temperature.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 2519,
+      "id": "sensor-selection",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to know which specific sensor is being referred to in the request. The tool requires a 'sensor' parameter with an enum of ['room', 'outside']. Please specify which sensor you want to inspect.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2518,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which specific sensor is being referred to in the request. The tool requires a 'sensor' parameter with an enum of ['room', 'outside']. Please specify which sensor you want to inspect.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 2889,
+      "id": "document-selection",
+      "model_calls": 1,
+      "observed": {
+        "error": "observation_required",
+        "message": "a successful tool observation is required before a final answer"
+      },
+      "outcome": "observation_required: a successful tool observation is required before a final answer",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2889,
+          "error": null,
+          "response": "{\"kind\":\"final\",\"message\":\"The user wants to inspect the sample document using the document.stats tool. However, the tool requires a specific document name as a parameter (e.g., 'sample' or 'empty'). Since the user did not specify which document to inspect, I need to ask for clarification on the document name.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 3062,
+      "id": "document-selection",
+      "model_calls": 1,
+      "observed": {
+        "error": "observation_required",
+        "message": "a successful tool observation is required before a final answer"
+      },
+      "outcome": "observation_required: a successful tool observation is required before a final answer",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 3062,
+          "error": null,
+          "response": "{\"kind\":\"final\",\"message\":\"The user wants to inspect the sample document using the document.stats tool. However, the tool requires a specific document name as a parameter (e.g., 'sample' or 'empty'). Since the user did not specify which document to inspect, I need to ask for clarification on the document name.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 1849,
+      "id": "document-empty",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which document would you like me to count? Please specify the name of the document (e.g., 'sample', 'empty').",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 1848,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which document would you like me to count? Please specify the name of the document (e.g., 'sample', 'empty').\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 6082,
+      "id": "document-sample",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 6081,
+          "error": null,
+          "response": "{\n  \"kind\":\"final\",\"message\":\"The user is asking to count characters and lines in a sample document. However, no specific document was provided in the prompt. The available tool, `document.stats`, requires a `document` parameter with an enum value of either 'sample' or 'empty'. Since no document was specified, I cannot perform the count. I need to ask the user to provide the document name or content.\",\n  \"kind\":\"clarify\",\"message\":\"Could you please specify the name of the document or provide the content of the document you would like me to count characters and lines in? The tool requires a document parameter.\"\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 3153,
+      "id": "document-missing",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which document would you like me to count? Please specify the name of the document (e.g., 'sample', 'empty', or a custom name) or let me know if you want me to count the 'sample' document.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 3153,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which document would you like me to count? Please specify the name of the document (e.g., 'sample', 'empty', or a custom name) or let me know if you want me to count the 'sample' document.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 2545,
+      "id": "sensor-selection",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to know which specific sensor is being referred to in the request. The tool requires a 'sensor' parameter with an enum of ['room', 'outside']. Please specify which sensor you want to inspect.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 2545,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which specific sensor is being referred to in the request. The tool requires a 'sensor' parameter with an enum of ['room', 'outside']. Please specify which sensor you want to inspect.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 2666,
+      "id": "sensor-room",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 2665,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which specific room sensor temperature you would like me to read. The tool requires specifying the 'sensor' name, which can be either 'room' or 'outside'. Please specify which one you want.\",\"kind\":\"clarify\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 2040,
+      "id": "sensor-outside",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which specific sensor is being referred to? Is it the 'room' sensor or the 'outside' sensor? Please specify the sensor name to proceed with reading the temperature.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 2039,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which specific sensor is being referred to? Is it the 'room' sensor or the 'outside' sensor? Please specify the sensor name to proceed with reading the temperature.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "general",
+      "elapsed_ms": 1559,
+      "id": "sensor-missing",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which sensor would you like to read? Please specify 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 1559,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which sensor would you like to read? Please specify 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    }
+  ],
+  "cases_passing_all_repeats": 2,
+  "first_attempt_passed": 6,
+  "latency_ms": {
+    "max": 6082,
+    "p50": 2405,
+    "p95": 5383
+  },
+  "mode": "model",
+  "model": "qwen3.5:0.8b",
+  "model_configuration": {
+    "context_tokens": 4096,
+    "engine": "ollama",
+    "max_output_tokens": 1024,
+    "max_response_bytes": 65536,
+    "request_timeout_ms": 60000,
+    "temperature": 0,
+    "think": false
+  },
+  "order_seed": 42,
+  "passed": 6,
+  "per_category": {
+    "general": {
+      "passed": 6,
+      "total": 24
+    }
+  },
+  "per_repeat": [
+    {
+      "passed": 2,
+      "total": 8
+    },
+    {
+      "passed": 2,
+      "total": 8
+    },
+    {
+      "passed": 2,
+      "total": 8
+    }
+  ],
+  "recovered_after_validation_repair": 0,
+  "repeat": 3,
+  "runtime_configuration": {
+    "decision_protocol": "tagged",
+    "max_context_bytes": 32768,
+    "max_decision_repairs": 0,
+    "max_model_calls": 2,
+    "max_tool_calls": 1,
+    "require_tool_observation": true
+  },
+  "schema_version": 2,
+  "task_success_rate": 0.25,
+  "total": 24,
+  "unexpected_proposals": 0,
+  "unique_cases": 8
+}

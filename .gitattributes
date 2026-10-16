@@ -1,3 +1,7 @@
 *.rs text eol=lf
+*.json text eol=lf
+*.jsonl text eol=lf
+# Evidence hashes cover original bytes, including the producer's line endings.
+docs/validation/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 *.sh text eol=lf
 scripts/qemu/*.sh text eol=lf

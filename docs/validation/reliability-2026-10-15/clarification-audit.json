@@ -1,0 +1,588 @@
+{
+  "schema_version": 1,
+  "reviewer": "Codex assistant in this task; post-run qualitative review, not an independent human or blind review",
+  "scope": "All automatically passing clarification responses in the six holdout reports; tool successes remain exact receipt checks. No failed trial is promoted.",
+  "rubric": [
+    "Ask for an actually missing value or resolve the specified ambiguity.",
+    "Do not invent supported tools or parameter values.",
+    "Do not demand a value the requested tool is meant to retrieve."
+  ],
+  "results": [
+    {
+      "report": "minicpm-action-holdout",
+      "automatic_passed": 78,
+      "semantic_review_passed": 78,
+      "downgraded_trials": 0,
+      "total": 108,
+      "unexpected_proposals": 27
+    },
+    {
+      "report": "minicpm-tagged-holdout",
+      "automatic_passed": 66,
+      "semantic_review_passed": 57,
+      "downgraded_trials": 9,
+      "total": 108,
+      "unexpected_proposals": 21
+    },
+    {
+      "report": "qwen06-action-holdout",
+      "automatic_passed": 82,
+      "semantic_review_passed": 79,
+      "downgraded_trials": 3,
+      "total": 108,
+      "unexpected_proposals": 17
+    },
+    {
+      "report": "qwen06-tagged-holdout",
+      "automatic_passed": 36,
+      "semantic_review_passed": 24,
+      "downgraded_trials": 12,
+      "total": 108,
+      "unexpected_proposals": 0
+    },
+    {
+      "report": "qwen08-action-holdout",
+      "automatic_passed": 75,
+      "semantic_review_passed": 69,
+      "downgraded_trials": 6,
+      "total": 108,
+      "unexpected_proposals": 18
+    },
+    {
+      "report": "qwen08-tagged-holdout",
+      "automatic_passed": 24,
+      "semantic_review_passed": 18,
+      "downgraded_trials": 6,
+      "total": 108,
+      "unexpected_proposals": 0
+    }
+  ],
+  "entries": [
+    {
+      "report": "minicpm-action-holdout",
+      "id": "doc-unspecified",
+      "message": "Please specify: document.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted_with_reservation",
+      "reason": "Requests the correct missing field, but the generated field-name prompt is terse."
+    },
+    {
+      "report": "minicpm-action-holdout",
+      "id": "length-ambiguous",
+      "message": "Please specify: to.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted_with_reservation",
+      "reason": "Requests the correct missing field, but the generated field-name prompt is terse."
+    },
+    {
+      "report": "minicpm-action-holdout",
+      "id": "length-missing-to",
+      "message": "Please specify: to.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted_with_reservation",
+      "reason": "Requests the correct missing field, but the generated field-name prompt is terse."
+    },
+    {
+      "report": "minicpm-action-holdout",
+      "id": "length-missing-value",
+      "message": "Please specify: value.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted_with_reservation",
+      "reason": "Requests the correct missing field, but the generated field-name prompt is terse."
+    },
+    {
+      "report": "minicpm-tagged-holdout",
+      "id": "doc-ambiguous",
+      "message": "The user wants to count either the 'sample' or an empty document, but didn't specify which one to use.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "rejected",
+      "reason": "Narrates the missing choice in third person instead of asking the user to choose."
+    },
+    {
+      "report": "minicpm-tagged-holdout",
+      "id": "sensor-unknown",
+      "message": "The user did not specify which sensor to read. Please provide the name of the basement temperature sensor.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "rejected",
+      "reason": "Claims the sensor is unspecified despite the supplied basement name, without supported alternatives."
+    },
+    {
+      "report": "minicpm-tagged-holdout",
+      "id": "doc-unspecified",
+      "message": "Please specify which document you want to check.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "minicpm-tagged-holdout",
+      "id": "doc-unknown",
+      "message": "Please provide the name of the report file you want to inspect.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "rejected",
+      "reason": "Asks for a report filename but this tool only accepts the sample or empty fixture."
+    },
+    {
+      "report": "minicpm-tagged-holdout",
+      "id": "doc-zh-missing",
+      "message": "请您提供需要统计的文档名称，以便我为您进行字符和行数统计。",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "minicpm-tagged-holdout",
+      "id": "length-missing-value",
+      "message": "Please provide the quantity you want to convert.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "qwen06-action-holdout",
+      "id": "sensor-unspecified",
+      "message": "Please specify which temperature sensor you are reading; there is no default value.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "qwen06-action-holdout",
+      "id": "doc-unspecified",
+      "message": "Please specify: document.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted_with_reservation",
+      "reason": "Requests the correct missing field, but the generated field-name prompt is terse."
+    },
+    {
+      "report": "qwen06-action-holdout",
+      "id": "sensor-ambiguous",
+      "message": "Please specify the sensor type (room or outside).",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "qwen06-action-holdout",
+      "id": "doc-unknown",
+      "message": "Please specify the document name you want to inspect.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "rejected",
+      "reason": "Repeats a request for the already provided document name without supported alternatives."
+    },
+    {
+      "report": "qwen06-action-holdout",
+      "id": "doc-zh-missing",
+      "message": "请告诉我您要统计的文档名称，例如 'sample' 或 'empty'。",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "qwen06-action-holdout",
+      "id": "length-missing-value",
+      "message": "Please specify: value.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted_with_reservation",
+      "reason": "Requests the correct missing field, but the generated field-name prompt is terse."
+    },
+    {
+      "report": "qwen06-action-holdout",
+      "id": "length-missing-from",
+      "message": "Please specify: from.",
+      "repetitions": [
+        2
+      ],
+      "verdict": "accepted_with_reservation",
+      "reason": "Requests the correct missing field, but the generated field-name prompt is terse."
+    },
+    {
+      "report": "qwen06-tagged-holdout",
+      "id": "length-unsupported",
+      "message": "Please provide the source unit and destination unit for the conversion from inches to centimeters.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "rejected",
+      "reason": "Asks again for source and destination that were already provided, without addressing unsupported inches."
+    },
+    {
+      "report": "qwen06-tagged-holdout",
+      "id": "sensor-unspecified",
+      "message": "Please specify which temperature sensor you would like to read. The available options are 'room' or 'outside'.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "qwen06-tagged-holdout",
+      "id": "length-missing-from",
+      "message": "Please specify the original unit in centimeters when converting 15 to centimeters.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "rejected",
+      "reason": "Constrains the unknown source unit to centimeters, conflating source and destination."
+    },
+    {
+      "report": "qwen06-tagged-holdout",
+      "id": "doc-ambiguous",
+      "message": "Please specify which document you want to count, either 'sample' or 'empty'.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "qwen06-tagged-holdout",
+      "id": "sensor-unknown",
+      "message": "Please specify the sensor type for the basement temperature sensor. The available options are 'room' or 'outside'.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted_with_reservation",
+      "reason": "Offers valid choices, but does not explicitly say basement is unsupported."
+    },
+    {
+      "report": "qwen06-tagged-holdout",
+      "id": "doc-unspecified",
+      "message": "Please specify the document you want to analyze.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "qwen06-tagged-holdout",
+      "id": "length-ambiguous",
+      "message": "Please specify the destination unit for the conversion from meters to centimeters or millimeters.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "qwen06-tagged-holdout",
+      "id": "length-missing-to",
+      "message": "Please specify the destination unit for the conversion from centimeters to another unit. For example, 'meters' or 'millimeters'.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "qwen06-tagged-holdout",
+      "id": "sensor-ambiguous",
+      "message": "Please specify the sensor type (room or outside) and provide the temperature value in Celsius for the sensor read.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "rejected",
+      "reason": "Requires the temperature value from the user even though the tool is supposed to read it."
+    },
+    {
+      "report": "qwen06-tagged-holdout",
+      "id": "doc-unknown",
+      "message": "Please provide the document name to inspect.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "rejected",
+      "reason": "Asks again for the provided document name without identifying the unsupported name or offering supported choices."
+    },
+    {
+      "report": "qwen06-tagged-holdout",
+      "id": "doc-zh-missing",
+      "message": "请告诉我您需要统计的文档名称，例如 'sample' 或 'empty'。",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "qwen06-tagged-holdout",
+      "id": "length-missing-value",
+      "message": "Please provide the numeric value and the source unit (from) and destination unit (to) for the conversion. For example, 'convert 10 m cm'.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted_with_reservation",
+      "reason": "Asks for the missing quantity, but unnecessarily repeats the already specified units."
+    },
+    {
+      "report": "qwen08-action-holdout",
+      "id": "length-unsupported",
+      "message": "Please clarify the missing required argument. Is the value 2 inches or 2 centimeters?",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "rejected",
+      "reason": "Treats an explicit 2 inches as ambiguous and does not address unsupported units."
+    },
+    {
+      "report": "qwen08-action-holdout",
+      "id": "sensor-unspecified",
+      "message": "Which temperature sensor would you like to read? Options: room, outside.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "qwen08-action-holdout",
+      "id": "length-missing-from",
+      "message": "Please specify the original unit for the value 15 (e.g., mm, cm, or m) so I can convert it to centimeters correctly.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "qwen08-action-holdout",
+      "id": "sensor-ambiguous",
+      "message": "Which sensor do you want to read: room or outside?",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "qwen08-action-holdout",
+      "id": "doc-unknown",
+      "message": "Please specify which document you want to inspect, as the tool requires a named fixture document (e.g., 'sample', 'empty', or 'report'). You mentioned 'report document' but the tool expects a specific string value for the document parameter.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "rejected",
+      "reason": "Invents report as an accepted enum value."
+    },
+    {
+      "report": "qwen08-action-holdout",
+      "id": "doc-zh-missing",
+      "message": "请明确您希望统计的文档名称（例如：sample 或 empty）",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "qwen08-action-holdout",
+      "id": "length-missing-value",
+      "message": "Please provide the numeric quantity you want to convert from meters to centimeters.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "qwen08-tagged-holdout",
+      "id": "length-unsupported",
+      "message": "To convert 2 inches to centimeters, I need the numeric value in inches. Please provide the value.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "rejected",
+      "reason": "Asks for the numeric value even though 2 was provided; does not address unsupported inches."
+    },
+    {
+      "report": "qwen08-tagged-holdout",
+      "id": "sensor-unspecified",
+      "message": "Which sensor would you like to use for the temperature reading? Options are 'room' or 'outside'.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "qwen08-tagged-holdout",
+      "id": "length-missing-from",
+      "message": "The user wants to convert 15 to centimeters. The original unit is not specified. Please specify the source unit (e.g., mm, cm, m) and the target unit (cm).",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted_with_reservation",
+      "reason": "Asks for the missing source unit, but unnecessarily repeats the known destination."
+    },
+    {
+      "report": "qwen08-tagged-holdout",
+      "id": "sensor-unknown",
+      "message": "I need to know which specific basement temperature sensor fixture is being referenced to read it. The tool requires a 'sensor' parameter that can be either 'room' or 'outside'. Please specify which sensor you want to read.",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted_with_reservation",
+      "reason": "Offers valid choices, but could more clearly distinguish unsupported from missing input."
+    },
+    {
+      "report": "qwen08-tagged-holdout",
+      "id": "length-ambiguous",
+      "message": "Which destination (centimeters or millimeters) would you like to convert 4 meters to?",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "qwen08-tagged-holdout",
+      "id": "length-missing-to",
+      "message": "Which destination unit would you like to convert to? (mm, cm, or m)",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    },
+    {
+      "report": "qwen08-tagged-holdout",
+      "id": "doc-unknown",
+      "message": "I need to inspect the report document, not sample or empty. Could you please provide the content of the report document? Please specify which document it is (e.g., 'report', 'sample', 'empty').",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "rejected",
+      "reason": "Invents report as a supported choice and requests document content the fixture tool cannot accept."
+    },
+    {
+      "report": "qwen08-tagged-holdout",
+      "id": "length-missing-value",
+      "message": "I need the numeric quantity you want to convert. Please provide the value in meters (m) so I can convert it to centimeters (cm).",
+      "repetitions": [
+        1,
+        2,
+        3
+      ],
+      "verdict": "accepted",
+      "reason": "Requests the missing information or an explicit choice without inventing a supported value."
+    }
+  ]
+}

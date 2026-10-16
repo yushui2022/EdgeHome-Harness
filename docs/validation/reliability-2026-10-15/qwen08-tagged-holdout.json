@@ -1,0 +1,2581 @@
+{
+  "cases": [
+    {
+      "category": "document",
+      "elapsed_ms": 47116,
+      "id": "doc-paraphrase",
+      "model_calls": 1,
+      "observed": {
+        "error": "model_error",
+        "message": "model failed: model generation reached its token limit before completion"
+      },
+      "outcome": "model_error: model failed: model generation reached its token limit before completion",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 47116,
+          "error": "truncated_response",
+          "response": null,
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 2875,
+      "id": "doc-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to inspect the document to understand its content. Please specify which document you are referring to (e.g., 'sample', 'empty', or a specific path). I cannot inspect the document without knowing its name or content.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2875,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to inspect the document to understand its content. Please specify which document you are referring to (e.g., 'sample', 'empty', or a specific path). I cannot inspect the document without knowing its name or content.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 2945,
+      "id": "sensor-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to know which specific temperature sensor fixture you are referring to, as the tool requires the 'sensor' parameter to be either 'room' or 'outside'. Please specify which one you want to read.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2944,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which specific temperature sensor fixture you are referring to, as the tool requires the 'sensor' parameter to be either 'room' or 'outside'. Please specify which one you want to read.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 2557,
+      "id": "length-zero",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2557,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"To convert zero meters to millimeters, I need the numeric value. Please provide the value in meters (m).\",\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 4188,
+      "id": "doc-zh-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "The user wants to count characters and lines in the 'sample' document, but they mentioned 'empty' documents. However, the tool `document.stats` only accepts a single document name ('sample' or 'empty'). Since the user specifically asked to count the 'sample' document, I will proceed with that request. I will not ask for missing information as the tool has a default value for the document name.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 4187,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"The user wants to count characters and lines in the 'sample' document, but they mentioned 'empty' documents. However, the tool `document.stats` only accepts a single document name ('sample' or 'empty'). Since the user specifically asked to count the 'sample' document, I will proceed with that request. I will not ask for missing information as the tool has a default value for the document name.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 1763,
+      "id": "length-unsupported",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "To convert 2 inches to centimeters, I need the numeric value in inches. Please provide the value.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 1763,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"To convert 2 inches to centimeters, I need the numeric value in inches. Please provide the value.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 2177,
+      "id": "sensor-paraphrase",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2176,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which specific room sensor fixture is being referenced in the fixture document? The tool requires the 'sensor' parameter to be either 'room' or 'outside'. Please specify which one.\",\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 1946,
+      "id": "length-negative",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "To convert -3 centimeters to millimeters, I need the numeric value. Please provide the value in centimeters.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 1946,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"To convert -3 centimeters to millimeters, I need the numeric value. Please provide the value in centimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 2466,
+      "id": "doc-en",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to specify which document you are referring to. There is no default document provided in the available tools. Please specify the document name (e.g., 'sample', 'empty') so I can count its characters and lines.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2465,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to specify which document you are referring to. There is no default document provided in the available tools. Please specify the document name (e.g., 'sample', 'empty') so I can count its characters and lines.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 1702,
+      "id": "sensor-unspecified",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which sensor would you like to use for the temperature reading? Options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 1701,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which sensor would you like to use for the temperature reading? Options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 51308,
+      "id": "sensor-zh",
+      "model_calls": 1,
+      "observed": {
+        "error": "model_error",
+        "message": "model failed: model generation reached its token limit before completion"
+      },
+      "outcome": "model_error: model failed: model generation reached its token limit before completion",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 51308,
+          "error": "truncated_response",
+          "response": null,
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 2416,
+      "id": "length-missing-from",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "The user wants to convert 15 to centimeters. The original unit is not specified. Please specify the source unit (e.g., mm, cm, m) and the target unit (cm).",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2416,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"The user wants to convert 15 to centimeters. The original unit is not specified. Please specify the source unit (e.g., mm, cm, m) and the target unit (cm).\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 3931,
+      "id": "sensor-en",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I don't have access to the specific fixture document or sensor data you are referring to. Could you please specify which document (e.g., 'sample', 'empty') and which sensor (e.g., 'room', 'outside') you want me to analyze? I can then use the document.stats tool to count characters and lines, or the sensor.read tool to read the temperature value.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 3931,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I don't have access to the specific fixture document or sensor data you are referring to. Could you please specify which document (e.g., 'sample', 'empty') and which sensor (e.g., 'room', 'outside') you want me to analyze? I can then use the document.stats tool to count characters and lines, or the sensor.read tool to read the temperature value.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 1691,
+      "id": "sensor-zh-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "您希望我读取 room 的温度传感器吗？还是您有其他其他需求？请确认。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 1690,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"您希望我读取 room 的温度传感器吗？还是您有其他其他需求？请确认。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 1448,
+      "id": "doc-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 1447,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which document would you like me to count: 'sample' or 'empty'?\"",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 2378,
+      "id": "sensor-unknown",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to know which specific basement temperature sensor fixture is being referenced to read it. The tool requires a 'sensor' parameter that can be either 'room' or 'outside'. Please specify which sensor you want to read.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2378,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which specific basement temperature sensor fixture is being referenced to read it. The tool requires a 'sensor' parameter that can be either 'room' or 'outside'. Please specify which sensor you want to read.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 2102,
+      "id": "sensor-distractor",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2101,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which specific room sensor is being read. The tool requires the 'sensor' parameter to be either 'room' or 'outside'. Please specify which one.\",\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 1861,
+      "id": "doc-unspecified",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 1861,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which document would you like me to analyze for character count? Please specify the name of the document (e.g., 'sample', 'empty').\"",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 1512,
+      "id": "length-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which destination (centimeters or millimeters) would you like to convert 4 meters to?",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 1511,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which destination (centimeters or millimeters) would you like to convert 4 meters to?\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 1492,
+      "id": "doc-zh",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 1491,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请提供 sample 文档的完整内容，以便我准确统计其字符数和行数。\\\"",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 2645,
+      "id": "sensor-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to know which specific sensor is being read to proceed. The user mentioned 'read the room sensor' but then suggested 'read the outside sensor instead'. Please specify the sensor name (e.g., 'room', 'outside') so I can read it.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2644,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which specific sensor is being read to proceed. The user mentioned 'read the room sensor' but then suggested 'read the outside sensor instead'. Please specify the sensor name (e.g., 'room', 'outside') so I can read it.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 3261,
+      "id": "doc-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "The user wants to count the empty document. However, the tool `document.stats` requires a specific `document` parameter (either 'sample' or 'empty'). Since the user explicitly asked to use the 'sample' document instead of the 'empty' one, I will ask for clarification on the document name to proceed with the count.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 3260,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"The user wants to count the empty document. However, the tool `document.stats` requires a specific `document` parameter (either 'sample' or 'empty'). Since the user explicitly asked to use the 'sample' document instead of the 'empty' one, I will ask for clarification on the document name to proceed with the count.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 1990,
+      "id": "length-short",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 1989,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"To convert 2500 mm to m, I need the numeric value. Please provide the value in millimeters (mm).\",\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 1503,
+      "id": "length-missing-to",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which destination unit would you like to convert to? (mm, cm, or m)",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 1502,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which destination unit would you like to convert to? (mm, cm, or m)\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 1915,
+      "id": "sensor-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 1915,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which room or outside do you want to read the sensor for? Please specify the name of the fixture (e.g., 'room', 'outside').\"",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 2932,
+      "id": "doc-unknown",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to inspect the report document, not sample or empty. Could you please provide the content of the report document? Please specify which document it is (e.g., 'report', 'sample', 'empty').",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2932,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to inspect the report document, not sample or empty. Could you please provide the content of the report document? Please specify which document it is (e.g., 'report', 'sample', 'empty').\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 2228,
+      "id": "doc-distractor",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to know which document you want me to count. Is it the 'sample' document or the 'empty' document?",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2227,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which document you want me to count. Is it the 'sample' document or the 'empty' document?\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 4381,
+      "id": "doc-quoted",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 4380,
+          "error": null,
+          "response": "{\n  \"kind\":\"final\",\"message\":\"The user has specified the document to inspect as 'empty'. However, the tool `document.stats` requires a specific document name (e.g., 'sample', 'empty') to be specified. Since the user provided the name 'empty', I will use that to count the characters and lines in the 'empty' document.\",\n  \"tool\":\"document.stats\",\"arguments\":{\"document\":\"empty\"}}\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 4249,
+      "id": "length-en",
+      "model_calls": 1,
+      "observed": {
+        "error": "observation_required",
+        "message": "a successful tool observation is required before a final answer"
+      },
+      "outcome": "observation_required: a successful tool observation is required before a final answer",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 4249,
+          "error": null,
+          "response": "{\"kind\":\"final\",\"message\":\"To convert 2.5 meters to centimeters, multiply by 100. 2.5 * 100 = 250. So, 2.5 meters is equal to 250 centimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 3930,
+      "id": "doc-zh-missing",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 3930,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"您提到“还没决定选哪个”，但您似乎没有提供具体的文档内容或需要统计的文档名称。请提供文档名称或说明您希望统计的内容，以便我才能执行统计操作。",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 2553,
+      "id": "length-decimal",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2552,
+          "error": null,
+          "response": "{\"kind\":\"final\",\"message\":\"To convert 125 millimeters into centimeters, you can use the following tool: {\"kind\":\"tool\",\"tool\":\"length.convert\",\"arguments\":{\"from\":\"mm\",\"to\":\"cm\",\"value\":125}}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 2491,
+      "id": "length-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "The user wants to convert 5 meters (m) to millimeters (mm), but the destination unit is centimeters (cm). Please confirm the correct conversion factor and the final destination unit.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2491,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"The user wants to convert 5 meters (m) to millimeters (mm), but the destination unit is centimeters (cm). Please confirm the correct conversion factor and the final destination unit.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 47949,
+      "id": "sensor-quoted",
+      "model_calls": 1,
+      "observed": {
+        "error": "model_error",
+        "message": "model failed: model generation reached its token limit before completion"
+      },
+      "outcome": "model_error: model failed: model generation reached its token limit before completion",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 47949,
+          "error": "truncated_response",
+          "response": null,
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 2433,
+      "id": "length-distractor",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to know the numeric value of 7 cm to perform the conversion. Please provide the value.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2432,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know the numeric value of 7 cm to perform the conversion. Please provide the value.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 2353,
+      "id": "length-missing-value",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need the numeric quantity you want to convert. Please provide the value in meters (m) so I can convert it to centimeters (cm).",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2352,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need the numeric quantity you want to convert. Please provide the value in meters (m) so I can convert it to centimeters (cm).\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 2319,
+      "id": "length-zh",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "您想让我把 30 厘米换算为毫米吗？还是您想让我使用工具来帮您完成这个换算？请确认一下。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 2319,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"您想让我把 30 厘米换算为毫米吗？还是您想让我使用工具来帮您完成这个换算？请确认一下。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 5013,
+      "id": "doc-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "The user wants to count the empty document. However, the tool `document.stats` requires a specific `document` parameter (either 'sample' or 'empty'). Since the user explicitly asked to use the 'sample' document instead of the 'empty' one, I will ask for clarification on the document name to proceed with the count.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 5012,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"The user wants to count the empty document. However, the tool `document.stats` requires a specific `document` parameter (either 'sample' or 'empty'). Since the user explicitly asked to use the 'sample' document instead of the 'empty' one, I will ask for clarification on the document name to proceed with the count.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 50555,
+      "id": "sensor-zh",
+      "model_calls": 1,
+      "observed": {
+        "error": "model_error",
+        "message": "model failed: model generation reached its token limit before completion"
+      },
+      "outcome": "model_error: model failed: model generation reached its token limit before completion",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 50555,
+          "error": "truncated_response",
+          "response": null,
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 2120,
+      "id": "doc-unspecified",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2119,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which document would you like me to analyze for character count? Please specify the name of the document (e.g., 'sample', 'empty').\"",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 3373,
+      "id": "doc-zh-missing",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 3373,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"您提到“还没决定选哪个”，但您似乎没有提供具体的文档内容或需要统计的文档名称。请提供文档名称或说明您希望统计的内容，以便我才能执行统计操作。",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 3729,
+      "id": "doc-en",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to specify which document you are referring to. There is no default document provided in the available tools. Please specify the document name (e.g., 'sample', 'empty') so I can count its characters and lines.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 3728,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to specify which document you are referring to. There is no default document provided in the available tools. Please specify the document name (e.g., 'sample', 'empty') so I can count its characters and lines.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 2343,
+      "id": "length-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which destination (centimeters or millimeters) would you like to convert 4 meters to?",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2343,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which destination (centimeters or millimeters) would you like to convert 4 meters to?\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 3149,
+      "id": "sensor-paraphrase",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 3148,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which specific room sensor fixture is being referenced in the fixture document? The tool requires the 'sensor' parameter to be either 'room' or 'outside'. Please specify which one.\",\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 2976,
+      "id": "sensor-distractor",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2976,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which specific room sensor is being read. The tool requires the 'sensor' parameter to be either 'room' or 'outside'. Please specify which one.\",\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 48559,
+      "id": "sensor-quoted",
+      "model_calls": 1,
+      "observed": {
+        "error": "model_error",
+        "message": "model failed: model generation reached its token limit before completion"
+      },
+      "outcome": "model_error: model failed: model generation reached its token limit before completion",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 48558,
+          "error": "truncated_response",
+          "response": null,
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 1811,
+      "id": "doc-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 1811,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which document would you like me to count: 'sample' or 'empty'?\"",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 4348,
+      "id": "doc-quoted",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 4347,
+          "error": null,
+          "response": "{\n  \"kind\":\"final\",\"message\":\"The user has specified the document to inspect as 'empty'. However, the tool `document.stats` requires a specific document name (e.g., 'sample', 'empty') to be specified. Since the user provided the name 'empty', I will use that to count the characters and lines in the 'empty' document.\",\n  \"tool\":\"document.stats\",\"arguments\":{\"document\":\"empty\"}}\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 2066,
+      "id": "length-zero",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2066,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"To convert zero meters to millimeters, I need the numeric value. Please provide the value in meters (m).\",\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 2551,
+      "id": "length-missing-from",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "The user wants to convert 15 to centimeters. The original unit is not specified. Please specify the source unit (e.g., mm, cm, m) and the target unit (cm).",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2550,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"The user wants to convert 15 to centimeters. The original unit is not specified. Please specify the source unit (e.g., mm, cm, m) and the target unit (cm).\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 1939,
+      "id": "sensor-unspecified",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which sensor would you like to use for the temperature reading? Options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 1939,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which sensor would you like to use for the temperature reading? Options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 1782,
+      "id": "doc-zh",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 1782,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请提供 sample 文档的完整内容，以便我准确统计其字符数和行数。\\\"",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 2812,
+      "id": "doc-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to inspect the document to understand its content. Please specify which document you are referring to (e.g., 'sample', 'empty', or a specific path). I cannot inspect the document without knowing its name or content.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2811,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to inspect the document to understand its content. Please specify which document you are referring to (e.g., 'sample', 'empty', or a specific path). I cannot inspect the document without knowing its name or content.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 1979,
+      "id": "length-negative",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "To convert -3 centimeters to millimeters, I need the numeric value. Please provide the value in centimeters.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 1979,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"To convert -3 centimeters to millimeters, I need the numeric value. Please provide the value in centimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 2530,
+      "id": "length-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "The user wants to convert 5 meters (m) to millimeters (mm), but the destination unit is centimeters (cm). Please confirm the correct conversion factor and the final destination unit.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2530,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"The user wants to convert 5 meters (m) to millimeters (mm), but the destination unit is centimeters (cm). Please confirm the correct conversion factor and the final destination unit.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 3036,
+      "id": "length-en",
+      "model_calls": 1,
+      "observed": {
+        "error": "observation_required",
+        "message": "a successful tool observation is required before a final answer"
+      },
+      "outcome": "observation_required: a successful tool observation is required before a final answer",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 3036,
+          "error": null,
+          "response": "{\"kind\":\"final\",\"message\":\"To convert 2.5 meters to centimeters, multiply by 100. 2.5 * 100 = 250. So, 2.5 meters is equal to 250 centimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 2317,
+      "id": "sensor-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2316,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which room or outside do you want to read the sensor for? Please specify the name of the fixture (e.g., 'room', 'outside').\"",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 2344,
+      "id": "length-zh",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "您想让我把 30 厘米换算为毫米吗？还是您想让我使用工具来帮您完成这个换算？请确认一下。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2344,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"您想让我把 30 厘米换算为毫米吗？还是您想让我使用工具来帮您完成这个换算？请确认一下。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 1954,
+      "id": "sensor-zh-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "您希望我读取 room 的温度传感器吗？还是您有其他其他需求？请确认。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 1954,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"您希望我读取 room 的温度传感器吗？还是您有其他其他需求？请确认。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 4142,
+      "id": "doc-zh-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "The user wants to count characters and lines in the 'sample' document, but they mentioned 'empty' documents. However, the tool `document.stats` only accepts a single document name ('sample' or 'empty'). Since the user specifically asked to count the 'sample' document, I will proceed with that request. I will not ask for missing information as the tool has a default value for the document name.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 4142,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"The user wants to count characters and lines in the 'sample' document, but they mentioned 'empty' documents. However, the tool `document.stats` only accepts a single document name ('sample' or 'empty'). Since the user specifically asked to count the 'sample' document, I will proceed with that request. I will not ask for missing information as the tool has a default value for the document name.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 1738,
+      "id": "length-missing-to",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which destination unit would you like to convert to? (mm, cm, or m)",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 1738,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which destination unit would you like to convert to? (mm, cm, or m)\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 1713,
+      "id": "length-distractor",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to know the numeric value of 7 cm to perform the conversion. Please provide the value.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 1712,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know the numeric value of 7 cm to perform the conversion. Please provide the value.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 2138,
+      "id": "length-missing-value",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need the numeric quantity you want to convert. Please provide the value in meters (m) so I can convert it to centimeters (cm).",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2137,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need the numeric quantity you want to convert. Please provide the value in meters (m) so I can convert it to centimeters (cm).\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 3130,
+      "id": "sensor-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to know which specific sensor is being read to proceed. The user mentioned 'read the room sensor' but then suggested 'read the outside sensor instead'. Please specify the sensor name (e.g., 'room', 'outside') so I can read it.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 3130,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which specific sensor is being read to proceed. The user mentioned 'read the room sensor' but then suggested 'read the outside sensor instead'. Please specify the sensor name (e.g., 'room', 'outside') so I can read it.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 2643,
+      "id": "sensor-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to know which specific temperature sensor fixture you are referring to, as the tool requires the 'sensor' parameter to be either 'room' or 'outside'. Please specify which one you want to read.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2643,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which specific temperature sensor fixture you are referring to, as the tool requires the 'sensor' parameter to be either 'room' or 'outside'. Please specify which one you want to read.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 1879,
+      "id": "length-unsupported",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "To convert 2 inches to centimeters, I need the numeric value in inches. Please provide the value.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 1878,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"To convert 2 inches to centimeters, I need the numeric value in inches. Please provide the value.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 2020,
+      "id": "length-short",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2019,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"To convert 2500 mm to m, I need the numeric value. Please provide the value in millimeters (mm).\",\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 4159,
+      "id": "sensor-en",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I don't have access to the specific fixture document or sensor data you are referring to. Could you please specify which document (e.g., 'sample', 'empty') and which sensor (e.g., 'room', 'outside') you want me to analyze? I can then use the document.stats tool to count characters and lines, or the sensor.read tool to read the temperature value.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 4158,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I don't have access to the specific fixture document or sensor data you are referring to. Could you please specify which document (e.g., 'sample', 'empty') and which sensor (e.g., 'room', 'outside') you want me to analyze? I can then use the document.stats tool to count characters and lines, or the sensor.read tool to read the temperature value.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 2801,
+      "id": "length-decimal",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2801,
+          "error": null,
+          "response": "{\"kind\":\"final\",\"message\":\"To convert 125 millimeters into centimeters, you can use the following tool: {\"kind\":\"tool\",\"tool\":\"length.convert\",\"arguments\":{\"from\":\"mm\",\"to\":\"cm\",\"value\":125}}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 3037,
+      "id": "sensor-unknown",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to know which specific basement temperature sensor fixture is being referenced to read it. The tool requires a 'sensor' parameter that can be either 'room' or 'outside'. Please specify which sensor you want to read.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 3037,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which specific basement temperature sensor fixture is being referenced to read it. The tool requires a 'sensor' parameter that can be either 'room' or 'outside'. Please specify which sensor you want to read.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 48304,
+      "id": "doc-paraphrase",
+      "model_calls": 1,
+      "observed": {
+        "error": "model_error",
+        "message": "model failed: model generation reached its token limit before completion"
+      },
+      "outcome": "model_error: model failed: model generation reached its token limit before completion",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 48303,
+          "error": "truncated_response",
+          "response": null,
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 1905,
+      "id": "doc-distractor",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to know which document you want me to count. Is it the 'sample' document or the 'empty' document?",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 1905,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which document you want me to count. Is it the 'sample' document or the 'empty' document?\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 2312,
+      "id": "doc-unknown",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to inspect the report document, not sample or empty. Could you please provide the content of the report document? Please specify which document it is (e.g., 'report', 'sample', 'empty').",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 2312,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to inspect the report document, not sample or empty. Could you please provide the content of the report document? Please specify which document it is (e.g., 'report', 'sample', 'empty').\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 2238,
+      "id": "sensor-paraphrase",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 2238,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which specific room sensor fixture is being referenced in the fixture document? The tool requires the 'sensor' parameter to be either 'room' or 'outside'. Please specify which one.\",\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 1607,
+      "id": "doc-zh",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 1606,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请提供 sample 文档的完整内容，以便我准确统计其字符数和行数。\\\"",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 1900,
+      "id": "length-missing-value",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need the numeric quantity you want to convert. Please provide the value in meters (m) so I can convert it to centimeters (cm).",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 1899,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need the numeric quantity you want to convert. Please provide the value in meters (m) so I can convert it to centimeters (cm).\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 1834,
+      "id": "length-short",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 1834,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"To convert 2500 mm to m, I need the numeric value. Please provide the value in millimeters (mm).\",\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 2585,
+      "id": "doc-unknown",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to inspect the report document, not sample or empty. Could you please provide the content of the report document? Please specify which document it is (e.g., 'report', 'sample', 'empty').",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 2584,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to inspect the report document, not sample or empty. Could you please provide the content of the report document? Please specify which document it is (e.g., 'report', 'sample', 'empty').\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 2731,
+      "id": "length-decimal",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 2730,
+          "error": null,
+          "response": "{\"kind\":\"final\",\"message\":\"To convert 125 millimeters into centimeters, you can use the following tool: {\"kind\":\"tool\",\"tool\":\"length.convert\",\"arguments\":{\"from\":\"mm\",\"to\":\"cm\",\"value\":125}}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 2625,
+      "id": "doc-zh-missing",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 2624,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"您提到“还没决定选哪个”，但您似乎没有提供具体的文档内容或需要统计的文档名称。请提供文档名称或说明您希望统计的内容，以便我才能执行统计操作。",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 1902,
+      "id": "sensor-zh-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "您希望我读取 room 的温度传感器吗？还是您有其他其他需求？请确认。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 1901,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"您希望我读取 room 的温度传感器吗？还是您有其他其他需求？请确认。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 4579,
+      "id": "sensor-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to know which specific temperature sensor fixture you are referring to, as the tool requires the 'sensor' parameter to be either 'room' or 'outside'. Please specify which one you want to read.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 4579,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which specific temperature sensor fixture you are referring to, as the tool requires the 'sensor' parameter to be either 'room' or 'outside'. Please specify which one you want to read.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 2444,
+      "id": "length-negative",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "To convert -3 centimeters to millimeters, I need the numeric value. Please provide the value in centimeters.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 2443,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"To convert -3 centimeters to millimeters, I need the numeric value. Please provide the value in centimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 1764,
+      "id": "doc-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 1764,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which document would you like me to count: 'sample' or 'empty'?\"",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 2499,
+      "id": "length-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "The user wants to convert 5 meters (m) to millimeters (mm), but the destination unit is centimeters (cm). Please confirm the correct conversion factor and the final destination unit.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 2499,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"The user wants to convert 5 meters (m) to millimeters (mm), but the destination unit is centimeters (cm). Please confirm the correct conversion factor and the final destination unit.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 2937,
+      "id": "doc-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to inspect the document to understand its content. Please specify which document you are referring to (e.g., 'sample', 'empty', or a specific path). I cannot inspect the document without knowing its name or content.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 2936,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to inspect the document to understand its content. Please specify which document you are referring to (e.g., 'sample', 'empty', or a specific path). I cannot inspect the document without knowing its name or content.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 2881,
+      "id": "length-en",
+      "model_calls": 1,
+      "observed": {
+        "error": "observation_required",
+        "message": "a successful tool observation is required before a final answer"
+      },
+      "outcome": "observation_required: a successful tool observation is required before a final answer",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 2881,
+          "error": null,
+          "response": "{\"kind\":\"final\",\"message\":\"To convert 2.5 meters to centimeters, multiply by 100. 2.5 * 100 = 250. So, 2.5 meters is equal to 250 centimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 2489,
+      "id": "length-missing-from",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "The user wants to convert 15 to centimeters. The original unit is not specified. Please specify the source unit (e.g., mm, cm, m) and the target unit (cm).",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 2488,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"The user wants to convert 15 to centimeters. The original unit is not specified. Please specify the source unit (e.g., mm, cm, m) and the target unit (cm).\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 3391,
+      "id": "doc-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "The user wants to count the empty document. However, the tool `document.stats` requires a specific `document` parameter (either 'sample' or 'empty'). Since the user explicitly asked to use the 'sample' document instead of the 'empty' one, I will ask for clarification on the document name to proceed with the count.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 3391,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"The user wants to count the empty document. However, the tool `document.stats` requires a specific `document` parameter (either 'sample' or 'empty'). Since the user explicitly asked to use the 'sample' document instead of the 'empty' one, I will ask for clarification on the document name to proceed with the count.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 2107,
+      "id": "length-zh",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "您想让我把 30 厘米换算为毫米吗？还是您想让我使用工具来帮您完成这个换算？请确认一下。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 2106,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"您想让我把 30 厘米换算为毫米吗？还是您想让我使用工具来帮您完成这个换算？请确认一下。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 1705,
+      "id": "sensor-unspecified",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which sensor would you like to use for the temperature reading? Options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 1704,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which sensor would you like to use for the temperature reading? Options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 3507,
+      "id": "sensor-en",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I don't have access to the specific fixture document or sensor data you are referring to. Could you please specify which document (e.g., 'sample', 'empty') and which sensor (e.g., 'room', 'outside') you want me to analyze? I can then use the document.stats tool to count characters and lines, or the sensor.read tool to read the temperature value.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 3507,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I don't have access to the specific fixture document or sensor data you are referring to. Could you please specify which document (e.g., 'sample', 'empty') and which sensor (e.g., 'room', 'outside') you want me to analyze? I can then use the document.stats tool to count characters and lines, or the sensor.read tool to read the temperature value.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 1673,
+      "id": "length-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which destination (centimeters or millimeters) would you like to convert 4 meters to?",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 1672,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which destination (centimeters or millimeters) would you like to convert 4 meters to?\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 2027,
+      "id": "sensor-distractor",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 2026,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which specific room sensor is being read. The tool requires the 'sensor' parameter to be either 'room' or 'outside'. Please specify which one.\",\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 2460,
+      "id": "sensor-unknown",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to know which specific basement temperature sensor fixture is being referenced to read it. The tool requires a 'sensor' parameter that can be either 'room' or 'outside'. Please specify which sensor you want to read.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 2460,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which specific basement temperature sensor fixture is being referenced to read it. The tool requires a 'sensor' parameter that can be either 'room' or 'outside'. Please specify which sensor you want to read.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 44582,
+      "id": "doc-paraphrase",
+      "model_calls": 1,
+      "observed": {
+        "error": "model_error",
+        "message": "model failed: model generation reached its token limit before completion"
+      },
+      "outcome": "model_error: model failed: model generation reached its token limit before completion",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 44581,
+          "error": "truncated_response",
+          "response": null,
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 2116,
+      "id": "length-missing-to",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Which destination unit would you like to convert to? (mm, cm, or m)",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 2116,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which destination unit would you like to convert to? (mm, cm, or m)\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 44479,
+      "id": "sensor-quoted",
+      "model_calls": 1,
+      "observed": {
+        "error": "model_error",
+        "message": "model failed: model generation reached its token limit before completion"
+      },
+      "outcome": "model_error: model failed: model generation reached its token limit before completion",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 44478,
+          "error": "truncated_response",
+          "response": null,
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 47236,
+      "id": "sensor-zh",
+      "model_calls": 1,
+      "observed": {
+        "error": "model_error",
+        "message": "model failed: model generation reached its token limit before completion"
+      },
+      "outcome": "model_error: model failed: model generation reached its token limit before completion",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 47235,
+          "error": "truncated_response",
+          "response": null,
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 3916,
+      "id": "doc-zh-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "The user wants to count characters and lines in the 'sample' document, but they mentioned 'empty' documents. However, the tool `document.stats` only accepts a single document name ('sample' or 'empty'). Since the user specifically asked to count the 'sample' document, I will proceed with that request. I will not ask for missing information as the tool has a default value for the document name.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 3915,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"The user wants to count characters and lines in the 'sample' document, but they mentioned 'empty' documents. However, the tool `document.stats` only accepts a single document name ('sample' or 'empty'). Since the user specifically asked to count the 'sample' document, I will proceed with that request. I will not ask for missing information as the tool has a default value for the document name.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 1990,
+      "id": "sensor-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 1989,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which room or outside do you want to read the sensor for? Please specify the name of the fixture (e.g., 'room', 'outside').\"",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 1628,
+      "id": "length-unsupported",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "To convert 2 inches to centimeters, I need the numeric value in inches. Please provide the value.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 1627,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"To convert 2 inches to centimeters, I need the numeric value in inches. Please provide the value.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 1758,
+      "id": "doc-distractor",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to know which document you want me to count. Is it the 'sample' document or the 'empty' document?",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 1757,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which document you want me to count. Is it the 'sample' document or the 'empty' document?\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 2406,
+      "id": "doc-en",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to specify which document you are referring to. There is no default document provided in the available tools. Please specify the document name (e.g., 'sample', 'empty') so I can count its characters and lines.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 2406,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to specify which document you are referring to. There is no default document provided in the available tools. Please specify the document name (e.g., 'sample', 'empty') so I can count its characters and lines.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 1781,
+      "id": "length-zero",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 1781,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"To convert zero meters to millimeters, I need the numeric value. Please provide the value in meters (m).\",\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 1848,
+      "id": "doc-unspecified",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 1847,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Which document would you like me to analyze for character count? Please specify the name of the document (e.g., 'sample', 'empty').\"",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 3600,
+      "id": "doc-quoted",
+      "model_calls": 1,
+      "observed": {
+        "error": "invalid_decision",
+        "message": "model decision is invalid or names an unregistered tool"
+      },
+      "outcome": "invalid_decision: model decision is invalid or names an unregistered tool",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 3599,
+          "error": null,
+          "response": "{\n  \"kind\":\"final\",\"message\":\"The user has specified the document to inspect as 'empty'. However, the tool `document.stats` requires a specific document name (e.g., 'sample', 'empty') to be specified. Since the user provided the name 'empty', I will use that to count the characters and lines in the 'empty' document.\",\n  \"tool\":\"document.stats\",\"arguments\":{\"document\":\"empty\"}}\n}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 1711,
+      "id": "length-distractor",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to know the numeric value of 7 cm to perform the conversion. Please provide the value.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 1711,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know the numeric value of 7 cm to perform the conversion. Please provide the value.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 3081,
+      "id": "sensor-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "I need to know which specific sensor is being read to proceed. The user mentioned 'read the room sensor' but then suggested 'read the outside sensor instead'. Please specify the sensor name (e.g., 'room', 'outside') so I can read it.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 3080,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"I need to know which specific sensor is being read to proceed. The user mentioned 'read the room sensor' but then suggested 'read the outside sensor instead'. Please specify the sensor name (e.g., 'room', 'outside') so I can read it.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    }
+  ],
+  "cases_passing_all_repeats": 8,
+  "first_attempt_passed": 24,
+  "latency_ms": {
+    "max": 51308,
+    "p50": 2433,
+    "p95": 47236
+  },
+  "mode": "model",
+  "model": "qwen3.5:0.8b",
+  "model_configuration": {
+    "context_tokens": 4096,
+    "engine": "ollama",
+    "max_output_tokens": 1024,
+    "max_response_bytes": 65536,
+    "request_timeout_ms": 60000,
+    "temperature": 0,
+    "think": false
+  },
+  "order_seed": 42,
+  "passed": 24,
+  "per_category": {
+    "ambiguous": {
+      "passed": 3,
+      "total": 9
+    },
+    "conversion": {
+      "passed": 0,
+      "total": 24
+    },
+    "document": {
+      "passed": 0,
+      "total": 24
+    },
+    "missing": {
+      "passed": 12,
+      "total": 18
+    },
+    "sensor": {
+      "passed": 0,
+      "total": 24
+    },
+    "unsupported": {
+      "passed": 9,
+      "total": 9
+    }
+  },
+  "per_repeat": [
+    {
+      "passed": 8,
+      "total": 36
+    },
+    {
+      "passed": 8,
+      "total": 36
+    },
+    {
+      "passed": 8,
+      "total": 36
+    }
+  ],
+  "recovered_after_validation_repair": 0,
+  "repeat": 3,
+  "runtime_configuration": {
+    "decision_protocol": "tagged",
+    "max_context_bytes": 32768,
+    "max_decision_repairs": 0,
+    "max_model_calls": 2,
+    "max_tool_calls": 1,
+    "require_tool_observation": true
+  },
+  "schema_version": 2,
+  "task_success_rate": 0.2222222222222222,
+  "total": 108,
+  "unexpected_proposals": 0,
+  "unique_cases": 36
+}

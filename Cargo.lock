@@ -256,6 +256,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "edgehome-kit"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "edgehome-inference",
+ "edgehome-runtime",
+ "schemars",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+]
+
+[[package]]
 name = "edgehome-memory"
 version = "0.1.0"
 dependencies = [

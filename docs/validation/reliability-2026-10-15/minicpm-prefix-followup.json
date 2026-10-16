@@ -1,0 +1,14 @@
+{
+  "experiment": "MiniCPM explicit non-thinking assistant prefix",
+  "scope": "Readiness probe only; excluded from the 792 scored trials",
+  "source": "https://huggingface.co/openbmb/MiniCPM5-1B/blob/main/chat_template.jinja",
+  "model": "edgehome-minicpm5-1b-nothink:v1",
+  "base_model": "openbmb/minicpm5:latest",
+  "change": "Append the official non-thinking assistant prefix; reuse existing weights and all generation settings",
+  "template": "<s>{{ if .System }}<|im_start|>system\n{{ .System }}<|im_end|>\n{{ end }}{{ range .Messages }}<|im_start|>{{ .Role }}\n{{ .Content }}<|im_end|>\n{{ end }}<|im_start|>assistant\n<think>\n\n</think>\n\n",
+  "configuration": "inference:\n  engine: ollama\n  model: edgehome-minicpm5-1b-nothink:v1\n  request_timeout_ms: 60000\n  max_output_tokens: 1024\n  context_tokens: 4096\nruntime:\n  decision_protocol: action\n  max_decision_repairs: 1\n  max_model_calls: 2\n  max_tool_calls: 1\n  max_context_bytes: 32768\n  require_tool_observation: true\n\n\r\n",
+  "exit_code": 1,
+  "stdout": null,
+  "stderr": "Error: model role probe failed; check the chat template and model instruction following\r\n",
+  "conclusion": "Did not pass the system role probe; not promoted as a working fix"
+}

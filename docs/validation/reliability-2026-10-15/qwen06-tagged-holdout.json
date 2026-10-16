@@ -1,0 +1,2671 @@
+{
+  "cases": [
+    {
+      "category": "document",
+      "elapsed_ms": 415,
+      "id": "doc-paraphrase",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document name to get its size and line count.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 415,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document name to get its size and line count.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 358,
+      "id": "doc-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document you want to inspect.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 358,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document you want to inspect.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 434,
+      "id": "sensor-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the temperature sensor you are referring to. The available options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 434,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the temperature sensor you are referring to. The available options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 444,
+      "id": "length-zero",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the value in meters and specify the source unit (meters) and destination unit (millimeters) for the conversion.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 443,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the value in meters and specify the source unit (meters) and destination unit (millimeters) for the conversion.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 432,
+      "id": "doc-zh-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请确认您需要统计的文档类型是否为 'sample'，以便进行统计操作。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 432,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请确认您需要统计的文档类型是否为 'sample'，以便进行统计操作。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 421,
+      "id": "length-unsupported",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the source unit and destination unit for the conversion from inches to centimeters.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 421,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the source unit and destination unit for the conversion from inches to centimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 437,
+      "id": "sensor-paraphrase",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type for the room sensor. The available options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 437,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type for the room sensor. The available options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 390,
+      "id": "length-negative",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the source unit and destination unit for the length conversion.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 390,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the source unit and destination unit for the length conversion.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 435,
+      "id": "doc-en",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document name to get the character and line count.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 434,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document name to get the character and line count.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 389,
+      "id": "sensor-unspecified",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify which temperature sensor you would like to read. The available options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 389,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify which temperature sensor you would like to read. The available options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 369,
+      "id": "sensor-zh",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请提供传感器的具体编号或名称以进行读取。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 369,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请提供传感器的具体编号或名称以进行读取。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 418,
+      "id": "length-missing-from",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the original unit in centimeters when converting 15 to centimeters.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 418,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the original unit in centimeters when converting 15 to centimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 377,
+      "id": "sensor-en",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the sensor name to retrieve its temperature value.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 377,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the sensor name to retrieve its temperature value.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 369,
+      "id": "sensor-zh-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请确认您需要读取的是室温传感器。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 369,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请确认您需要读取的是室温传感器。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 371,
+      "id": "doc-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify which document you want to count, either 'sample' or 'empty'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 370,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify which document you want to count, either 'sample' or 'empty'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 433,
+      "id": "sensor-unknown",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type for the basement temperature sensor. The available options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 433,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type for the basement temperature sensor. The available options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 426,
+      "id": "sensor-distractor",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the value and units for the length conversion. The room sensor is being read.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 426,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the value and units for the length conversion. The room sensor is being read.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 320,
+      "id": "doc-unspecified",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document you want to analyze.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 320,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document you want to analyze.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 397,
+      "id": "length-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the destination unit for the conversion from meters to centimeters or millimeters.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 397,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the destination unit for the conversion from meters to centimeters or millimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 467,
+      "id": "doc-zh",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请指定要统计的文档名称，例如 'sample' 或 'empty'。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 467,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请指定要统计的文档名称，例如 'sample' 或 'empty'。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 420,
+      "id": "sensor-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type. The available options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 420,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type. The available options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 409,
+      "id": "doc-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document you want to count, either 'sample' or 'empty'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 408,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document you want to count, either 'sample' or 'empty'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 423,
+      "id": "length-short",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document you want to analyze. For example, 'sample' or 'empty'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 422,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document you want to analyze. For example, 'sample' or 'empty'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 465,
+      "id": "length-missing-to",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the destination unit for the conversion from centimeters to another unit. For example, 'meters' or 'millimeters'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 465,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the destination unit for the conversion from centimeters to another unit. For example, 'meters' or 'millimeters'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 440,
+      "id": "sensor-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type (room or outside) and provide the temperature value in Celsius for the sensor read.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 440,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type (room or outside) and provide the temperature value in Celsius for the sensor read.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 354,
+      "id": "doc-unknown",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the document name to inspect.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 354,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the document name to inspect.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 388,
+      "id": "doc-distractor",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document you want to count characters and lines in.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 387,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document you want to count characters and lines in.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 495,
+      "id": "doc-quoted",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "The document to inspect is named 'empty'. Could you please specify the unit of measurement you want to convert or the sensor you are reading?",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 494,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"The document to inspect is named 'empty'. Could you please specify the unit of measurement you want to convert or the sensor you are reading?\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 917,
+      "id": "length-en",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the source unit and destination unit for the conversion. The required parameters are 'from' and 'to'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 917,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the source unit and destination unit for the conversion. The required parameters are 'from' and 'to'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 382,
+      "id": "doc-zh-missing",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请告诉我您需要统计的文档名称，例如 'sample' 或 'empty'。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 382,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请告诉我您需要统计的文档名称，例如 'sample' 或 'empty'。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 401,
+      "id": "length-decimal",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the value in millimeters to convert to centimeters.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 401,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the value in millimeters to convert to centimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 782,
+      "id": "length-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the source and destination units for the conversion from meters to millimeters or centimeters. For example, if the conversion is from meters to centimeters, specify 'cm' as the destination.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 782,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the source and destination units for the conversion from meters to millimeters or centimeters. For example, if the conversion is from meters to centimeters, specify 'cm' as the destination.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 391,
+      "id": "sensor-quoted",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the sensor name to check its data.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 391,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the sensor name to check its data.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 739,
+      "id": "length-distractor",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the source unit and destination unit for the conversion from centimeters to millimeters.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 739,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the source unit and destination unit for the conversion from centimeters to millimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 474,
+      "id": "length-missing-value",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the numeric value and the source unit (from) and destination unit (to) for the conversion. For example, 'convert 10 m cm'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 474,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the numeric value and the source unit (from) and destination unit (to) for the conversion. For example, 'convert 10 m cm'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 454,
+      "id": "length-zh",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请提供需要转换的数值和单位。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 1,
+      "responses": [
+        {
+          "elapsed_ms": 454,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请提供需要转换的数值和单位。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 434,
+      "id": "doc-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document you want to count, either 'sample' or 'empty'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 434,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document you want to count, either 'sample' or 'empty'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 380,
+      "id": "sensor-zh",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请提供传感器的具体编号或名称以进行读取。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 379,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请提供传感器的具体编号或名称以进行读取。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 319,
+      "id": "doc-unspecified",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document you want to analyze.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 319,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document you want to analyze.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 394,
+      "id": "doc-zh-missing",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请告诉我您需要统计的文档名称，例如 'sample' 或 'empty'。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 394,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请告诉我您需要统计的文档名称，例如 'sample' 或 'empty'。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 390,
+      "id": "doc-en",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document name to get the character and line count.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 390,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document name to get the character and line count.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 420,
+      "id": "length-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the destination unit for the conversion from meters to centimeters or millimeters.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 419,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the destination unit for the conversion from meters to centimeters or millimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 444,
+      "id": "sensor-paraphrase",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type for the room sensor. The available options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 444,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type for the room sensor. The available options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 436,
+      "id": "sensor-distractor",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the value and units for the length conversion. The room sensor is being read.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 435,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the value and units for the length conversion. The room sensor is being read.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 380,
+      "id": "sensor-quoted",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the sensor name to check its data.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 379,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the sensor name to check its data.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 363,
+      "id": "doc-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify which document you want to count, either 'sample' or 'empty'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 363,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify which document you want to count, either 'sample' or 'empty'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 467,
+      "id": "doc-quoted",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "The document to inspect is named 'empty'. Could you please specify the unit of measurement you want to convert or the sensor you are reading?",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 466,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"The document to inspect is named 'empty'. Could you please specify the unit of measurement you want to convert or the sensor you are reading?\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 458,
+      "id": "length-zero",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the value in meters and specify the source unit (meters) and destination unit (millimeters) for the conversion.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 458,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the value in meters and specify the source unit (meters) and destination unit (millimeters) for the conversion.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 432,
+      "id": "length-missing-from",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the original unit in centimeters when converting 15 to centimeters.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 431,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the original unit in centimeters when converting 15 to centimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 390,
+      "id": "sensor-unspecified",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify which temperature sensor you would like to read. The available options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 389,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify which temperature sensor you would like to read. The available options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 450,
+      "id": "doc-zh",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请指定要统计的文档名称，例如 'sample' 或 'empty'。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 449,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请指定要统计的文档名称，例如 'sample' 或 'empty'。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 363,
+      "id": "doc-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document you want to inspect.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 363,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document you want to inspect.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 391,
+      "id": "length-negative",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the source unit and destination unit for the length conversion.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 391,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the source unit and destination unit for the length conversion.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 517,
+      "id": "length-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the source and destination units for the conversion from meters to millimeters or centimeters. For example, if the conversion is from meters to centimeters, specify 'cm' as the destination.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 517,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the source and destination units for the conversion from meters to millimeters or centimeters. For example, if the conversion is from meters to centimeters, specify 'cm' as the destination.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 443,
+      "id": "length-en",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the source unit and destination unit for the conversion. The required parameters are 'from' and 'to'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 443,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the source unit and destination unit for the conversion. The required parameters are 'from' and 'to'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 425,
+      "id": "sensor-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type (room or outside) and provide the temperature value in Celsius for the sensor read.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 424,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type (room or outside) and provide the temperature value in Celsius for the sensor read.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 360,
+      "id": "length-zh",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请提供需要转换的数值和单位。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 360,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请提供需要转换的数值和单位。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 397,
+      "id": "sensor-zh-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请确认您需要读取的是室温传感器。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 397,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请确认您需要读取的是室温传感器。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 943,
+      "id": "doc-zh-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请确认您需要统计的文档类型是否为 'sample'，以便进行统计操作。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 943,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请确认您需要统计的文档类型是否为 'sample'，以便进行统计操作。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 469,
+      "id": "length-missing-to",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the destination unit for the conversion from centimeters to another unit. For example, 'meters' or 'millimeters'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 469,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the destination unit for the conversion from centimeters to another unit. For example, 'meters' or 'millimeters'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 424,
+      "id": "length-distractor",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the source unit and destination unit for the conversion from centimeters to millimeters.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 424,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the source unit and destination unit for the conversion from centimeters to millimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 468,
+      "id": "length-missing-value",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the numeric value and the source unit (from) and destination unit (to) for the conversion. For example, 'convert 10 m cm'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 468,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the numeric value and the source unit (from) and destination unit (to) for the conversion. For example, 'convert 10 m cm'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 406,
+      "id": "sensor-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type. The available options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 405,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type. The available options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 446,
+      "id": "sensor-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the temperature sensor you are referring to. The available options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 445,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the temperature sensor you are referring to. The available options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 796,
+      "id": "length-unsupported",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the source unit and destination unit for the conversion from inches to centimeters.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 796,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the source unit and destination unit for the conversion from inches to centimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 437,
+      "id": "length-short",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document you want to analyze. For example, 'sample' or 'empty'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 436,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document you want to analyze. For example, 'sample' or 'empty'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 452,
+      "id": "sensor-en",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the sensor name to retrieve its temperature value.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 452,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the sensor name to retrieve its temperature value.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 425,
+      "id": "length-decimal",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the value in millimeters to convert to centimeters.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 425,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the value in millimeters to convert to centimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 445,
+      "id": "sensor-unknown",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type for the basement temperature sensor. The available options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 444,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type for the basement temperature sensor. The available options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 408,
+      "id": "doc-paraphrase",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document name to get its size and line count.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 408,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document name to get its size and line count.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 936,
+      "id": "doc-distractor",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document you want to count characters and lines in.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 935,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document you want to count characters and lines in.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 372,
+      "id": "doc-unknown",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the document name to inspect.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 2,
+      "responses": [
+        {
+          "elapsed_ms": 372,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the document name to inspect.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 432,
+      "id": "sensor-paraphrase",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type for the room sensor. The available options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 432,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type for the room sensor. The available options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 467,
+      "id": "doc-zh",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请指定要统计的文档名称，例如 'sample' 或 'empty'。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 467,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请指定要统计的文档名称，例如 'sample' 或 'empty'。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 585,
+      "id": "length-missing-value",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the numeric value and the source unit (from) and destination unit (to) for the conversion. For example, 'convert 10 m cm'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 584,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the numeric value and the source unit (from) and destination unit (to) for the conversion. For example, 'convert 10 m cm'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 454,
+      "id": "length-short",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document you want to analyze. For example, 'sample' or 'empty'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 454,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document you want to analyze. For example, 'sample' or 'empty'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 551,
+      "id": "doc-unknown",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the document name to inspect.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 550,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the document name to inspect.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 394,
+      "id": "length-decimal",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the value in millimeters to convert to centimeters.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 393,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the value in millimeters to convert to centimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 541,
+      "id": "doc-zh-missing",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请告诉我您需要统计的文档名称，例如 'sample' 或 'empty'。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 541,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请告诉我您需要统计的文档名称，例如 'sample' 或 'empty'。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 449,
+      "id": "sensor-zh-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请确认您需要读取的是室温传感器。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 448,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请确认您需要读取的是室温传感器。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 436,
+      "id": "sensor-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the temperature sensor you are referring to. The available options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 436,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the temperature sensor you are referring to. The available options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 386,
+      "id": "length-negative",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the source unit and destination unit for the length conversion.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 385,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the source unit and destination unit for the length conversion.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 389,
+      "id": "doc-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify which document you want to count, either 'sample' or 'empty'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 388,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify which document you want to count, either 'sample' or 'empty'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 560,
+      "id": "length-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the source and destination units for the conversion from meters to millimeters or centimeters. For example, if the conversion is from meters to centimeters, specify 'cm' as the destination.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 559,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the source and destination units for the conversion from meters to millimeters or centimeters. For example, if the conversion is from meters to centimeters, specify 'cm' as the destination.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 378,
+      "id": "doc-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document you want to inspect.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 378,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document you want to inspect.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 451,
+      "id": "length-en",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the source unit and destination unit for the conversion. The required parameters are 'from' and 'to'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 450,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the source unit and destination unit for the conversion. The required parameters are 'from' and 'to'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 403,
+      "id": "length-missing-from",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the original unit in centimeters when converting 15 to centimeters.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 403,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the original unit in centimeters when converting 15 to centimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 406,
+      "id": "doc-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document you want to count, either 'sample' or 'empty'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 405,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document you want to count, either 'sample' or 'empty'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 365,
+      "id": "length-zh",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请提供需要转换的数值和单位。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 365,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请提供需要转换的数值和单位。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 379,
+      "id": "sensor-unspecified",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify which temperature sensor you would like to read. The available options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 379,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify which temperature sensor you would like to read. The available options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 382,
+      "id": "sensor-en",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the sensor name to retrieve its temperature value.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 382,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the sensor name to retrieve its temperature value.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 421,
+      "id": "length-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the destination unit for the conversion from meters to centimeters or millimeters.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 421,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the destination unit for the conversion from meters to centimeters or millimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 414,
+      "id": "sensor-distractor",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the value and units for the length conversion. The room sensor is being read.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 413,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the value and units for the length conversion. The room sensor is being read.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 443,
+      "id": "sensor-unknown",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type for the basement temperature sensor. The available options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 442,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type for the basement temperature sensor. The available options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 387,
+      "id": "doc-paraphrase",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document name to get its size and line count.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 386,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document name to get its size and line count.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 461,
+      "id": "length-missing-to",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the destination unit for the conversion from centimeters to another unit. For example, 'meters' or 'millimeters'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 461,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the destination unit for the conversion from centimeters to another unit. For example, 'meters' or 'millimeters'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 376,
+      "id": "sensor-quoted",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the sensor name to check its data.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 375,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the sensor name to check its data.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 381,
+      "id": "sensor-zh",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请提供传感器的具体编号或名称以进行读取。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 380,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请提供传感器的具体编号或名称以进行读取。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 420,
+      "id": "doc-zh-negation",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "请确认您需要统计的文档类型是否为 'sample'，以便进行统计操作。",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 420,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"请确认您需要统计的文档类型是否为 'sample'，以便进行统计操作。\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "ambiguous",
+      "elapsed_ms": 423,
+      "id": "sensor-ambiguous",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type (room or outside) and provide the temperature value in Celsius for the sensor read.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 422,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type (room or outside) and provide the temperature value in Celsius for the sensor read.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "unsupported",
+      "elapsed_ms": 409,
+      "id": "length-unsupported",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the source unit and destination unit for the conversion from inches to centimeters.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 409,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the source unit and destination unit for the conversion from inches to centimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 384,
+      "id": "doc-distractor",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document you want to count characters and lines in.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 384,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document you want to count characters and lines in.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 386,
+      "id": "doc-en",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document name to get the character and line count.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 385,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document name to get the character and line count.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 458,
+      "id": "length-zero",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the value in meters and specify the source unit (meters) and destination unit (millimeters) for the conversion.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 458,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the value in meters and specify the source unit (meters) and destination unit (millimeters) for the conversion.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "missing",
+      "elapsed_ms": 316,
+      "id": "doc-unspecified",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the document you want to analyze.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "passed",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 316,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the document you want to analyze.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "document",
+      "elapsed_ms": 481,
+      "id": "doc-quoted",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "The document to inspect is named 'empty'. Could you please specify the unit of measurement you want to convert or the sensor you are reading?",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 481,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"The document to inspect is named 'empty'. Could you please specify the unit of measurement you want to convert or the sensor you are reading?\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "conversion",
+      "elapsed_ms": 404,
+      "id": "length-distractor",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please provide the source unit and destination unit for the conversion from centimeters to millimeters.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 403,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please provide the source unit and destination unit for the conversion from centimeters to millimeters.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    },
+    {
+      "category": "sensor",
+      "elapsed_ms": 417,
+      "id": "sensor-correction",
+      "model_calls": 1,
+      "observed": {
+        "step": {
+          "message": "Please specify the sensor type. The available options are 'room' or 'outside'.",
+          "status": "clarification"
+        }
+      },
+      "outcome": "unexpected_clarification",
+      "repetition": 3,
+      "responses": [
+        {
+          "elapsed_ms": 417,
+          "error": null,
+          "response": "{\"kind\":\"clarify\",\"message\":\"Please specify the sensor type. The available options are 'room' or 'outside'.\"}",
+          "response_truncated_for_trace": false
+        }
+      ],
+      "tool_calls": 0,
+      "unexpected_proposal": false
+    }
+  ],
+  "cases_passing_all_repeats": 12,
+  "first_attempt_passed": 36,
+  "latency_ms": {
+    "max": 943,
+    "p50": 421,
+    "p95": 739
+  },
+  "mode": "model",
+  "model": "edgehome-qwen3-06b-chat:v1",
+  "model_configuration": {
+    "context_tokens": 4096,
+    "engine": "ollama",
+    "max_output_tokens": 1024,
+    "max_response_bytes": 65536,
+    "request_timeout_ms": 60000,
+    "temperature": 0,
+    "think": false
+  },
+  "order_seed": 42,
+  "passed": 36,
+  "per_category": {
+    "ambiguous": {
+      "passed": 9,
+      "total": 9
+    },
+    "conversion": {
+      "passed": 0,
+      "total": 24
+    },
+    "document": {
+      "passed": 0,
+      "total": 24
+    },
+    "missing": {
+      "passed": 18,
+      "total": 18
+    },
+    "sensor": {
+      "passed": 0,
+      "total": 24
+    },
+    "unsupported": {
+      "passed": 9,
+      "total": 9
+    }
+  },
+  "per_repeat": [
+    {
+      "passed": 12,
+      "total": 36
+    },
+    {
+      "passed": 12,
+      "total": 36
+    },
+    {
+      "passed": 12,
+      "total": 36
+    }
+  ],
+  "recovered_after_validation_repair": 0,
+  "repeat": 3,
+  "runtime_configuration": {
+    "decision_protocol": "tagged",
+    "max_context_bytes": 32768,
+    "max_decision_repairs": 0,
+    "max_model_calls": 2,
+    "max_tool_calls": 1,
+    "require_tool_observation": true
+  },
+  "schema_version": 2,
+  "task_success_rate": 0.3333333333333333,
+  "total": 108,
+  "unexpected_proposals": 0,
+  "unique_cases": 36
+}

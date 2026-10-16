@@ -1,0 +1,153 @@
+{
+  "id": "unknown-chinese",
+  "category": "clarification",
+  "model": "qwen06",
+  "arm": "guided",
+  "repeat": 2,
+  "elapsed_ms": 516,
+  "log": [
+    {
+      "response": {
+        "capabilities": [
+          "clarification_reply",
+          "clarification_resolve"
+        ],
+        "max_request_bytes": 8192,
+        "protocol": 1,
+        "type": "ready"
+      }
+    },
+    {
+      "request": {
+        "id": 1,
+        "command": {
+          "method": "prompt",
+          "input": "读取草稿.txt。",
+          "tools": [
+            "file.list",
+            "file.read",
+            "file.stats"
+          ]
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 1,
+        "result": {
+          "clarification": {
+            "clarification_id": "62050079-9e91-4985-abb8-f2b7899c866d",
+            "draft_arguments": {},
+            "fields": [
+              {
+                "choices": [
+                  "alpha/report.txt",
+                  "beta/report.txt",
+                  "binary.bin",
+                  "empty.txt",
+                  "large.txt",
+                  "notes.txt",
+                  "payload.json",
+                  "资料.txt"
+                ],
+                "name": "path",
+                "prompt": "Choose an existing relative file path."
+              }
+            ],
+            "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+            "tool": "file.read"
+          },
+          "message": "The requested path is unavailable or incomplete. Which existing relative file path should be used?",
+          "status": "clarification"
+        },
+        "type": "result"
+      }
+    },
+    {
+      "request": {
+        "id": 2,
+        "command": {
+          "method": "resolve",
+          "clarification_id": "62050079-9e91-4985-abb8-f2b7899c866d",
+          "values": {
+            "path": "资料.txt"
+          }
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 2,
+        "result": {
+          "plan": {
+            "arguments": {
+              "path": "资料.txt"
+            },
+            "plan_id": "ecf7df26-597a-4b1b-91ea-526ecbc78d68",
+            "tool": "file.read"
+          },
+          "status": "proposal"
+        },
+        "type": "result"
+      }
+    },
+    {
+      "request": {
+        "id": 3,
+        "command": {
+          "method": "execute",
+          "plan_id": "ecf7df26-597a-4b1b-91ea-526ecbc78d68",
+          "approved": true
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 3,
+        "result": {
+          "completion_recorded": true,
+          "continuation_available": true,
+          "output": {
+            "path": "资料.txt",
+            "text": "温度正常\n"
+          },
+          "plan_id": "ecf7df26-597a-4b1b-91ea-526ecbc78d68",
+          "status": "succeeded"
+        },
+        "type": "result"
+      }
+    },
+    {
+      "request": {
+        "id": 4,
+        "command": {
+          "method": "status"
+        }
+      }
+    },
+    {
+      "response": {
+        "id": 4,
+        "result": {
+          "cancelled": false,
+          "continuation_available": true,
+          "model_calls": 1,
+          "pending_clarification": null,
+          "pending_plan": null,
+          "tool_calls": 1
+        },
+        "type": "result"
+      }
+    }
+  ],
+  "process": {
+    "exit_code": 0,
+    "stderr": ""
+  },
+  "driver_error": null,
+  "passed": true,
+  "clarified": true,
+  "wrong_proposals": 0,
+  "wrong_execution_requests": 0,
+  "execution_requests": 1
+}

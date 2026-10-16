@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-15",
+  "scope": "single model decision followed by a validated tool receipt; clarification branch checks",
+  "base_commit": "327bf726b8775c79b7019ebb2482086c63ba49bb",
+  "source_state": "uncommitted_worktree",
+  "ollama_version": "0.18.3",
+  "cases": {
+    "count": 8,
+    "positive_tool_tasks": 6,
+    "clarification_tasks": 2,
+    "tool_scope": "specified by each case; not automatic routing"
+  },
+  "reports": [
+    "sdk-starter-2026-10-15-qwen06.json",
+    "sdk-starter-2026-10-15-minicpm.json",
+    "sdk-starter-2026-10-15-qwen08.json"
+  ],
+  "sha256": {
+    "Cargo.lock": "a18e9328dbc165e7fc44c0be960b7a6d5dbe9ee6d54b482fd2e08413bf32094b",
+    "cases/sdk-starter.json": "c9e2d02f7d0eb9e43445bf96c9f214ec7e3a3b28ad23518fa6b126d8fddc34d1",
+    "crates/edgehome-runtime/src/lib.rs": "b59f96ba8fd54e2edcea8ae58a39993966bb795c9302458e4d03e0ee41168927",
+    "crates/edgehome-runtime/src/model.rs": "17e5d4cce3ed8d5f6744e3ffb01c4245febd63187a8220a4770066c063b4cec7",
+    "crates/edgehome-runtime/src/tool.rs": "6de24376ef9b7803887f5b7e7897468e2c939f4bb34a9c68d92d0d5bac5df04a",
+    "crates/edgehome-runtime/src/cancellation.rs": "079ab6bec7daa5dac36cfbcafa19dc1b3cb59187fd1ab14a0c065c38ac8dedaa",
+    "crates/edgehome-runtime/src/journal.rs": "029d9b6eaff7bbb60bb091a79400a6c053298ff8d613b00d0345ce67be61cf6d",
+    "crates/edgehome-inference/src/lib.rs": "6a4397d35a13bc3b2f82651defbce300266dace01a8ac4187638e29deb791446",
+    "crates/edgehome-kit/src/lib.rs": "5bab46b548c6a714a22ddc0cc114a1722da6c22acbb4c2c36607e822e5f4724d",
+    "crates/edgehome-kit/src/eval.rs": "895b8e54f848604df57abf0625adfc00da5a56472765a8ce9cb2d1f91d200dfa",
+    "crates/edgehome-kit/templates/tools.rs": "8492f3bdfc9585331daaa5088ab3fe0710e913ce34e1b1c14c70a40323dfb7bf"
+  }
+}

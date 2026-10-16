@@ -12,10 +12,11 @@ pub struct ToolDefinition {
     pub parameters: Value,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct ToolContext {
     pub timeout: Duration,
     pub max_output_bytes: usize,
+    pub cancellation: crate::CancellationToken,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Error)]
@@ -34,7 +35,64 @@ pub enum ToolError {
 pub trait Tool {
     fn definition(&self) -> ToolDefinition;
     fn validate(&self, arguments: &Value) -> Result<(), ToolError>;
+    /// Side-effect-free business check, repeated immediately before dispatch.
+    /// Implementations must retain `validate`'s type and permission checks.
+    fn preflight(&self, arguments: &Value) -> Result<Preflight, ToolError> {
+        self.validate(arguments)?;
+        Ok(Preflight::Allow)
+    }
     fn execute(&mut self, arguments: Value, context: ToolContext) -> Result<Value, ToolError>;
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct InputField {
+    /// A top-level argument name in this tool's schema.
+    pub name: String,
+    pub prompt: String,
+    /// Empty means free input; otherwise resolution must select an exact value.
+    pub choices: Vec<Value>,
+}
+
+#[derive(Debug, Clone)]
+pub enum Preflight {
+    Allow,
+    Clarify {
+        message: String,
+        fields: Vec<InputField>,
+    },
+    Deny,
+}
+
+/// Add an application policy without replacing a typed tool's existing checks.
+/// The callback is trusted, synchronous and must bound its own I/O.
+pub struct GuardedTool<T, G> {
+    inner: T,
+    guard: G,
+}
+
+impl<T, G> GuardedTool<T, G> {
+    pub fn new(inner: T, guard: G) -> Self {
+        Self { inner, guard }
+    }
+}
+
+impl<T: Tool, G: Fn(&Value) -> Result<Preflight, ToolError>> Tool for GuardedTool<T, G> {
+    fn definition(&self) -> ToolDefinition {
+        self.inner.definition()
+    }
+    fn validate(&self, arguments: &Value) -> Result<(), ToolError> {
+        self.inner.validate(arguments)
+    }
+    fn preflight(&self, arguments: &Value) -> Result<Preflight, ToolError> {
+        // Do not bypass an inner guard when wrappers are nested.
+        match self.inner.preflight(arguments)? {
+            Preflight::Allow => (self.guard)(arguments),
+            other => Ok(other),
+        }
+    }
+    fn execute(&mut self, arguments: Value, context: ToolContext) -> Result<Value, ToolError> {
+        self.inner.execute(arguments, context)
+    }
 }
 
 /// Generate the prompt schema and deserialize arguments from the same Rust type.
@@ -103,6 +161,10 @@ pub struct ToolRegistry {
 impl ToolRegistry {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn definitions(&self) -> impl Iterator<Item = &ToolDefinition> {
+        self.definitions.values()
     }
 
     pub fn register(&mut self, tool: impl Tool + 'static) -> Result<(), ToolError> {
