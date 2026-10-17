@@ -1,6 +1,6 @@
 # 从模板开发自己的端侧 Agent
 
-`edgehome-kit` 为通用 SDK 提供项目初始化、配置诊断、命令行运行、stdio RPC 和固定任务评测。生成的项目拥有自己的工具代码，运行时和推理客户端通过本地 Cargo 路径依赖复用。
+`edgehome-kit` 为通用 SDK 提供项目初始化、配置诊断、命令行运行、stdio RPC 和固定任务评测。生成的项目拥有自己的工具代码，默认通过固定 Git 提交复用 SDK，并携带依赖锁文件和 Rust 工具链版本。
 
 ## 创建独立应用
 
@@ -9,32 +9,35 @@
 ```sh
 cargo run --locked -p edgehome-kit -- init ../my-edge-agent --name my-edge-agent
 cd ../my-edge-agent
-cargo run -- doctor --mock
-cargo run -- tools
+cargo run --locked -- doctor --mock
+cargo run --locked -- tools
 ```
 
-`init` 只接受尚不存在的目标目录，不覆盖现有文件。默认引用当前 SDK 源码位置；需要指定另一个检出目录时使用 `--sdk-path /path/to/EdgeHome-Harness`。生成结果为：
+`init` 只接受尚不存在的目标目录，不覆盖现有文件。默认固定模板配套的已发布 SDK 基线；`--sdk-rev` 可指定兼容的、已发布的 40 位提交。只有本地联调时才用 `--sdk-path /path/to/EdgeHome-Harness`，该模式仍依赖原目录。生成结果为：
 
 ```text
 my-edge-agent/
-  Cargo.toml       独立 workspace 和 SDK 路径依赖
+  Cargo.toml       独立 workspace 和 SDK Git 固定提交
+  Cargo.lock       应用直接/间接依赖的固定版本
+  rust-toolchain.toml  固定 Rust 1.95.0
   agent.yaml       模型配置与任务预算
   src/main.rs     共用入口
   src/tools.rs    应用自己的工具与确定性 demo provider
   cases.json      8 条工具/参数/结果/澄清回归用例
   client.py       Python stdio 集成示例
   README.md
+  UPGRADING.md    随应用携带的升级、回退与迁移步骤
   LICENSE
 ```
 
-SDK 源码目录需要继续存在。当前模板未依赖已发布的 crates.io 包，也没有后台安装模型、下载依赖包或启动推理服务。第一次 Cargo 构建可能下载普通 Rust 依赖。
+默认生成的应用不需要保留原 SDK 源码目录。`init` 会联网完成依赖锁定；缓存齐全时可加 `--offline`。后续构建使用 `--locked`，并把锁文件与工具链文件纳入应用版本管理。当前通过 Git 分发 SDK，未发布 crates.io 包；不自动安装模型或启动推理服务。CLI 安装、换机、兼容范围及旧项目迁移见[安装与升级](install-and-upgrade.md)。
 
 ## 先完成一个短任务
 
 ```sh
-cargo run -- run --mock --prompt "Count the sample document" --tool document.stats
-cargo run -- run --mock --prompt "Count the sample document" --tool document.stats --allow document.stats
-cargo run -- run --mock --prompt "Read the room sensor" --tool sensor.read --allow sensor.read --events
+cargo run --locked -- run --mock --prompt "Count the sample document" --tool document.stats
+cargo run --locked -- run --mock --prompt "Count the sample document" --tool document.stats --allow document.stats
+cargo run --locked -- run --mock --prompt "Read the room sensor" --tool sensor.read --allow sensor.read --events
 ```
 
 - 第一条只提出计划，不执行。
@@ -72,9 +75,9 @@ runtime:
 其余[引擎预设](../configs/inference/ollama.yaml)的字段放在 `inference` 下。原 `document_agent --config` 读取的是扁平推理配置，开发工具读取的是含 `inference/runtime` 的应用配置，两者不要直接混用。
 
 ```sh
-cargo run -- doctor
-cargo run -- doctor --probe
-cargo run -- run --prompt "Count the sample document" --tool document.stats --allow document.stats
+cargo run --locked -- doctor
+cargo run --locked -- doctor --probe
+cargo run --locked -- run --prompt "Count the sample document" --tool document.stats --allow document.stats
 ```
 
 `doctor` 验证本地配置、模型客户端构造和基本运行时预算，不发起网络请求。`--probe` 发起两次有时限、无工具的请求，要求读取仅存在于 system 消息中的不同测试值；答案不写进 schema，避免只检查 JSON 格式却漏掉聊天模板问题。它不会验证任务准确率、所有工具的 Schema 或硬件内存。`--config FILE` 可以覆盖默认的 `agent.yaml`。
@@ -86,7 +89,7 @@ cargo run -- run --prompt "Count the sample document" --tool document.stats --al
 `--events` 将元数据事件输出到 stderr，stdout 留给结果或 RPC。事件包括任务开始、模型请求开始/结束、提案、执行开始、完成、取消与拒绝；模型结束事件只表示调用返回，不代表候选已通过校验。
 
 ```sh
-cargo run -- run --mock --prompt "Count the sample document" --allow document.stats --events --journal session-001.jsonl
+cargo run --locked -- run --mock --prompt "Count the sample document" --allow document.stats --events --journal session-001.jsonl
 ```
 
 `--journal` 必须指向现有目录下的新文件。记录只保留事件类型、计划 ID 和工具名称，不写原始提示、参数或结果；默认内存记录最多 128 条，文件上限 512 KiB。文件写入会同步到存储，写入失败或达到上限时返回错误，派发前失败不会调用工具。
@@ -102,7 +105,7 @@ cargo run -- run --mock --prompt "Count the sample document" --allow document.st
 启动子进程：
 
 ```sh
-cargo run -- rpc --mock --enable-execution
+cargo run --locked -- rpc --mock --enable-execution
 ```
 
 协议为本地、顺序处理的 NDJSON v1，不是 JSON-RPC 2.0。每行一个 JSON 对象，请求最大 8,192 字节（含换行）；过大请求结束连接。没有网络监听端口，父进程是可信的授权边界。省略 `--enable-execution` 时，所有执行请求都被拒绝。
@@ -150,8 +153,8 @@ ID 只在当前任务内有效。用户补充不会重置调用预算，也不�
 ## 固定任务评测
 
 ```sh
-cargo run -- eval --mock --cases cases.json --allow document.stats --allow sensor.read
-cargo run -- eval --cases cases.json --allow document.stats --allow sensor.read
+cargo run --locked -- eval --mock --cases cases.json --allow document.stats --allow sensor.read
+cargo run --locked -- eval --cases cases.json --allow document.stats --allow sensor.read
 ```
 
 模板提供 6 条工具任务和 2 条缺失参数澄清任务。成功标准是正确工具、匹配参数、成功且记录完成的执行回执以及匹配的结构化结果；2 与 2.0 按同值比较，不转换字符串。schema v2 澄清案例还要求包含指定问题主题，但这个自动检查不能完整证明问题语义。

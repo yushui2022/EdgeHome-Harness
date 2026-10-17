@@ -7,6 +7,19 @@ implemented code, tests, docs, and eval evidence.
 
 ## Unreleased
 
+### Distribution
+
+- Generated applications now pin the SDK to a published compatibility commit by
+  default; `--sdk-path` remains an explicit local development option.
+- Initialization seeds and reconciles `Cargo.lock` from the SDK dependency
+  baseline, supports cached offline resolution, and preserves files on failure.
+- Rust 1.95.0 toolchain pins, application upgrade/rollback instructions, and a
+  compatibility and installation guide accompany the generated project.
+- The SDK baseline is release-controlled in `edgehome-kit/sdk-revision.txt`,
+  separate from CLI installation and independent of build-directory metadata.
+- Onboarding checks cover CLI installation, Git dependencies, relocation,
+  locked builds, conservative upgrades, rollback and the existing RPC/tool gate.
+
 ### Licensing
 
 - Standardized the project license on MIT, with the full notice in `LICENSE`.

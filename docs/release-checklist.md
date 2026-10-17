@@ -28,6 +28,20 @@ Before every release, confirm these statements are still true:
 
 ## 2. Required Commands
 
+Use the repository's pinned Rust toolchain and Python 3.11+ for SDK onboarding.
+Run `python scripts/check-sdk-onboarding.py` to verify installation, Git and path
+dependencies, locked builds after relocation, conservative upgrades, rollback,
+and the generated application's tool/RPC gate. The release script also runs it.
+The temporary Git remote tests the current source; before distributing a revision,
+check that its full commit is reachable from the public repository and perform
+the [fixed-revision installation](install-and-upgrade.md) from a clean checkout.
+Record the tested OS/toolchain. Keep API and model qualification claims separate
+from successful installation tests.
+The generated application's default SDK revision is recorded separately in
+`crates/edgehome-kit/sdk-revision.txt`. Change it only to a published commit, after
+checking the template against that SDK. Onboarding tests both this baseline and
+the current working tree. A CLI-only update need not change the SDK baseline.
+
 Run from the repository root:
 
 ```powershell

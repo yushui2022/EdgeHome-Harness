@@ -153,7 +153,8 @@ fn configuration_errors_do_not_echo_pasted_secrets() {
 fn scaffolding_creates_an_independent_app_and_preserves_existing_files() {
     let temp = Temp::new();
     let path = temp.path().join("my app");
-    scaffold::create(&path, None, "my-agent").unwrap();
+    let revision = "1234567890abcdef1234567890abcdef12345678";
+    scaffold::create(&path, None, Some(revision), "my-agent").unwrap();
     assert!(
         fs::read_to_string(path.join("Cargo.toml"))
             .unwrap()
@@ -161,12 +162,61 @@ fn scaffolding_creates_an_independent_app_and_preserves_existing_files() {
     );
     assert!(path.join("src/tools.rs").is_file());
     assert!(path.join("client.py").is_file());
+    let manifest = fs::read_to_string(path.join("Cargo.toml")).unwrap();
+    assert_eq!(manifest.matches(revision).count(), 2);
+    assert!(!manifest.contains("path ="));
+    assert!(path.join("Cargo.lock").is_file());
+    assert!(path.join("rust-toolchain.toml").is_file());
+    assert!(path.join("UPGRADING.md").is_file());
     fs::write(path.join("src/main.rs"), "user content").unwrap();
-    assert!(scaffold::create(&path, None, "my-agent").is_err());
+    assert!(scaffold::create(&path, None, Some(revision), "my-agent").is_err());
     assert_eq!(
         fs::read_to_string(path.join("src/main.rs")).unwrap(),
         "user content"
     );
+}
+
+#[test]
+fn scaffolding_rejects_moving_refs_and_keeps_local_sdk_mode_explicit() {
+    let temp = Temp::new();
+    let path = temp.path().join("app");
+    for revision in [
+        "main",
+        "v0.1.0",
+        "1234567",
+        "../../sdk",
+        "z234567890abcdef1234567890abcdef12345678",
+    ] {
+        assert!(scaffold::create(&path, None, Some(revision), "my-agent").is_err());
+        assert!(!path.exists());
+    }
+    let sdk = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    assert!(scaffold::create(&path, Some(&sdk), Some("main"), "my-agent").is_err());
+    scaffold::create(&path, Some(&sdk), None, "my-agent").unwrap();
+    let manifest = fs::read_to_string(path.join("Cargo.toml")).unwrap();
+    assert_eq!(manifest.matches("path =").count(), 2);
+    assert!(!manifest.contains("git ="));
+    assert!(
+        Cli::try_parse_from([
+            "edgehome-dev",
+            "init",
+            "new-app",
+            "--sdk-path",
+            ".",
+            "--sdk-rev",
+            "main"
+        ])
+        .is_err()
+    );
+}
+
+#[test]
+fn scaffolding_pins_the_bundled_sdk_baseline_by_default() {
+    let temp = Temp::new();
+    let path = temp.path().join("app");
+    scaffold::create(&path, None, None, "my-agent").unwrap();
+    let manifest = fs::read_to_string(path.join("Cargo.toml")).unwrap();
+    assert_eq!(manifest.matches(scaffold::SDK_REV.trim()).count(), 2);
 }
 
 #[test]

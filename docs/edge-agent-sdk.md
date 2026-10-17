@@ -49,19 +49,19 @@ cargo run --locked -p edgehome-inference --example document_agent -- --config co
 
 ## 在自己的项目中集成
 
-1. **引入库。** 在自己的 Cargo 项目使用指向本仓库 `crates/edgehome-runtime` 和 `crates/edgehome-inference` 的路径依赖。这份仓库提供源码集成，不要求先发布 crates.io 包。
+1. **引入库。** 在自己的 Cargo 项目用固定 Git 提交引用 `edgehome-runtime` 和 `edgehome-inference`，并提交 `Cargo.lock`；SDK 联调时才使用本地路径依赖。推荐由 `init` 创建应用，安装和迁移方式见[安装与升级](install-and-upgrade.md)。当前无需 crates.io 包。
 2. **定义工具。** 参数结构派生 `Deserialize` 与 `JsonSchema`，使用 `#[serde(deny_unknown_fields)]`，通过 `TypedTool::new` 注册名称、简短描述、校验函数和执行函数。为小模型提供具体参数示例会比宽泛描述更容易调试。
 3. **配置模型。** 创建 `HttpProvider::new(InferenceConfig)`。内置引擎不需要重复实现 HTTP、超时或响应大小限制；自定义推理方式实现 `ModelProvider`。
 4. **驱动循环。** `prompt` 返回工具计划、最终回答或澄清。宿主展示计划并确认后调用 `execute`；只有 `continuation_available` 为 true 时再调用 `continue_run`。
 
 完整、可编译的接入实例是 [document_agent.rs](../crates/edgehome-inference/examples/document_agent.rs)。把 `document.stats` 替换为文档解析、传感器读取或服务操作，无需修改运行时里的领域枚举。
 
-例如，应用项目与本仓库并列时，可使用以下依赖配置；按实际目录调整 `path`：
+例如，直接嵌入 SDK 时使用以下依赖配置；把两个占位符替换成同一个已发布的完整提交号：
 
 ```toml
 [dependencies]
-edgehome-runtime = { path = "../EdgeHome-Harness/crates/edgehome-runtime" }
-edgehome-inference = { path = "../EdgeHome-Harness/crates/edgehome-inference" }
+edgehome-runtime = { git = "https://github.com/yushui2022/EdgeHome-Harness.git", rev = "<FULL_40_CHARACTER_COMMIT>" }
+edgehome-inference = { git = "https://github.com/yushui2022/EdgeHome-Harness.git", rev = "<FULL_40_CHARACTER_COMMIT>" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 schemars = { version = "0.8", features = ["derive"] }

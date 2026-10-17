@@ -44,18 +44,28 @@ The SDK uses Rust `std`. Its core has no HTTP, SQLite, or smart-home dependency;
 
 ## Quick Start
 
-Requires **Rust 1.95+**. Create your own application with two replaceable tools:
+Requires **rustup, Git and a native linker**. The repository pins Rust **1.95.0**.
+Install the developer CLI and create an application with two replaceable tools:
 
 ```sh
 git clone https://github.com/yushui2022/EdgeHome-Harness.git
 cd EdgeHome-Harness
-cargo run --locked -p edgehome-kit -- init ../my-edge-agent --name my-edge-agent
+cargo install --locked --path crates/edgehome-kit --bin edgehome-dev
+edgehome-dev init ../my-edge-agent --name my-edge-agent
 cd ../my-edge-agent
-cargo run -- doctor --mock
-cargo run -- run --mock --prompt "Count the sample document" --tool document.stats --allow document.stats
+cargo run --locked -- doctor --mock
+cargo run --locked -- run --mock --prompt "Count the sample document" --tool document.stats --allow document.stats
 ```
 
-The generated project owns its tool code and references the SDK through local path dependencies. It includes a configuration file, document and sensor fixtures, task cases, and a Python client. No model, credentials, or device is needed for `--mock`.
+The generated project owns its tools and pins the SDK to a published compatibility baseline.
+Commit its `Cargo.lock` and `rust-toolchain.toml`; another machine can build it
+without the original SDK checkout. It includes configuration, document and sensor
+fixtures, task cases, a Python client, and upgrade instructions. No model,
+credentials, or device is needed for `--mock`.
+
+See [installation, compatibility and upgrades / 安装与升级](docs/install-and-upgrade.md)
+for repeatable CLI installation, moving an application, offline preparation and rollback.
+Use `init --sdk-path ...` only when developing against a local SDK checkout.
 
 | Command | Purpose |
 | --- | --- |
@@ -108,7 +118,8 @@ For tasks that need only the tool's authoritative result, add `--result-only` to
 
 ## Build On EdgeHome
 
-Add the crates to your Cargo application through local path dependencies, then follow the [SDK integration guide / 端侧 Agent SDK](docs/edge-agent-sdk.md).
+Add the crates to your Cargo application at a fixed Git commit, commit the lockfile,
+then follow the [SDK integration guide / 端侧 Agent SDK](docs/edge-agent-sdk.md).
 
 | Component | What you configure or implement |
 | --- | --- |
@@ -233,6 +244,7 @@ The stdio protocol supports external hosts and includes a Python example. Dynami
 | --- | --- |
 | Start building | [SDK guide / 中文](docs/edge-agent-sdk.md) · [Document example](crates/edgehome-inference/examples/document_agent.rs) |
 | Application workflow | [Developer kit / 中文](docs/developer-kit.md) · [Python client](examples/python/agent_client.py) · [Starter cases](cases/sdk-starter.json) |
+| Installation & upgrades | [Install, compatibility and rollback / 中文](docs/install-and-upgrade.md) · [Application upgrade guide](crates/edgehome-kit/templates/UPGRADING.md) |
 | Model integration | [Engines and configuration / 中文](docs/inference-engines.md) · [Model validation](docs/sdk-model-validation.md) |
 | Smart-home reference | [Agent reference](docs/agent-reference.md) · [Architecture](docs/architecture-v2.md) · [Customization](docs/customization.md) |
 | Devices | [Home Assistant](docs/home-assistant-gateway.md) · [MQTT](docs/mqtt-guarded-publish.md) · [MIoT](docs/miot-bridge-adapter.md) · [Matter](docs/matter-bridge-adapter.md) |

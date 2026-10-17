@@ -6,6 +6,7 @@ param(
         "docs\agent-reference.md",
         "docs\edge-agent-sdk.md",
         "docs\developer-kit.md",
+        "docs\install-and-upgrade.md",
         "docs\model-reliability.md",
         "docs\file-agent.md",
         "docs\file-agent-results.md",

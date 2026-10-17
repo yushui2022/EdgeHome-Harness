@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Repository hygiene
         run: |
@@ -76,6 +78,7 @@ jobs:
 
       - name: Install Rust components
         run: |
+          rustup toolchain install 1.95.0 --profile minimal
           rustup component add rustfmt clippy
           rustc --version
           cargo --version
@@ -100,8 +103,8 @@ jobs:
           cargo run --locked -q -p edgehome-inference --example document_agent -- --execute-demo
 
       - name: Independent SDK application and RPC smoke
-        # The generated app uses only dependencies already built by workspace tests.
-        # It runs from an independent temporary workspace with the same target cache.
+        # Installs the CLI and tests path + Git modes against a temporary remote.
+        # Relocation/upgrade/rollback share the target and dependency caches.
         run: python scripts/check-sdk-onboarding.py
 
       - name: Audit recorded model evidence and scorer tamper detection
@@ -138,3 +141,21 @@ jobs:
 
       - name: Diff whitespace check
         run: git diff --check
+
+  windows-install:
+    name: Windows SDK installation and portability
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned Rust toolchain
+        run: rustup toolchain install 1.95.0 --profile minimal
+      - name: Install, relocate, upgrade and roll back a generated app
+        run: python scripts/check-sdk-onboarding.py

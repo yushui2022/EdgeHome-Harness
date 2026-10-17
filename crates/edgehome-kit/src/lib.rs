@@ -23,7 +23,11 @@ use serde_json::json;
 use std::{collections::BTreeSet, path::PathBuf};
 
 #[derive(Parser)]
-#[command(about = "Build and host a focused local agent", version)]
+#[command(
+    about = "Build and host a focused local agent",
+    version,
+    long_version = concat!(env!("CARGO_PKG_VERSION"), "\nDefault SDK commit: ", include_str!("../sdk-revision.txt"))
+)]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -59,8 +63,22 @@ enum Command {
     /// Generate an independent Cargo app with two replaceable tools.
     Init {
         directory: PathBuf,
-        #[arg(long)]
+        #[arg(
+            long,
+            conflicts_with = "sdk_rev",
+            help = "Local SDK checkout (development only; not portable)"
+        )]
         sdk_path: Option<PathBuf>,
+        #[arg(
+            long,
+            help = "Published 40-character SDK commit; defaults to the bundled compatibility baseline"
+        )]
+        sdk_rev: Option<String>,
+        #[arg(
+            long,
+            help = "Resolve the lockfile using only cached Git sources and dependencies"
+        )]
+        offline: bool,
         #[arg(long, default_value = "my-edge-agent")]
         name: String,
     },
@@ -156,11 +174,15 @@ pub fn run_cli(
         Command::Init {
             directory,
             sdk_path,
+            sdk_rev,
+            offline,
             name,
         } => {
-            let path = scaffold::create(&directory, sdk_path.as_deref(), &name)?;
+            let path =
+                scaffold::create(&directory, sdk_path.as_deref(), sdk_rev.as_deref(), &name)?;
+            scaffold::lock_dependencies(&path, offline)?;
             println!(
-                "Created {}\nNext: cd into the project and run `cargo run -- doctor --mock`.",
+                "Created {} with Cargo.lock.\nNext: cd into the project and run `cargo run --locked -- doctor --mock`.\nCommit Cargo.toml, Cargo.lock and rust-toolchain.toml with your application.",
                 path.display()
             );
         }

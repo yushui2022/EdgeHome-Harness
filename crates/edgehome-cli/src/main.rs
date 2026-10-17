@@ -2196,11 +2196,14 @@ mod tests {
     use std::{
         io::{Read, Write},
         net::TcpListener,
+        sync::atomic::{AtomicU64, Ordering},
         thread,
         time::Duration,
     };
 
     use edgehome_core::{Action, CommandParams, CommandSchemaVersion, Intent, RiskLevel, Room};
+
+    static TEMP_SEQUENCE: AtomicU64 = AtomicU64::new(0);
 
     fn workspace_config_dir() -> PathBuf {
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -2215,16 +2218,15 @@ mod tests {
     }
 
     fn temp_db_path(prefix: &str) -> PathBuf {
-        std::env::temp_dir().join(format!(
-            "{prefix}-{}.sqlite",
-            time::OffsetDateTime::now_utc().unix_timestamp_nanos()
-        ))
+        temp_dir_path(prefix).with_extension("sqlite")
     }
 
     fn temp_dir_path(prefix: &str) -> PathBuf {
         std::env::temp_dir().join(format!(
-            "{prefix}-{}",
-            time::OffsetDateTime::now_utc().unix_timestamp_nanos()
+            "{prefix}-{}-{}-{}",
+            std::process::id(),
+            time::OffsetDateTime::now_utc().unix_timestamp_nanos(),
+            TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed)
         ))
     }
 

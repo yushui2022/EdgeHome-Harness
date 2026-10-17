@@ -7,6 +7,7 @@ Core documents:
 
 - [只读文件 Agent 与澄清闭环](file-agent.md): real files, application preflight, retained arguments, host replies and paired acceptance evidence.
 - [开发工具与独立应用](developer-kit.md): init, doctor, run, bounded stdio RPC, event logs, and fixed task evaluation.
+- [安装、兼容性与升级](install-and-upgrade.md): pinned Git dependencies, toolchain and lockfile, application relocation, deliberate upgrades and rollback.
 - [端侧 Agent SDK](edge-agent-sdk.md): domain-independent Rust tools, a bounded task loop, host approval, and integration steps.
 - [推理引擎接入](inference-engines.md): Ollama, llama.cpp, LM Studio, vLLM, SGLang, protocol limits, and configuration presets.
 - [SDK 模型验证记录](sdk-model-validation.md): actual model probes, failure cases, and the boundary between protocol compatibility and task success.
