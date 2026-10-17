@@ -44,7 +44,15 @@ The SDK uses Rust `std`. Its core has no HTTP, SQLite, or smart-home dependency;
 
 ## Quick Start
 
-Requires **rustup, Git and a native linker**. The repository pins Rust **1.95.0**.
+To try the CLI without a Rust installation, use a published archive from
+[Releases](https://github.com/yushui2022/EdgeHome-Harness/releases) and follow the
+[download, checksum and platform guide](docs/cli-distribution.md).
+The versioned release pipeline targets Windows x64, Linux x64/ARM64 and macOS
+Apple Silicon. Only assets listed on a Release are available; source installation
+below remains available before the first binary release.
+
+Building your own application requires **rustup, Git and a native linker**.
+The repository pins Rust **1.95.0**.
 Install the developer CLI and create an application with two replaceable tools:
 
 ```sh

@@ -1,0 +1,32 @@
+{
+  "targets": [
+    {
+      "target": "x86_64-pc-windows-msvc",
+      "runner": "windows-2022",
+      "platform": "Windows x64",
+      "tested_on": "Windows Server 2022; Windows 10/11 require deployment validation",
+      "archive": "zip"
+    },
+    {
+      "target": "x86_64-unknown-linux-gnu",
+      "runner": "ubuntu-22.04",
+      "platform": "Linux x64",
+      "tested_on": "Ubuntu 22.04, glibc 2.35; not Alpine/musl",
+      "archive": "tar.gz"
+    },
+    {
+      "target": "aarch64-unknown-linux-gnu",
+      "runner": "ubuntu-22.04-arm",
+      "platform": "Linux ARM64",
+      "tested_on": "Ubuntu 22.04 ARM64, glibc 2.35; not ARMv7 or hardware qualification",
+      "archive": "tar.gz"
+    },
+    {
+      "target": "aarch64-apple-darwin",
+      "runner": "macos-14",
+      "platform": "macOS Apple Silicon",
+      "tested_on": "macOS 14 ARM64; no Developer ID signing or notarization",
+      "archive": "tar.gz"
+    }
+  ]
+}

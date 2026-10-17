@@ -158,6 +158,8 @@ try {
     Invoke-Native "Clippy" (@("cargo", "clippy") + $CargoLockArgs + @("--workspace", "--all-targets", "--", "-D", "warnings"))
     Invoke-Native "Workspace tests" (@("cargo", "test") + $CargoLockArgs + @("--workspace"))
 
+    Invoke-Native "CLI distribution regression checks" @("python", (Join-Path $PSScriptRoot "test-release.py"))
+
     Invoke-Native "Bounded agent preview example" (@("cargo", "run") + $CargoLockArgs + @(
         "-q", "-p", "edgehome-agent", "--example", "bounded_agent"
     ))

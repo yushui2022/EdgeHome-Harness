@@ -9,6 +9,13 @@ implemented code, tests, docs, and eval evidence.
 
 ### Distribution
 
+- Prepared CLI version 0.2.0 with a tag-driven native release workflow for
+  Windows x64, Linux x64/ARM64 and macOS Apple Silicon. Releases remain developer
+  previews; the workflow publishes only after the full CI and platform checks.
+- Versioned archives include fixtures, configuration, licenses, source/SDK
+  metadata and SHA-256 inventories. Extraction tests run the binary without
+  Rust or Git on PATH; missing, corrupt or inconsistent platform assets fail
+  release assembly. Added download verification and CLI upgrade/rollback guides.
 - Generated applications now pin the SDK to a published compatibility commit by
   default; `--sdk-path` remains an explicit local development option.
 - Initialization seeds and reconciles `Cargo.lock` from the SDK dependency

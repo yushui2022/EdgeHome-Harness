@@ -1,0 +1,112 @@
+name: CLI release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cli-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+
+  plan:
+    runs-on: ubuntu-22.04
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      tag: ${{ steps.plan.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - id: plan
+        env:
+          RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+        run: |
+          args=()
+          if [ -n "$RELEASE_TAG" ]; then args+=(--tag "$RELEASE_TAG"); fi
+          python scripts/release.py plan "${args[@]}" --github-output "$GITHUB_OUTPUT"
+
+  build:
+    needs: plan
+    name: Package ${{ matrix.target }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    env:
+      CARGO_TARGET_DIR: ${{ github.workspace }}/target
+      RUSTFLAGS: ${{ matrix.target == 'x86_64-pc-windows-msvc' && '-C target-feature=+crt-static' || '' }}
+      RELEASE_TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned toolchain
+        run: rustup toolchain install 1.95.0 --profile minimal
+      - name: Packaging regression checks
+        run: python scripts/test-release.py
+      - name: Native SDK tests and CLI build
+        run: |
+          cargo test --locked --target "${{ matrix.target }}" -p edgehome-runtime -p edgehome-inference -p edgehome-kit
+          cargo build --release --locked --target "${{ matrix.target }}" -p edgehome-kit --bin edgehome-dev
+      - name: Package and exercise the extracted binary without developer tools
+        run: |
+          args=()
+          if [ -n "$RELEASE_TAG" ]; then args+=(--tag "$RELEASE_TAG"); fi
+          python scripts/release.py package "${args[@]}" \
+            --target "${{ matrix.target }}" \
+            --binary "$CARGO_TARGET_DIR/${{ matrix.target }}/release/edgehome-dev${{ runner.os == 'Windows' && '.exe' || '' }}" \
+            --output release/package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cli-${{ matrix.target }}
+          path: release/package/*
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    needs: [plan, checks, build]
+    # A manual run is a rehearsal. Only a pushed version tag publishes assets.
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ needs.plan.outputs.tag }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cli-*
+          path: release/assets
+          merge-multiple: true
+      - name: Verify complete platform set, source identity and checksums
+        run: python scripts/release.py assemble --directory release/assets --tag "$RELEASE_TAG"
+      - name: Publish developer preview without replacing existing releases
+        run: |
+          gh release create "$RELEASE_TAG" release/assets/*.zip release/assets/*.tar.gz \
+            release/assets/*.sha256 release/assets/SHA256SUMS release/assets/release-manifest.json \
+            --verify-tag --prerelease --latest=false \
+            --title "EdgeHome CLI $RELEASE_TAG" --notes-file release/assets/release-notes.md

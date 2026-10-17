@@ -1,11 +1,13 @@
 # 安装、迁移与升级
 
-EdgeHome 当前以 **Git 固定提交 + Cargo.lock + 固定 Rust 工具链**交付。
+EdgeHome 的应用 SDK 以 **Git 固定提交 + Cargo.lock + 固定 Rust 工具链**交付。
 新应用默认不依赖原 SDK 的磁盘路径；只需携带应用代码和版本文件即可重新构建。
-这是 developer preview 的可复现依赖流程，还不是稳定 API、预编译安装包或硬件认证。
+开发 CLI 另有[版本化预编译发行流程](cli-distribution.md)，可下载已发布的归档直接体验，
+无需先编译 CLI；具体可用版本以 GitHub Releases 为准。自定义 Rust 应用仍需工具链。
+这是 developer preview，不代表稳定 API 或硬件认证。
 当前未发布 crates.io 包，请勿使用 `cargo install edgehome-kit`。
 
-## 首次安装
+## 从源码首次安装
 
 准备 Git、[rustup](https://rustup.rs/) 和本机链接工具链。
 Linux 需要 C 编译器/链接器；Windows 可使用 MSVC Build Tools，或已配置的 GNU 工具链；

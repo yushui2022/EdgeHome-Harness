@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_call:
   push:
     branches: ["main"]
   pull_request:
@@ -85,6 +86,9 @@ jobs:
 
       - name: Format
         run: cargo fmt --all --check
+
+      - name: CLI distribution regression checks
+        run: python scripts/test-release.py
 
       - name: Clippy
         run: cargo clippy --workspace --all-targets --locked -- -D warnings

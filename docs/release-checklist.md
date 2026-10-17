@@ -28,6 +28,13 @@ Before every release, confirm these statements are still true:
 
 ## 2. Required Commands
 
+For binary CLI releases, follow [the distribution guide](cli-distribution.md).
+The `v*` tag must match the `edgehome-kit` package and lockfile versions. The release
+workflow reuses CI, builds each platform natively, smoke-tests extracted archives,
+and verifies all platform artifacts and hashes before publishing a prerelease.
+Manual workflow runs only rehearse packaging. Do not reuse a published version or
+replace its assets; record the CLI source and independently pinned SDK baseline.
+
 Use the repository's pinned Rust toolchain and Python 3.11+ for SDK onboarding.
 Run `python scripts/check-sdk-onboarding.py` to verify installation, Git and path
 dependencies, locked builds after relocation, conservative upgrades, rollback,
@@ -57,6 +64,7 @@ powershell -ExecutionPolicy Bypass -File scripts\check-public-claims.ps1
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace
+python scripts/test-release.py
 cargo run -q -p edgehome-cli -- --db-path "$env:TEMP\edgehome-release-gate.sqlite" eval cases\zh-home.yaml --gate --summary
 cargo run -q -p edgehome-cli -- backend check --backend home_assistant --registry configs\devices.home_assistant.example.yaml
 cargo run -q -p edgehome-cli -- backend check --backend mqtt --registry configs\devices.mqtt.example.yaml
